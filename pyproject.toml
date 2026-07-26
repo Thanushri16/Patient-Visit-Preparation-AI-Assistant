@@ -1,0 +1,10 @@
+[project]
+name = "project1-ai-chatbot-for-healthcare"
+version = "0.1.0"
+description = "AI chatbot for healthcare appointment preparation"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115.0",
+  "openai>=1.0.0",
+  "uvicorn>=0.30.0",
+]

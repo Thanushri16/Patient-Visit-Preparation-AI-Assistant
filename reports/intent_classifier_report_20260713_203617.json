@@ -1,0 +1,440 @@
+{
+  "summary": {
+    "mode": "rule",
+    "total_samples": 30,
+    "correct_predictions": 28,
+    "accuracy": 0.9333,
+    "macro_precision": 0.963,
+    "macro_recall": 0.9352,
+    "macro_f1": 0.9397,
+    "weighted_f1": 0.9343,
+    "unknown_prediction_rate": 0.2
+  },
+  "per_intent_metrics": [
+    {
+      "intent": "show_menu",
+      "support": 4,
+      "precision": 1.0,
+      "recall": 0.75,
+      "f1": 0.8571
+    },
+    {
+      "intent": "appointment_preparation",
+      "support": 3,
+      "precision": 1.0,
+      "recall": 0.6667,
+      "f1": 0.8
+    },
+    {
+      "intent": "report_new_symptoms",
+      "support": 4,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "intent": "review_health_notes",
+      "support": 3,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "intent": "report_allergy",
+      "support": 3,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "intent": "medication_question",
+      "support": 3,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "intent": "emergency_support",
+      "support": 3,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "intent": "view_summary",
+      "support": 3,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "intent": "unknown",
+      "support": 4,
+      "precision": 0.6667,
+      "recall": 1.0,
+      "f1": 0.8
+    }
+  ],
+  "confusion_matrix": {
+    "show_menu": {
+      "show_menu": 3,
+      "appointment_preparation": 0,
+      "report_new_symptoms": 0,
+      "review_health_notes": 0,
+      "report_allergy": 0,
+      "medication_question": 0,
+      "emergency_support": 0,
+      "view_summary": 0,
+      "unknown": 1
+    },
+    "appointment_preparation": {
+      "show_menu": 0,
+      "appointment_preparation": 2,
+      "report_new_symptoms": 0,
+      "review_health_notes": 0,
+      "report_allergy": 0,
+      "medication_question": 0,
+      "emergency_support": 0,
+      "view_summary": 0,
+      "unknown": 1
+    },
+    "report_new_symptoms": {
+      "show_menu": 0,
+      "appointment_preparation": 0,
+      "report_new_symptoms": 4,
+      "review_health_notes": 0,
+      "report_allergy": 0,
+      "medication_question": 0,
+      "emergency_support": 0,
+      "view_summary": 0,
+      "unknown": 0
+    },
+    "review_health_notes": {
+      "show_menu": 0,
+      "appointment_preparation": 0,
+      "report_new_symptoms": 0,
+      "review_health_notes": 3,
+      "report_allergy": 0,
+      "medication_question": 0,
+      "emergency_support": 0,
+      "view_summary": 0,
+      "unknown": 0
+    },
+    "report_allergy": {
+      "show_menu": 0,
+      "appointment_preparation": 0,
+      "report_new_symptoms": 0,
+      "review_health_notes": 0,
+      "report_allergy": 3,
+      "medication_question": 0,
+      "emergency_support": 0,
+      "view_summary": 0,
+      "unknown": 0
+    },
+    "medication_question": {
+      "show_menu": 0,
+      "appointment_preparation": 0,
+      "report_new_symptoms": 0,
+      "review_health_notes": 0,
+      "report_allergy": 0,
+      "medication_question": 3,
+      "emergency_support": 0,
+      "view_summary": 0,
+      "unknown": 0
+    },
+    "emergency_support": {
+      "show_menu": 0,
+      "appointment_preparation": 0,
+      "report_new_symptoms": 0,
+      "review_health_notes": 0,
+      "report_allergy": 0,
+      "medication_question": 0,
+      "emergency_support": 3,
+      "view_summary": 0,
+      "unknown": 0
+    },
+    "view_summary": {
+      "show_menu": 0,
+      "appointment_preparation": 0,
+      "report_new_symptoms": 0,
+      "review_health_notes": 0,
+      "report_allergy": 0,
+      "medication_question": 0,
+      "emergency_support": 0,
+      "view_summary": 3,
+      "unknown": 0
+    },
+    "unknown": {
+      "show_menu": 0,
+      "appointment_preparation": 0,
+      "report_new_symptoms": 0,
+      "review_health_notes": 0,
+      "report_allergy": 0,
+      "medication_question": 0,
+      "emergency_support": 0,
+      "view_summary": 0,
+      "unknown": 4
+    }
+  },
+  "misclassifications": [
+    {
+      "text": "What can you do for me?",
+      "expected_intent": "show_menu",
+      "predicted_intent": "unknown",
+      "confidence": 0.0,
+      "status": "unknown",
+      "correct": false
+    },
+    {
+      "text": "Please prepare me for my visit.",
+      "expected_intent": "appointment_preparation",
+      "predicted_intent": "unknown",
+      "confidence": 0.0,
+      "status": "unknown",
+      "correct": false
+    }
+  ],
+  "predictions": [
+    {
+      "text": "Show me the menu.",
+      "expected_intent": "show_menu",
+      "predicted_intent": "show_menu",
+      "confidence": 0.29,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "What can you do for me?",
+      "expected_intent": "show_menu",
+      "predicted_intent": "unknown",
+      "confidence": 0.0,
+      "status": "unknown",
+      "correct": false
+    },
+    {
+      "text": "Please show menu options.",
+      "expected_intent": "show_menu",
+      "predicted_intent": "show_menu",
+      "confidence": 0.43,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "I need help with options.",
+      "expected_intent": "show_menu",
+      "predicted_intent": "show_menu",
+      "confidence": 0.29,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "I want to prepare for my appointment.",
+      "expected_intent": "appointment_preparation",
+      "predicted_intent": "appointment_preparation",
+      "confidence": 0.2,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "Start appointment prep now.",
+      "expected_intent": "appointment_preparation",
+      "predicted_intent": "appointment_preparation",
+      "confidence": 0.2,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "Please prepare me for my visit.",
+      "expected_intent": "appointment_preparation",
+      "predicted_intent": "unknown",
+      "confidence": 0.0,
+      "status": "unknown",
+      "correct": false
+    },
+    {
+      "text": "I need to report new symptoms.",
+      "expected_intent": "report_new_symptoms",
+      "predicted_intent": "report_new_symptoms",
+      "confidence": 0.6,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "I have symptoms to share.",
+      "expected_intent": "report_new_symptoms",
+      "predicted_intent": "report_new_symptoms",
+      "confidence": 0.2,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "Symptom report.",
+      "expected_intent": "report_new_symptoms",
+      "predicted_intent": "report_new_symptoms",
+      "confidence": 0.2,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "Describe my symptoms please.",
+      "expected_intent": "report_new_symptoms",
+      "predicted_intent": "report_new_symptoms",
+      "confidence": 0.4,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "Please review my health notes.",
+      "expected_intent": "review_health_notes",
+      "predicted_intent": "review_health_notes",
+      "confidence": 0.5,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "Can we review notes?",
+      "expected_intent": "review_health_notes",
+      "predicted_intent": "review_health_notes",
+      "confidence": 0.25,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "Review my summary.",
+      "expected_intent": "review_health_notes",
+      "predicted_intent": "review_health_notes",
+      "confidence": 0.25,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "I have a peanut allergy.",
+      "expected_intent": "report_allergy",
+      "predicted_intent": "report_allergy",
+      "confidence": 0.2,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "Report an allergy reaction.",
+      "expected_intent": "report_allergy",
+      "predicted_intent": "report_allergy",
+      "confidence": 0.6,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "I am allergic to penicillin.",
+      "expected_intent": "report_allergy",
+      "predicted_intent": "report_allergy",
+      "confidence": 0.2,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "I have a medication question.",
+      "expected_intent": "medication_question",
+      "predicted_intent": "medication_question",
+      "confidence": 0.2,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "Can I ask about treatment?",
+      "expected_intent": "medication_question",
+      "predicted_intent": "medication_question",
+      "confidence": 0.2,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "Medicine question.",
+      "expected_intent": "medication_question",
+      "predicted_intent": "medication_question",
+      "confidence": 0.2,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "This is an emergency.",
+      "expected_intent": "emergency_support",
+      "predicted_intent": "emergency_support",
+      "confidence": 0.25,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "I need urgent help now.",
+      "expected_intent": "emergency_support",
+      "predicted_intent": "emergency_support",
+      "confidence": 0.25,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "Should I seek emergency care?",
+      "expected_intent": "emergency_support",
+      "predicted_intent": "emergency_support",
+      "confidence": 0.5,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "Show my appointment summary.",
+      "expected_intent": "view_summary",
+      "predicted_intent": "view_summary",
+      "confidence": 0.4,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "View summary.",
+      "expected_intent": "view_summary",
+      "predicted_intent": "view_summary",
+      "confidence": 0.4,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "Visit summary please.",
+      "expected_intent": "view_summary",
+      "predicted_intent": "view_summary",
+      "confidence": 0.4,
+      "status": "confident",
+      "correct": true
+    },
+    {
+      "text": "Hello there.",
+      "expected_intent": "unknown",
+      "predicted_intent": "unknown",
+      "confidence": 0.0,
+      "status": "unknown",
+      "correct": true
+    },
+    {
+      "text": "Thank you.",
+      "expected_intent": "unknown",
+      "predicted_intent": "unknown",
+      "confidence": 0.0,
+      "status": "unknown",
+      "correct": true
+    },
+    {
+      "text": "Can you tell me the weather?",
+      "expected_intent": "unknown",
+      "predicted_intent": "unknown",
+      "confidence": 0.0,
+      "status": "unknown",
+      "correct": true
+    },
+    {
+      "text": "",
+      "expected_intent": "unknown",
+      "predicted_intent": "unknown",
+      "confidence": 0.0,
+      "status": "unknown",
+      "correct": true
+    }
+  ],
+  "generated_at": "2026-07-13T20:36:17.326876"
+}
