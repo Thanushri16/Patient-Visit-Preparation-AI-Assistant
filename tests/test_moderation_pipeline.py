@@ -6,6 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from chatbot import get_chatbot_response
 from moderation import moderate_text
+from models import ConversationState
 
 
 class ModerationPipelineTests(unittest.TestCase):
@@ -26,10 +27,16 @@ class ModerationPipelineTests(unittest.TestCase):
         self.assertIn("medical_policy_violation", decision.reasons)
 
     def test_chatbot_returns_emergency_escalation_without_model_call(self):
-        message_history = []
-        response = get_chatbot_response(message_history, "I think I am having anaphylaxis.", client=None)
+        messages = []
+        state = ConversationState(session_id="session-123")
+        response = get_chatbot_response(
+            messages,
+            "I think I am having anaphylaxis.",
+            client=None,
+            state=state,
+        )
         self.assertIn("immediate emergency care", response.lower())
-        self.assertEqual(message_history[-1]["role"], "assistant")
+        self.assertEqual(messages[-1].role, "assistant")
 
 
 if __name__ == "__main__":

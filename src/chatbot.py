@@ -1,170 +1,94 @@
-import json
-import os
-import re
-from pathlib import Path
+"""Orchestrates the typed healthcare prompt chain for each conversation turn."""
 
-from openai import OpenAI
+import os
+from pathlib import Path
+from time import perf_counter
+
+from openai import OpenAI, OpenAIError
 
 try:
+    from .extraction import process_collection_turn
     from .moderation import moderate_text
+    from .models import ChatMessage, ConversationPhase, ConversationState, WorkflowType
+    from .observability import emit_chain_event
+    from .persistence import JsonVisitRepository
+    from .routing import ROUTER_VERSION, route_message
+    from .summary_workflow import (
+        begin_summary_review,
+        classify_confirmation,
+        confirmation_response,
+    )
     from .chatbot_content import (
-        APPOINTMENT_SUMMARY_FIELDS,
-        APPOINTMENT_SUMMARY_HEADER,
         API_KEY_ERROR_MESSAGE,
         BLOCKED_RESPONSE,
-        BOOTSTRAP_PROMPT,
         DEFAULT_MODEL,
-        FEW_SHOT_EXAMPLES,
-        FEW_SHOT_FALLBACK_THRESHOLD,
-        GENERIC_ASSISTANT_PROMPT,
-        INTAKE_SYSTEM_PROMPT,
-        INTENT_CLASSIFIER_PROMPT_PREFIX_LINES,
-        INTENT_CLASSIFIER_PROMPT_SUFFIX_LABEL,
-        INPUT_BLOCK_LIST,
-        INTENT_PATTERNS,
-        INTENT_TO_MENU_OPTION,
-        MENU_OPTIONS,
+    )
+    from .workflow_catalog import (
+        INTENT_LABELS,
         MENU_PROMPT_RESPONSE,
-        NOT_PROVIDED_TEXT,
-        OUTPUT_BLOCK_LIST,
-        PROMPT_INJECTION_PATTERNS,
-        USE_FEW_SHOT_INTENT_CLASSIFIER,
+        build_intent_classifier_prompt,
     )
 except ImportError:  # pragma: no cover - allows running as a script
+    from extraction import process_collection_turn
     from moderation import moderate_text
+    from models import ChatMessage, ConversationPhase, ConversationState, WorkflowType
+    from observability import emit_chain_event
+    from persistence import JsonVisitRepository
+    from routing import ROUTER_VERSION, route_message
+    from summary_workflow import (
+        begin_summary_review,
+        classify_confirmation,
+        confirmation_response,
+    )
     from chatbot_content import (
-        APPOINTMENT_SUMMARY_FIELDS,
-        APPOINTMENT_SUMMARY_HEADER,
         API_KEY_ERROR_MESSAGE,
         BLOCKED_RESPONSE,
-        BOOTSTRAP_PROMPT,
         DEFAULT_MODEL,
-        FEW_SHOT_EXAMPLES,
-        FEW_SHOT_FALLBACK_THRESHOLD,
-        GENERIC_ASSISTANT_PROMPT,
-        INTAKE_SYSTEM_PROMPT,
-        INTENT_CLASSIFIER_PROMPT_PREFIX_LINES,
-        INTENT_CLASSIFIER_PROMPT_SUFFIX_LABEL,
-        INPUT_BLOCK_LIST,
-        INTENT_PATTERNS,
-        INTENT_TO_MENU_OPTION,
-        MENU_OPTIONS,
+    )
+    from workflow_catalog import (
+        INTENT_LABELS,
         MENU_PROMPT_RESPONSE,
-        NOT_PROVIDED_TEXT,
-        OUTPUT_BLOCK_LIST,
-        PROMPT_INJECTION_PATTERNS,
-        USE_FEW_SHOT_INTENT_CLASSIFIER,
+        build_intent_classifier_prompt,
     )
 
 
-def normalize_text(text: str) -> str:
-    if not isinstance(text, str):
-        return ""
-    return re.sub(r"\s+", " ", text).strip().lower()
-
-
-def is_blocked_text(text: str, block_list: list[str]) -> bool:
-    if not isinstance(text, str):
-        return False
-    normalized_text = normalize_text(text)
-    normalized_block_list = [normalize_text(block_phrase) for block_phrase in block_list]
-    return any(block_phrase in normalized_text for block_phrase in normalized_block_list)
-
-
-def classify_intent_rule(text: str) -> dict[str, object]:
-    normalized_text = normalize_text(text)
-    if not normalized_text:
-        return {"intent": "unknown", "confidence": 0.0, "top_score": 0.0, "margin": 0.0, "status": "unknown"}
-
-    scored_intents = []
-    for intent, patterns in INTENT_PATTERNS.items():
-        matches = sum(1 for keyword in patterns if keyword in normalized_text)
-        score = matches / len(patterns) if patterns else 0.0
-        scored_intents.append((intent, score))
-
-    scored_intents.sort(key=lambda item: item[1], reverse=True)
-    best_intent, top_score = scored_intents[0]
-
-    if top_score == 0.0 or top_score < FEW_SHOT_FALLBACK_THRESHOLD:
-        return {"intent": "unknown", "confidence": 0.0, "top_score": round(top_score, 2), "margin": 0.0, "status": "unknown"}
-
-    confidence = round(top_score, 2)
+def _unknown_intent() -> dict[str, object]:
     return {
-        "intent": best_intent,
-        "confidence": confidence,
-        "top_score": round(top_score, 2),
+        "intent": "unknown",
+        "confidence": 0.0,
+        "top_score": 0.0,
         "margin": 0.0,
-        "status": "confident",
+        "status": "unknown",
     }
 
 
-def classify_intent_few_shot(text: str, client: OpenAI | None) -> dict[str, object]:
-    if client is None:
-        return {"intent": "unknown", "confidence": 0.0, "top_score": 0.0, "margin": 0.0, "status": "unknown"}
-
-    prompt_lines = list(INTENT_CLASSIFIER_PROMPT_PREFIX_LINES)
-
-    for example in FEW_SHOT_EXAMPLES:
-        prompt_lines.append(f"User: {example['text']}")
-        prompt_lines.append(f"Intent: {example['intent']}")
-        prompt_lines.append("")
-
-    prompt_lines.append(f"User: {text}")
-    prompt_lines.append(INTENT_CLASSIFIER_PROMPT_SUFFIX_LABEL)
-    prompt = "\n".join(prompt_lines)
-
-    response = client.chat.completions.create(
-        model=DEFAULT_MODEL,
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=10,
-        temperature=0.0,
-    )
-    label = response.choices[0].message.content.strip().lower().splitlines()[0]
-    if label not in INTENT_PATTERNS:
-        return {"intent": "unknown", "confidence": 0.0, "top_score": 0.0, "margin": 0.0, "status": "unknown"}
-
-    return {"intent": label, "confidence": 0.85, "top_score": 0.85, "margin": 0.0, "status": "few_shot"}
-
-
 def classify_intent(text: str, client: OpenAI | None = None) -> dict[str, object]:
-    rule_result = classify_intent_rule(text)
-    if rule_result["status"] != "unknown" or not USE_FEW_SHOT_INTENT_CLASSIFIER:
-        return rule_result
-    if client is None:
-        return rule_result
+    """Classify directly with the model; never run keyword scoring first."""
 
-    few_shot_result = classify_intent_few_shot(text, client)
-    if few_shot_result["status"] == "few_shot":
-        return few_shot_result
-    return rule_result
+    if client is None or not isinstance(text, str) or not text.strip():
+        return _unknown_intent()
 
-
-def contains_prompt_injection_attempt(text: str) -> bool:
-    if not isinstance(text, str):
-        return False
-    normalized_text = normalize_text(text)
-    return any(re.search(pattern, normalized_text) for pattern in PROMPT_INJECTION_PATTERNS)
-
-
-def handle_menu_request(text: str, client: OpenAI | None = None):
-    if not isinstance(text, str):
-        return None
-
-    normalized_text = normalize_text(text)
-    if normalized_text in MENU_OPTIONS:
-        return MENU_OPTIONS[normalized_text]["response"]
-
-    intent_result = classify_intent(text, client)
-    intent = intent_result["intent"]
-
-    if intent == "show_menu":
-        return MENU_PROMPT_RESPONSE
-
-    if intent in INTENT_TO_MENU_OPTION:
-        option_key = INTENT_TO_MENU_OPTION[intent]
-        return MENU_OPTIONS[option_key]["response"]
-
-    return None
+    try:
+        response = client.chat.completions.create(
+            model=DEFAULT_MODEL,
+            messages=[
+                {"role": "user", "content": build_intent_classifier_prompt(text)}
+            ],
+            max_tokens=10,
+            temperature=0.0,
+        )
+        label = response.choices[0].message.content.strip().lower().splitlines()[0]
+    except (OpenAIError, AttributeError, IndexError, TypeError):
+        return _unknown_intent()
+    if label not in INTENT_LABELS:
+        return _unknown_intent()
+    return {
+        "intent": label,
+        "confidence": 0.85,
+        "top_score": 0.85,
+        "margin": 0.0,
+        "status": "model",
+    }
 
 
 def load_api_key():
@@ -196,148 +120,150 @@ def load_api_key():
     )
 
 
-def extract_json_payload(response_text):
-    if not isinstance(response_text, str) or not response_text.strip():
-        return None
+def _record_turn(messages: list[ChatMessage], prompt: str, response: str) -> None:
+    """Store user-visible memory separately from the workflow state."""
 
-    fenced_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", response_text, re.DOTALL | re.IGNORECASE)
-    if fenced_match:
-        candidate = fenced_match.group(1)
-    else:
-        candidate = response_text
-
-    brace_match = re.search(r"\{.*\}", candidate, re.DOTALL)
-    if not brace_match:
-        return None
-
-    try:
-        payload = json.loads(brace_match.group(0))
-    except json.JSONDecodeError:
-        return None
-
-    if isinstance(payload, dict):
-        return payload
-
-    return None
-
-
-def save_summary_to_db(payload):
-    project_root = Path(__file__).resolve().parent.parent
-    db_dir = project_root / "db"
-    db_dir.mkdir(exist_ok=True)
-
-    if isinstance(payload, str):
-        payload = extract_json_payload(payload)
-
-    if not isinstance(payload, dict):
-        return None
-
-    patient_name = payload.get("patient_name") or payload.get("name") or "unknown_patient"
-    safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", str(patient_name)).strip("._-") or "unknown_patient"
-    file_path = db_dir / f"{safe_name}.json"
-
-    existing_payload = {}
-    if file_path.exists():
-        try:
-            with file_path.open("r", encoding="utf-8") as handle:
-                existing_payload = json.load(handle)
-        except json.JSONDecodeError:
-            existing_payload = {}
-
-    if not isinstance(existing_payload, dict):
-        existing_payload = {}
-
-    merged_payload = {**existing_payload, **payload}
-    if existing_payload.get("notes") and payload.get("notes"):
-        merged_payload["notes"] = f"{existing_payload.get('notes')}\n{payload.get('notes')}"
-
-    with file_path.open("w", encoding="utf-8") as handle:
-        json.dump(merged_payload, handle, indent=2)
-
-    return str(file_path)
-
-
-def build_aesthetic_summary(payload):
-    if not isinstance(payload, dict):
-        return None
-
-    lines = [APPOINTMENT_SUMMARY_HEADER, ""]
-    for field_key, field_label in APPOINTMENT_SUMMARY_FIELDS:
-        lines.append(f"{field_label}: {payload.get(field_key, NOT_PROVIDED_TEXT)}")
-    return "\n".join(lines)
-
-
-def get_response(prompt, client):
-    response = client.chat.completions.create(
-        model=DEFAULT_MODEL,
-        messages=[
-            {"role": "system", "content": GENERIC_ASSISTANT_PROMPT},
-            {"role": "user", "content": prompt},
-        ],
+    messages.extend(
+        [
+            ChatMessage(role="user", content=prompt),
+            ChatMessage(role="assistant", content=response),
+        ]
     )
-    return response.choices[0].message.content
 
-def get_chatbot_response(message_list, prompt, client):
-    if not message_list:
-        message_list.append(
-            {
-                "role": "system",
-                "content": INTAKE_SYSTEM_PROMPT,
-            }
-        )
-
+def get_chatbot_response(
+    messages: list[ChatMessage],
+    prompt: str,
+    client: OpenAI | None,
+    state: ConversationState,
+    visit_repository: JsonVisitRepository | None = None,
+) -> str:
     input_moderation = moderate_text(prompt, stage="input")
+    emit_chain_event(
+        state,
+        "input_guardrail",
+        success=True,
+        metadata={
+            "action": input_moderation.action,
+            "risk_level": input_moderation.risk_level,
+            "reason_count": len(input_moderation.reasons),
+        },
+    )
     if input_moderation.action in {"block", "escalate"}:
         safe_reply = input_moderation.response or BLOCKED_RESPONSE
-        message_list.append({"content": prompt, "role": "user"})
-        message_list.append({"content": safe_reply, "role": "assistant"})
+        if input_moderation.action == "escalate":
+            state.phase = ConversationPhase.ESCALATED
+            state.workflow = WorkflowType.EMERGENCY_SUPPORT
+            state.emergency_detected = True
+            state.missing_fields = []
+        _record_turn(messages, prompt, safe_reply)
         return safe_reply
 
-    menu_response = handle_menu_request(prompt, client)
-    if menu_response:
-        return menu_response
-
-    if is_blocked_text(prompt, INPUT_BLOCK_LIST) or contains_prompt_injection_attempt(prompt):
-        return BLOCKED_RESPONSE
-
-    message_list.append({"content": prompt, "role": "user"})
-    response = client.chat.completions.create(
-        model=DEFAULT_MODEL,
-        messages=message_list,
+    routing_phase_before = state.phase.value
+    routing_started = perf_counter()
+    route_decision = route_message(
+        state,
+        prompt,
+        intent_classifier=lambda text: classify_intent(text, client),
     )
-    response_text = response.choices[0].message.content
+    emit_chain_event(
+        state,
+        "state_router",
+        success=True,
+        latency_ms=(perf_counter() - routing_started) * 1_000,
+        prompt_version=ROUTER_VERSION,
+        metadata={
+            "action": route_decision.action.value,
+            "source": route_decision.source,
+            "handled": route_decision.handled,
+        },
+        phase_before=routing_phase_before,
+    )
+    if route_decision.handled:
+        if state.phase is ConversationPhase.REVIEWING:
+            route_reply = begin_summary_review(state)
+        else:
+            route_reply = route_decision.response or MENU_PROMPT_RESPONSE
+        route_output_moderation = moderate_text(route_reply, stage="output")
+        if route_output_moderation.action in {"block", "sanitize"}:
+            route_reply = route_output_moderation.response or BLOCKED_RESPONSE
+        _record_turn(messages, prompt, route_reply)
+        return route_reply
 
-    output_moderation = moderate_text(response_text, stage="output")
-    if output_moderation.action in {"block", "sanitize"}:
-        safe_reply = output_moderation.response or BLOCKED_RESPONSE
-        message_list.append({"content": safe_reply, "role": "assistant"})
-        return safe_reply
+    if state.phase is ConversationPhase.AWAITING_CONFIRMATION:
+        confirmation_phase_before = state.phase.value
+        confirmation = classify_confirmation(
+            client,
+            prompt,
+            state.summary_text or begin_summary_review(state),
+        )
+        if confirmation.action.value == "correct":
+            state.phase = ConversationPhase.COLLECTING
+            state.confirmed = False
+            state.confirmation_attempt_count = 0
+            correction_result = process_collection_turn(
+                client,
+                state,
+                confirmation.correction_text or prompt,
+            )
+            if correction_result.merge_result.errors or correction_result.merge_result.missing_fields:
+                response_text = correction_result.response
+            else:
+                response_text = begin_summary_review(state)
+        else:
+            response_text = confirmation_response(state, confirmation)
+            emit_chain_event(
+                state,
+                "confirmation_classifier",
+                success=confirmation.action.value != "unclear",
+                prompt_version="confirmation_classifier_v1",
+                retry_count=state.confirmation_attempt_count,
+                error_category=(
+                    "unclear_confirmation" if confirmation.action.value == "unclear" else None
+                ),
+                metadata={"action": confirmation.action.value},
+                phase_before=confirmation_phase_before,
+            )
+            if state.phase is ConversationPhase.COMPLETED and visit_repository is not None:
+                persistence_started = perf_counter()
+                try:
+                    saved_path = visit_repository.save_confirmed(state)
+                    response_text += f" It was saved locally with visit ID {state.visit_id}."
+                    emit_chain_event(
+                        state,
+                        "confirmed_visit_persistence",
+                        success=True,
+                        latency_ms=(perf_counter() - persistence_started) * 1_000,
+                        metadata={"file_extension": saved_path.suffix},
+                    )
+                except (OSError, TypeError, ValueError) as exc:
+                    state.persistence_error = type(exc).__name__
+                    response_text += " I couldn't save it locally; your session still has the summary."
+                    emit_chain_event(
+                        state,
+                        "confirmed_visit_persistence",
+                        success=False,
+                        latency_ms=(perf_counter() - persistence_started) * 1_000,
+                        error_category=type(exc).__name__,
+                    )
 
-    message_list.append({"content": response_text, "role": response.choices[0].message.role})
+        output_moderation = moderate_text(response_text, stage="output")
+        if output_moderation.action in {"block", "sanitize"}:
+            response_text = output_moderation.response or BLOCKED_RESPONSE
+        _record_turn(messages, prompt, response_text)
+        return response_text
 
-    if is_blocked_text(response_text, OUTPUT_BLOCK_LIST) or contains_prompt_injection_attempt(response_text):
-        return BLOCKED_RESPONSE
-    payload = extract_json_payload(response_text)
-    if payload is not None:
-        save_summary_to_db(payload)
-        return build_aesthetic_summary(payload)
+    if state.phase is ConversationPhase.COLLECTING:
+        collection_result = process_collection_turn(client, state, prompt)
+        if not collection_result.merge_result.errors and not collection_result.merge_result.missing_fields:
+            response_text = begin_summary_review(state)
+        else:
+            response_text = collection_result.response
+        output_moderation = moderate_text(response_text, stage="output")
+        if output_moderation.action in {"block", "sanitize"}:
+            response_text = output_moderation.response or BLOCKED_RESPONSE
+        _record_turn(messages, prompt, response_text)
+        return response_text
 
-    save_summary_to_db(response_text)
-    return response_text
-
-def main():
-    try:
-        api_key = load_api_key()
-    except RuntimeError as exc:
-        print(exc)
-        return 1
-
-    os.environ["OPENAI_API_KEY"] = api_key
-    client = OpenAI()
-    message_list = []
-    print(get_chatbot_response(message_list, BOOTSTRAP_PROMPT, client))
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+    fallback = MENU_PROMPT_RESPONSE
+    _record_turn(messages, prompt, fallback)
+    return fallback

@@ -1,3 +1,5 @@
+"""Runs prompt-injection scenarios against the typed chatbot workflow."""
+
 import datetime
 import json
 import os
@@ -10,12 +12,14 @@ from openai import OpenAI
 import sys
 
 try:
-    from ..chatbot import extract_json_payload, get_chatbot_response, load_api_key
+    from ..chatbot import get_chatbot_response, load_api_key
+    from ..models import ConversationState
 except ImportError:  # pragma: no cover - allows running as a script
     project_root = Path(__file__).resolve().parents[1]
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
-    from chatbot import extract_json_payload, get_chatbot_response, load_api_key
+    from chatbot import get_chatbot_response, load_api_key
+    from models import ConversationState
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REPORTS_DIR = PROJECT_ROOT / "reports"
@@ -86,8 +90,24 @@ Assistant response:
 
 
 def generate_chatbot_reply(prompt: str, client: OpenAI) -> str:
-    message_history = []
-    return get_chatbot_response(message_history, prompt, client)
+    messages = []
+    state = ConversationState(session_id="prompt-injection-evaluation")
+    return get_chatbot_response(messages, prompt, client, state)
+
+
+def extract_json_payload(response_text: str) -> dict[str, Any] | None:
+    """Parse a judge's JSON response without coupling evaluation to chatbot runtime."""
+
+    if not response_text.strip():
+        return None
+    match = re.search(r"\{.*\}", response_text, re.DOTALL)
+    if not match:
+        return None
+    try:
+        payload = json.loads(match.group(0))
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
 
 
 def evaluate_with_judge(judge_name: str, user_input: str, assistant_response: str, client: OpenAI) -> Dict[str, Any]:

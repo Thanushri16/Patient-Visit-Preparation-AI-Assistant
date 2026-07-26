@@ -1,3 +1,5 @@
+"""FastAPI entry point and in-memory typed session management for the chatbot."""
+
 import os
 import time
 from pathlib import Path
@@ -7,21 +9,41 @@ from fastapi.responses import HTMLResponse, JSONResponse
 
 try:
     from .chatbot import get_chatbot_response, load_api_key
+    from .models import ChatSession, ConversationState
+    from .persistence import JsonVisitRepository
 except ImportError:  # pragma: no cover - allows running as a script
     from chatbot import get_chatbot_response, load_api_key
+    from models import ChatSession, ConversationState
+    from persistence import JsonVisitRepository
 
 app = FastAPI(title="Healthcare Chatbot")
 project_root = Path(__file__).resolve().parent.parent
-conversation_histories = {}
+conversation_histories: dict[str, ChatSession] = {}
 SESSION_TTL_SECONDS = 15 * 60
+visit_repository = JsonVisitRepository(project_root / "db" / "visits")
 
 
-def prune_expired_sessions():
-    now = time.time()
+def create_chat_session(session_id: str, now: float) -> ChatSession:
+    return ChatSession(
+        state=ConversationState(session_id=session_id),
+        expires_at=now + SESSION_TTL_SECONDS,
+    )
+
+
+def get_or_create_chat_session(session_id: str, now: float) -> ChatSession:
+    session = conversation_histories.get(session_id)
+    if session is None:
+        session = create_chat_session(session_id, now)
+        conversation_histories[session_id] = session
+    return session
+
+
+def prune_expired_sessions(now: float | None = None) -> None:
+    current_time = time.time() if now is None else now
     expired_ids = [
         session_id
-        for session_id, (_, expires_at) in conversation_histories.items()
-        if expires_at <= now
+        for session_id, session in conversation_histories.items()
+        if session.expires_at <= current_time
     ]
     for session_id in expired_ids:
         conversation_histories.pop(session_id, None)
@@ -198,17 +220,25 @@ async def chat(request: Request):
     if not prompt:
         return JSONResponse({"reply": "Please enter a message."})
 
+    if not isinstance(session_id, str) or not session_id.strip() or len(session_id) > 200:
+        return JSONResponse({"reply": "A valid session ID is required."}, status_code=400)
+
+    session_id = session_id.strip()
+
     if client is None:
         return JSONResponse({"reply": "OpenAI API key is not configured yet."})
 
     prune_expired_sessions()
     now = time.time()
-    if session_id not in conversation_histories:
-        conversation_histories[session_id] = ([], now + SESSION_TTL_SECONDS)
-
-    message_history, _ = conversation_histories[session_id]
-    reply = get_chatbot_response(message_history, prompt, client)
-    conversation_histories[session_id] = (message_history, now + SESSION_TTL_SECONDS)
+    session = get_or_create_chat_session(session_id, now)
+    reply = get_chatbot_response(
+        session.messages,
+        prompt,
+        client,
+        state=session.state,
+        visit_repository=visit_repository,
+    )
+    session.expires_at = now + SESSION_TTL_SECONDS
     return JSONResponse({"reply": reply})
 
 
