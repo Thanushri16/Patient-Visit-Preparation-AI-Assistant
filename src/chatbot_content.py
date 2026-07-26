@@ -276,7 +276,6 @@ INTENT_CLASSIFIER_PROMPT_PREFIX_LINES = [
 ]
 INTENT_CLASSIFIER_PROMPT_SUFFIX_LABEL = "Intent:"
 API_KEY_ERROR_MESSAGE = (
-    "No OpenAI API key found. Create an 'openaikey.txt' file in the project root "
-    "or set the OPENAI_API_KEY environment variable."
+    "No OpenAI API key found. Set OPENAI_API_KEY in your environment or project .env file."
 )
 BOOTSTRAP_PROMPT = "Hey, What do you need help with?"

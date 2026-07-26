@@ -168,15 +168,28 @@ def handle_menu_request(text: str, client: OpenAI | None = None):
 
 
 def load_api_key():
-    project_src_root = Path(__file__).resolve().parent
-    key_file = project_src_root / "openaikey.txt"
-
-    if key_file.exists():
-        return key_file.read_text().strip()
-
     env_key = os.getenv("OPENAI_API_KEY")
     if env_key:
-        return env_key
+        return env_key.strip()
+
+    project_root = Path(__file__).resolve().parent.parent
+    env_path = project_root / ".env"
+    if env_path.exists():
+        for line in env_path.read_text(encoding="utf-8").splitlines():
+            normalized_line = line.strip()
+            if not normalized_line or normalized_line.startswith("#"):
+                continue
+            if normalized_line.startswith("export "):
+                normalized_line = normalized_line[len("export "):].strip()
+            if "=" not in normalized_line:
+                continue
+            key, value = normalized_line.split("=", 1)
+            if key.strip() != "OPENAI_API_KEY":
+                continue
+            key_value = value.strip().strip('"').strip("'")
+            if key_value:
+                os.environ["OPENAI_API_KEY"] = key_value
+                return key_value
 
     raise RuntimeError(
         API_KEY_ERROR_MESSAGE
