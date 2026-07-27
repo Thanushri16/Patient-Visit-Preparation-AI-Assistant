@@ -137,6 +137,16 @@ def get_chatbot_response(
     state: ConversationState,
     visit_repository: JsonVisitRepository | None = None,
 ) -> str:
+    """Run one chat turn through moderation, routing, extraction, confirmation, and persistence.
+
+    Flow:
+    1. Moderate the user input and block or escalate unsafe content immediately.
+    2. Route control commands or menu-style messages before any workflow processing.
+    3. If the chatbot is awaiting confirmation, classify the reply as confirm, correct, or unclear.
+    4. If the user is correcting the summary, send the correction back through extraction and validation.
+    5. Otherwise continue the active workflow with structured extraction, validation, and the next question.
+    6. When the summary is confirmed, save the visit locally if a repository is available.
+    """
     input_moderation = moderate_text(prompt, stage="input")
     emit_chain_event(
         state,
@@ -148,16 +158,21 @@ def get_chatbot_response(
             "reason_count": len(input_moderation.reasons),
         },
     )
+    # Flow 1: stop unsafe input before any routing or workflow processing.
     if input_moderation.action in {"block", "escalate"}:
+        # Input moderation output path: return the safety response immediately.
         safe_reply = input_moderation.response or BLOCKED_RESPONSE
         if input_moderation.action == "escalate":
+            # Input moderation escalation path: switch the conversation into emergency support.
             state.phase = ConversationPhase.ESCALATED
             state.workflow = WorkflowType.EMERGENCY_SUPPORT
             state.emergency_detected = True
             state.missing_fields = []
         _record_turn(messages, prompt, safe_reply)
         return safe_reply
+    # Input moderation else path: continue to routing because the message is safe enough to process.
 
+    # Flow 2: route menu commands and global controls before workflow extraction.
     routing_phase_before = state.phase.value
     routing_started = perf_counter()
     route_decision = route_message(
@@ -178,25 +193,37 @@ def get_chatbot_response(
         },
         phase_before=routing_phase_before,
     )
+    # Flow 2a: if routing handled the turn, return the routed response immediately.
+    # Routing is handled when the message is an explicit global command, a menu option,
+    # an intent-classified workflow start, or a state-based continuation such as completed or escalated.
     if route_decision.handled:
+        # Routing handled output path: show the review summary when the user entered review mode.
         if state.phase is ConversationPhase.REVIEWING:
             route_reply = begin_summary_review(state)
+        # Routing handled output path: otherwise return the router's own response or the menu prompt.
         else:
             route_reply = route_decision.response or MENU_PROMPT_RESPONSE
+        # Output moderation path for routed replies: sanitize or block the response if needed.
         route_output_moderation = moderate_text(route_reply, stage="output")
         if route_output_moderation.action in {"block", "sanitize"}:
+            # Output moderation nested path: replace unsafe routed text with a safe response.
             route_reply = route_output_moderation.response or BLOCKED_RESPONSE
         _record_turn(messages, prompt, route_reply)
         return route_reply
+    # Routing else path: no control command was handled, so continue into workflow processing.
 
+    # Flow 3: if the chatbot is waiting on review, classify confirm vs correction.
     if state.phase is ConversationPhase.AWAITING_CONFIRMATION:
+        # Confirmation input path: classify the user's reply against the displayed summary.
         confirmation_phase_before = state.phase.value
         confirmation = classify_confirmation(
             client,
             prompt,
             state.summary_text or begin_summary_review(state),
         )
+        # Flow 4: a correction goes back through extraction and validation.
         if confirmation.action.value == "correct":
+            # Confirmation correction path: re-enter collection with the correction text.
             state.phase = ConversationPhase.COLLECTING
             state.confirmed = False
             state.confirmation_attempt_count = 0
@@ -206,10 +233,13 @@ def get_chatbot_response(
                 confirmation.correction_text or prompt,
             )
             if correction_result.merge_result.errors or correction_result.merge_result.missing_fields:
+                # Correction output path with errors or missing data: keep asking for the missing or invalid fields.
                 response_text = correction_result.response
             else:
+                # Correction output path with a clean merge: regenerate the summary for another confirmation pass.
                 response_text = begin_summary_review(state)
         else:
+            # Flow 5: confirm or unclear replies use the confirmation response path.
             response_text = confirmation_response(state, confirmation)
             emit_chain_event(
                 state,
@@ -248,22 +278,32 @@ def get_chatbot_response(
 
         output_moderation = moderate_text(response_text, stage="output")
         if output_moderation.action in {"block", "sanitize"}:
+            # Confirmation output moderation path: replace unsafe confirmation text before returning it.
             response_text = output_moderation.response or BLOCKED_RESPONSE
         _record_turn(messages, prompt, response_text)
         return response_text
+    # Confirmation else path: the chatbot is not awaiting review, so continue to active collection.
 
+    # Flow 6: continue the active collection workflow with extraction and validation.
     if state.phase is ConversationPhase.COLLECTING:
+        # Collection input path: extract structured fields from the user's latest message.
         collection_result = process_collection_turn(client, state, prompt)
         if not collection_result.merge_result.errors and not collection_result.merge_result.missing_fields:
+            # Collection success path: enough information was collected, so show the summary for review.
             response_text = begin_summary_review(state)
         else:
+            # Collection continuation path: return the next question or validation feedback.
             response_text = collection_result.response
+        # Collection output moderation path: sanitize or block any unsafe response text.
         output_moderation = moderate_text(response_text, stage="output")
         if output_moderation.action in {"block", "sanitize"}:
+            # Collection nested output path: replace unsafe extracted-flow text with a safe response.
             response_text = output_moderation.response or BLOCKED_RESPONSE
         _record_turn(messages, prompt, response_text)
         return response_text
+    # Collection else path: no collection workflow is active, so fall back to the menu response.
 
+    # Flow 7: fallback to the menu prompt when no workflow branch applies.
     fallback = MENU_PROMPT_RESPONSE
     _record_turn(messages, prompt, fallback)
     return fallback
