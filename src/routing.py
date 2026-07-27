@@ -1,4 +1,11 @@
-"""State-aware workflow routing and deterministic global-command transitions."""
+"""State-aware workflow routing and deterministic global-command transitions.
+
+This module decides whether a user turn should:
+- start a workflow from the menu or intent classifier
+- handle a global command like restart, cancel, or go back
+- continue the current workflow without rerouting
+- keep emergency or completed conversations in their terminal state
+"""
 
 import re
 from collections.abc import Callable
@@ -73,10 +80,12 @@ GLOBAL_COMMANDS = {
 
 
 def normalize_route_text(text: str) -> str:
+    """Normalize free-text commands so exact command matching is reliable."""
     return re.sub(r"\s+", " ", text).strip().lower()
 
 
 def detect_global_command(text: str) -> RouteAction | None:
+    """Detect whether the message is a deterministic global control command."""
     normalized = normalize_route_text(text)
     for action, commands in GLOBAL_COMMANDS.items():
         if normalized in commands:
@@ -89,6 +98,7 @@ def _menu_decision(
     action: RouteAction,
     response: str = MENU_PROMPT_RESPONSE,
 ) -> RouteDecision:
+    """Reset the conversation to the menu and return a handled routing decision."""
     state.phase = ConversationPhase.MENU
     state.workflow = None
     state.missing_fields = []
@@ -103,6 +113,7 @@ def _menu_decision(
 
 
 def _clear_completion_metadata(state: ConversationState) -> None:
+    """Clear summary and persistence state when restarting or changing workflows."""
     state.confirmed = False
     state.summary_text = None
     state.confirmation_attempt_count = 0
@@ -117,6 +128,19 @@ def _start_workflow(
     confidence: float,
     source: str,
 ) -> RouteDecision:
+    """Move the conversation into a selected workflow and return the start response.
+
+    Workflow handling is explicit by workflow type:
+    - `APPOINTMENT_PREPARATION`: clear prior completion metadata, switch to `COLLECTING`, and start guided intake.
+    - `REPORT_NEW_SYMPTOMS`: clear prior completion metadata, switch to `COLLECTING`, and start symptom collection.
+    - `REPORT_ALLERGY`: clear prior completion metadata, switch to `COLLECTING`, and start allergy collection.
+    - `MEDICATION_QUESTION`: clear prior completion metadata, switch to `COLLECTING`, and start medication collection.
+    - `REVIEW_HEALTH_NOTES`: switch to `REVIEWING`, clear missing fields, and wait for summary review.
+    - `VIEW_SUMMARY`: switch to `REVIEWING`, clear missing fields, and wait for summary review.
+    - `EMERGENCY_SUPPORT`: switch to `ESCALATED`, mark the emergency flag, and return the emergency response.
+
+    The function also clears or resets completion metadata where needed so a new workflow starts cleanly.
+    """
     state.workflow = workflow
     if workflow in {
         WorkflowType.APPOINTMENT_PREPARATION,
@@ -162,6 +186,7 @@ def _handle_global_command(
     state: ConversationState,
     action: RouteAction,
 ) -> RouteDecision:
+    """Apply a deterministic state transition for a global command."""
     if action is RouteAction.SHOW_MENU:
         return _menu_decision(state, action)
 
@@ -225,7 +250,12 @@ def route_message(
     text: str,
     intent_classifier: Callable[[str], dict[str, object]] | None = None,
 ) -> RouteDecision:
-    """Route a message using global commands, state, then intent classification."""
+    """Route one message using state first, then commands, then intent classification.
+
+    The router handles emergency and completed states immediately, then checks
+    deterministic global commands and menu selections, and finally falls back
+    to intent classification when the conversation is at the menu.
+    """
 
     if state.phase is ConversationPhase.ESCALATED:
         return RouteDecision(
