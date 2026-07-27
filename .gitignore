@@ -163,6 +163,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# Local healthcare visit records
+db/visits/
+
 # Spyder project settings
 .spyderproject
 .spyproject

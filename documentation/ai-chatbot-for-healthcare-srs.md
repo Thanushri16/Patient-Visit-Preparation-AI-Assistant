@@ -50,20 +50,35 @@ This project will be delivered in three development iterations:
    **4. Prompt Chaining → AI Workflow**
    - The system shall support a multi-step AI workflow that guides the conversation from intake to clarification to summary generation.
    - The workflow shall ensure that follow-up questions are asked only when necessary and that previously collected information is reused appropriately.
-   - **Basic skills learning:** Prompt chaining, step-by-step workflow design, state tracking across turns, and role-based system prompts for different functionalities instead of relying on a single prompt for everything. *[Status: In use / Partially complete]*
-   - **Advanced skills learning:** Orchestration logic, conditional branching, workflow state machines, modular prompt design, reusable sub-prompts, and task decomposition. *[Status: Not yet implemented]*
+   - The living implementation architecture and status diagram shall be maintained in [`prompt_chaining_architecture.md`](./prompt_chaining_architecture.md).
+   - **Basic skills learning:** Prompt chaining, step-by-step workflow design, state tracking across turns, and role-based system prompts for different functionalities instead of relying on a single prompt for everything. *[Status: Implementation Complete]*
+   - **Advanced skills learning:** Orchestration logic, conditional branching, workflow state machines, modular prompt design, reusable sub-prompts, and task decomposition. *[Status: Implementation Complete]*
+
+   **Prompt-chaining architectures selected for implementation:**
+   - **State Machine Architecture:** Controls explicit conversation phases such as menu selection, data collection, review, confirmation, completion, and emergency escalation.
+   - **Router–Worker Architecture:** Classifies the user's intent and routes the request to the appropriate workflow, such as appointment preparation, symptom reporting, allergy reporting, medication questions, summary review, or emergency support.
+   - **Schema-Driven Collection:** Defines the required and optional fields for each workflow and uses the schema as the source of truth for completeness.
+   - **Extract–Validate–Respond Pattern:** Extracts structured updates from a user message, validates them, and then generates the next appropriate response.
+   - **Looping or Iterative Collection Chain:** Repeats extraction, validation, and missing-field checks until the workflow has enough information to produce a summary.
+   - **Conditional Branching Chains:** Adds or skips follow-up questions based on information already supplied by the user.
+   - **Structured Output Chaining:** Requires prompt nodes to exchange typed, schema-validated data instead of ambiguous free-form text.
+   - **Memory and State Separation:** Stores conversation history and application-owned workflow state outside the model so previously collected information can be reused reliably.
+   - **Confirmation and Correction Chain:** Presents the collected information for confirmation and supports corrections before the visit summary is finalized.
+   - **Guardrail Chain:** Applies input safety checks before workflow processing and output safety checks before returning a response.
+   - **Confidence-Based Routing:** Continues automatically for sufficiently reliable classifications and asks for clarification or shows the menu when confidence is low.
+   - **Fallback and Recovery Chain:** Uses bounded retries and safe fallback behavior for malformed model output, validation failures, and unsupported requests.
 
    **5. Structured Output → JSON Visit Summary**
    - The system shall generate a structured JSON summary of the conversation that includes key patient preparation details.
    - The output shall follow a consistent schema and be suitable for storage, review, or future export.
-   - **Basic skills learning:** JSON schema design, structured prompting, and parsing responses into dictionaries or objects. *[Status: In use / Partially complete]*
-   - **Advanced skills learning:** Schema validation, typed models, robust parsing fallback, consistency checks, and error recovery. *[Status: Not yet implemented]*
+   - **Basic skills learning:** JSON schema design, structured prompting, and parsing responses into dictionaries or objects. *[Status: Implementation Complete]*
+   - **Advanced skills learning:** Schema validation, typed models, robust parsing fallback, consistency checks, and error recovery. *[Status: Implementation Complete]*
 
    **6. Evaluation → Response Quality Checks**
    - The system shall include quality checks for response relevance, completeness, safety, and clarity.
    - The system shall flag responses that fail quality expectations so they can be reviewed or improved before being delivered to the user.
-   - **Basic skills learning:** Response review criteria, rubric-based evaluation, and simple pass/fail checks. *[Status: Not yet implemented]*
-   - **Advanced skills learning:** Automated evaluation pipelines, scoring heuristics, human-in-the-loop review, and regression testing for prompt quality. *[Status: Not yet implemented]*
+   - **Basic skills learning:** Response review criteria, rubric-based evaluation, and simple pass/fail checks. *[Status: Implementation Complete]*
+   - **Advanced skills learning:** Automated evaluation pipelines, scoring heuristics, human-in-the-loop review, and regression testing for prompt quality. *[Status: In use / Partially complete]*
 
 3. **Iteration 3 — Scaled Platform**
    - Expand the solution based on the architecture, security, privacy, scalability, and reliability requirements defined in this document.

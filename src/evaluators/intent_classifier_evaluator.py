@@ -1,3 +1,5 @@
+"""Evaluates the direct model-backed intent classifier against labeled examples."""
+
 import argparse
 import datetime
 import json
@@ -10,12 +12,14 @@ from openai import OpenAI
 import sys
 
 try:
-    from ..chatbot import INTENT_PATTERNS, classify_intent, load_api_key
+    from ..chatbot import classify_intent, load_api_key
+    from ..workflow_catalog import INTENT_LABELS
 except ImportError:  # pragma: no cover - allows running as a script
     project_root = Path(__file__).resolve().parents[1]
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
-    from chatbot import INTENT_PATTERNS, classify_intent, load_api_key
+    from chatbot import classify_intent, load_api_key
+    from workflow_catalog import INTENT_LABELS
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REPORTS_DIR = PROJECT_ROOT / "reports"
@@ -97,12 +101,11 @@ def load_dataset(dataset_path: Path) -> list[dict[str, str]]:
 
 def run_intent_classifier_evaluation(
     dataset: list[dict[str, str]],
-    client: OpenAI | None,
-    mode: str,
+    client: OpenAI,
 ) -> dict[str, Any]:
     rows: list[dict[str, Any]] = []
     for item in dataset:
-        result = classify_intent(item["text"], client if mode == "hybrid" else None)
+        result = classify_intent(item["text"], client)
         predicted_intent = str(result.get("intent", "unknown"))
         is_correct = predicted_intent == item["expected_intent"]
         rows.append(
@@ -117,7 +120,7 @@ def run_intent_classifier_evaluation(
         )
 
     labels = _stable_unique(
-        list(INTENT_PATTERNS.keys())
+        list(INTENT_LABELS)
         + ["unknown"]
         + [row["expected_intent"] for row in rows]
         + [row["predicted_intent"] for row in rows]
@@ -176,7 +179,7 @@ def run_intent_classifier_evaluation(
 
     return {
         "summary": {
-            "mode": mode,
+            "mode": "model",
             "total_samples": total_samples,
             "correct_predictions": correct_predictions,
             "accuracy": _round(accuracy),
@@ -252,12 +255,6 @@ def write_reports(report_data: dict[str, Any], output_dir: Path) -> Path:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Evaluate intent classifier performance.")
     parser.add_argument(
-        "--mode",
-        choices=["rule", "hybrid"],
-        default="rule",
-        help="rule=keyword/rule path only, hybrid=rule + few-shot fallback via OpenAI.",
-    )
-    parser.add_argument(
         "--dataset",
         type=Path,
         default=None,
@@ -282,17 +279,15 @@ def main() -> int:
             print(f"Could not load dataset: {exc}")
             return 1
 
-    client = None
-    if args.mode == "hybrid":
-        try:
-            api_key = load_api_key()
-        except RuntimeError as exc:
-            print(f"Could not run hybrid mode: {exc}")
-            return 1
-        os.environ["OPENAI_API_KEY"] = api_key
-        client = OpenAI()
+    try:
+        api_key = load_api_key()
+    except RuntimeError as exc:
+        print(f"Could not run model-backed evaluation: {exc}")
+        return 1
+    os.environ["OPENAI_API_KEY"] = api_key
+    client = OpenAI()
 
-    report_data = run_intent_classifier_evaluation(dataset, client=client, mode=args.mode)
+    report_data = run_intent_classifier_evaluation(dataset, client=client)
     json_path = write_reports(report_data, args.output_dir)
     summary = report_data["summary"]
     print(
