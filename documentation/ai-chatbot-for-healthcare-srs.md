@@ -85,374 +85,212 @@ This project will be delivered in three development iterations:
    - Add the broader features highlighted in the functional and non-functional requirements, including session management, structured data handling, export capabilities, feedback, and administrative monitoring.
    - Scale the backend, deployment, and observability approach to meet the target usage and availability expectations.
 
----
-
-# 1. Functional Requirements
-
-## FR-1 User Authentication
-
-The system shall allow users to securely create an account, log in, and access their own conversations.
-
----
-
-## FR-2 Session Management
-
-The system shall allow users to create, resume, and manage multiple chat sessions.
-
----
-
-## FR-3 Patient Intake
-
-The chatbot shall collect relevant patient information, including but not limited to:
-
-- Chief complaint
-- Symptom duration
-- Symptom severity
-- Existing medical conditions
-- Current medications
-- Allergies
-- Lifestyle information (optional)
-
----
-
-## FR-4 Conversational Follow-up
-
-The chatbot shall dynamically ask follow-up questions based on previous user responses to gather sufficient context.
-
----
-
-## FR-5 Conversation Context
-
-The chatbot shall maintain context throughout the conversation and reference previously collected information when generating responses.
-
----
-
-## FR-6 Emergency Symptom Detection
-
-The chatbot shall detect potentially life-threatening symptoms during the conversation.
-
-Examples include:
-
-- Chest pain
-- Difficulty breathing
-- Stroke-like symptoms
-- Severe allergic reactions
-- Severe bleeding
-- Loss of consciousness
-
----
-
-## FR-7 Emergency Escalation
-
-If emergency symptoms are detected, the chatbot shall immediately recommend seeking emergency medical attention and discontinue normal conversational flow.
-
----
-
-## FR-8 Safety Guardrails
-
-The chatbot shall not:
-
-- Diagnose diseases
-- Prescribe medication
-- Recommend stopping prescribed medication
-- Replace professional medical advice
-
----
-
-## FR-9 Educational Assistance
-
-The chatbot shall provide general health education and encourage users to discuss concerns with licensed healthcare professionals.
-
----
-
-## FR-10 Visit Summary Generation
-
-The chatbot shall generate a structured summary that can be shared with a healthcare provider before the appointment.
-
----
-
-## FR-11 Structured Output
-
-The chatbot shall internally organize collected information into structured data suitable for downstream processing.
-
----
-
-## FR-12 Conversation History
-
-The system shall maintain conversation history for each user session.
-
----
-
-## FR-13 Export Visit Summary
-
-The system shall allow users to export their visit summary in multiple formats.
-
-Examples:
-
-- PDF
-- Plain text
-- JSON
-
----
-
-## FR-14 User Feedback
-
-The system shall allow users to submit feedback regarding chatbot responses.
-
----
-
-## FR-15 Administrative Monitoring
-
-The system shall allow administrators to review anonymized platform metrics, chatbot usage statistics, and reported issues.
-
----
-
-## FR-16 Healthcare Menu Navigation
-
-The system shall provide a simple healthcare-focused menu of options for appointment preparation, symptom reporting, allergy reporting, medication questions, summary review, emergency support, and general health education.
-
----
-
-## FR-17 Menu-Based Conversation Routing
-
-The system shall allow users to select a menu option using simple text commands and route them to the appropriate healthcare conversation flow.
-
----
-
-## FR-18 Safety-First Emergency Handling
-
-If a menu option relates to urgent or emergency symptoms, the system shall prioritize safety guidance, recommend immediate emergency care, and redirect the conversation away from routine intake.
-
----
-
-# 2. Non-Functional Requirements
-
-## NFR-1 Performance
-
-The chatbot should respond to normal user requests within **5 seconds** under expected load.
-
----
-
-## NFR-2 Availability
-
-The platform should target an availability of **99.5%**.
-
----
-
-## NFR-3 Scalability
-
-The platform shall support horizontal scaling of backend services.
-
----
-
-## NFR-4 Reliability
-
-The system shall gracefully recover from transient failures without data loss.
-
----
-
-## NFR-5 Security
-
-The platform shall:
-
-- Secure user authentication
-- Encrypt sensitive data
-- Protect user sessions
-- Prevent unauthorized access
-
----
-
-## NFR-6 Privacy
-
-The platform shall minimize collection of sensitive information and ensure user conversations remain private.
-
----
-
-## NFR-7 Maintainability
-
-The application shall be modular and support independent development of major components.
-
----
-
-## NFR-8 Observability
-
-The system shall capture logs, metrics, and traces necessary for monitoring platform health.
-
----
-
-## NFR-9 Extensibility
-
-The architecture shall allow future integration of additional AI capabilities without major redesign.
-
----
-
-## NFR-10 Testability
-
-The platform shall support:
-
-- Unit testing
-- Integration testing
-- End-to-end testing
-
----
-
-## NFR-11 Cost Efficiency
-
-The system shall monitor AI usage costs and optimize resource utilization where appropriate.
-
----
-
-## NFR-12 Accessibility
-
-The chatbot interface should be usable across desktop and mobile devices.
-
----
-
-# 3. Expected Scale
-
-## MVP
-
-- 100–500 registered users
-- 1,000 chatbot conversations per day
-- Average conversation length: 15–25 messages
-- Single geographic deployment
-
----
-
-## Target Scale
-
-- 10,000 registered users
-- 100,000 chatbot messages per day
-- Thousands of concurrent conversations
-- Horizontally scalable backend services
-- Support for future multi-region deployment
-
----
-
-# Appendix A — Solution Notes (For Future Design)
-
-> **This appendix is intentionally non-prescriptive.**
+   **Current Implementation Status**
+
+   **Functional Requirements**
+
+   | Requirement | Status | Notes |
+   |---|---|---|
+   | FR-1 User Authentication | Not complete | There is no login, account creation, or user-owned conversation model yet. |
+   | FR-2 Session Management | Partially complete | The chatbot supports in-memory session creation, reuse, and expiration, but it does not yet support authenticated multi-user session management. |
+   | FR-3 Patient Intake | Complete | The chatbot collects appointment-preparation, symptom, allergy, and medication information through structured workflows. |
+   | FR-4 Conversational Follow-up | Complete | The chatbot asks conditional follow-up questions based on missing or incomplete fields. |
+   | FR-5 Conversation Context | Complete | The chatbot keeps workflow state and message memory separate and reuses collected values across turns. |
+   | FR-6 Emergency Symptom Detection | Complete | Input moderation detects emergency content and routes the conversation into emergency support. |
+   | FR-7 Emergency Escalation | Complete | Emergency cases immediately exit normal intake and return the emergency response. |
+   | FR-8 Safety Guardrails | Complete | The system blocks unsafe medical behavior and keeps responses educational and non-diagnostic. |
+   | FR-9 Educational Assistance | Partially complete | The medication workflow provides general education and safety framing, but the broader educational assistant scope is not fully built out. |
+   | FR-10 Visit Summary Generation | Complete | The system renders a faithful summary from structured visit data and asks for confirmation before completion. |
+   | FR-11 Structured Output | Complete | The chatbot stores and validates typed visit data internally for downstream processing and persistence. |
+   | FR-12 Conversation History | Complete | Message history is maintained per session in memory. |
+   | FR-13 Export Visit Summary | Not complete | The system does not yet export summaries to PDF, text, or downloadable JSON. |
+   | FR-14 User Feedback | Not complete | There is no feedback capture flow for user ratings or comments. |
+   | FR-15 Administrative Monitoring | Not complete | There is no administrator dashboard or reporting surface. |
+   | FR-16 Healthcare Menu Navigation | Complete | The application exposes a healthcare-focused menu for the implemented workflows. |
+   | FR-17 Menu-Based Conversation Routing | Complete | Menu options and simple commands route users to the correct workflow. |
+   | FR-18 Safety-First Emergency Handling | Complete | Emergency-related turns are prioritized and routed away from routine intake. |
+
+   **Non-Functional Requirements**
+
+   | Requirement | Status | Notes |
+   |---|---|---|
+   | NFR-1 Performance | Not complete | There is no measured response-time target enforcement yet. |
+   | NFR-2 Availability | Not complete | The application is not deployed with an availability target such as 99.5%. |
+   | NFR-3 Scalability | Not complete | The current runtime is single-process and in-memory rather than horizontally scalable. |
+   | NFR-4 Reliability | Partially complete | The chatbot has bounded retries and safe fallbacks, but it does not yet provide durable recovery across process restarts. |
+   | NFR-5 Security | Partially complete | The application has safety guardrails and session validation, but it does not yet include secure authentication, encryption, or full authorization controls. |
+   | NFR-6 Privacy | Partially complete | The implementation avoids logging patient values in telemetry and keeps confirmed records local, but it does not yet provide production-grade encryption. |
+   | NFR-7 Maintainability | Complete | The implementation is modular and split across routing, extraction, summary, persistence, moderation, and evaluation modules. |
+   | NFR-8 Observability | Partially complete | The chatbot emits privacy-safe chain events and evaluation output, but it does not yet expose a full production metrics stack. |
+   | NFR-9 Extensibility | Complete | The current prompt chain is modular and designed for future expansion. |
+   | NFR-10 Testability | Complete | The repository includes unit tests and deterministic evaluation scripts. |
+   | NFR-11 Cost Efficiency | Not complete | There is no cost monitoring or optimization layer yet. |
+   | NFR-12 Accessibility | Complete | The UI is a simple browser-based chat interface that works across desktop and mobile viewports. |
+
+# Appendix A — Solution Notes (Implementation Status and Remaining Design Work)
+
+> **This appendix now records the implementation direction already established in the codebase.**
 >
-> The following topics are placeholders for implementation decisions that will be designed later.
+> The sections below summarize what has been implemented so far and what remains in the scaled-platform scope.
 
 ## System Architecture
 
-_To be designed._
+Implemented direction:
 
-Possible considerations:
+- FastAPI serves the web UI and `/chat` API.
+- `src/app.py` owns typed in-memory session management and session expiry.
+- `src/chatbot.py` orchestrates moderation, routing, extraction, confirmation, and persistence.
+- `src/routing.py` handles menu commands, workflow selection, emergency continuation, and completion handling.
+- `src/extraction.py` performs structured field extraction, validation, and safe merging into visit state.
+- `src/summary_workflow.py` renders the faithful summary and classifies confirmation or correction replies.
+- `src/persistence.py` writes confirmed summaries locally as versioned JSON records.
+- `src/observability.py` emits privacy-safe chain events without logging raw patient values.
+- `src/evaluators/` contains deterministic and model-backed evaluation scripts for regression checks.
 
-- High-level architecture
-- Service boundaries
-- Request flow
-- Deployment topology
+Remaining platform design work:
+
+- Multi-user authentication and authorization boundaries
+- Durable session storage and shared backend state
+- Production deployment topology and scaling strategy
 
 ---
 
 ## Backend Services
 
-_To be designed._
+Implemented direction:
 
-Possible considerations:
+- Chat service is already implemented in the FastAPI runtime.
+- Conversation management is typed and session-scoped.
+- Summary generation is implemented as a faithful render of `VisitData`.
+- Local persistence is limited to confirmed summaries.
+- Safety, moderation, and routing are split into dedicated modules.
 
-- Authentication
-- Chat service
-- Conversation management
-- Summary generation
-- Notification service
+Remaining platform design work:
+
+- Authentication service
+- Notification or messaging service
+- Administrative service
+- Export service
 
 ---
 
 ## Database Design
 
-_To be designed._
+Implemented direction:
 
-Possible considerations:
+- In-memory session state stores active conversations during runtime.
+- Confirmed summaries are persisted locally as JSON files with UUID-based filenames.
+- Observability records store anonymized session references instead of raw session IDs.
 
-- Entity relationships
-- Table design
-- Data retention
-- Audit logging
+Remaining platform design work:
+
+- Persistent relational or document storage for users, sessions, visits, and exports
+- Retention and archival rules
+- Audit logging model
+- Encryption at rest design
 
 ---
 
 ## API Design
 
-_To be designed._
+Implemented direction:
 
-Possible considerations:
+- `GET /` serves the browser chat UI.
+- `POST /chat` accepts a message and a session ID and returns one chatbot reply.
+- Session IDs are validated server-side.
+
+Remaining platform design work:
 
 - Authentication APIs
-- Chat APIs
-- Session APIs
+- Session management APIs
 - Export APIs
+- Feedback APIs
 - Administrative APIs
 
 ---
 
 ## AI Design
 
-_To be designed._
+Implemented direction:
 
-Possible considerations:
+- Prompt chaining is split into routing, extraction, summary, confirmation, and guardrail stages.
+- Conversation memory is separated from workflow state.
+- Structured extraction uses typed models and schema validation.
+- Confirmation is classified with a dedicated prompt after summary review.
+- Input and output guardrails run before and after workflow processing.
 
-- Prompt design
-- Conversation memory
-- Safety validation
-- Structured output generation
-- Guardrail implementation
+Remaining platform design work:
+
+- Higher-coverage evaluation of prompt quality and failure modes
+- Model governance for larger-scale deployment
+- Potential retrieval or knowledge integration for future features
 
 ---
 
 ## Security Design
 
-_To be designed._
+Implemented direction:
 
-Possible considerations:
+- Safety guardrails block or escalate high-risk inputs.
+- Session IDs are validated and not logged as raw identifiers in observability events.
+- Confirmed visit records are saved locally with restricted file handling.
+
+Remaining platform design work:
 
 - Authentication strategy
 - Authorization model
-- Encryption
-- Session management
+- Encryption at rest and in transit
+- Role-based admin access
+- Production session hardening
 
 ---
 
 ## Deployment
 
-_To be designed._
+Implemented direction:
 
-Possible considerations:
+- The application can run locally with FastAPI and `uv`.
+- Tests and evaluators run from the repository for regression checking.
+
+Remaining platform design work:
 
 - Containerization
 - Orchestration
 - CI/CD
-- Infrastructure
+- Environment-specific infrastructure
 
 ---
 
 ## Monitoring
 
-_To be designed._
+Implemented direction:
 
-Possible considerations:
+- Privacy-safe chain events are emitted for key workflow stages.
+- Evaluators generate reports for prompt-chain and safety regression checks.
 
-- Logging
-- Metrics
+Remaining platform design work:
+
+- Centralized logging
+- Metrics collection
 - Alerting
-- Tracing
+- Distributed tracing
+- Admin reporting dashboards
 
 ---
 
 ## Testing Strategy
 
-_To be designed._
+Implemented direction:
 
-Possible considerations:
+- Unit tests cover routing, extraction, summary workflow, persistence, observability, session state, and models.
+- Integration-style tests cover the chatbot flow and deterministic chain evaluation.
+- Prompt-injection and intent-classifier evaluators support safety and routing regression checks.
 
-- Unit tests
-- Integration tests
-- API tests
-- End-to-end tests
-- Performance testing
+Remaining platform design work:
+
+- Performance testing at target scale
+- End-to-end tests against a deployed environment
+- Load and availability testing
 
 ---
 
