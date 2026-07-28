@@ -2,6 +2,8 @@
 
 This document is the living architecture diagram and implementation tracker for the healthcare chatbot's prompt chain. It must be updated whenever a prompt-chaining implementation step changes the runtime flow.
 
+Roadmap note: this tracker covers the implemented prompt chain through the AI/API expansion work. The SRS now reserves Iteration 3 for the production RAG platform and Iteration 4 for the enterprise production platform.
+
 Last updated: 2026-07-26, after Step 12 — Direct Intent Classification
 
 ## Architecture diagram
