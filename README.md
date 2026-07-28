@@ -21,6 +21,8 @@ The implemented prompt chain supports:
 
 See [the SRS](documentation/ai-chatbot-for-healthcare-srs.md) for full product requirements and future platform scope. See [the prompt-chaining architecture](documentation/prompt_chaining_architecture.md) for the runtime diagram and implementation tracker.
 
+The current codebase covers the MVP and AI workflow expansion. The SRS now reserves Iteration 3 for the production RAG platform and Iteration 4 for the enterprise production platform.
+
 ## Project structure
 
 ```text
@@ -129,4 +131,4 @@ Evaluation reports are written to `reports/` by default.
 - Session state is held in memory and expires after 15 minutes.
 - Only completed, explicitly confirmed summaries are persisted.
 - Local JSON records use UUID filenames and restricted file permissions.
-- Local records are not encrypted; authentication, production encryption, export formats, durable multi-user sessions, and administrative monitoring belong to the later scaled-platform scope in the SRS.
+- Local records are not encrypted; authentication, production encryption, export formats, durable multi-user sessions, RAG knowledge management, and administrative monitoring belong to later iterations in the SRS.

@@ -4,13 +4,13 @@
 
 > **Purpose**
 >
-> Build an AI-powered healthcare chatbot that helps patients prepare for a doctor's appointment by collecting relevant information, organizing it into a structured summary, and improving communication between patients and healthcare providers.
+> Build an AI-powered healthcare application that helps patients prepare for a doctor's appointment by collecting structured pre-visit information, answering appointment-preparation questions using Retrieval-Augmented Generation (RAG), and generating a provider-ready visit summary.
 >
-> **Note:** This application is intended for educational and appointment preparation purposes only. It is **not** designed to diagnose, treat, or replace medical professionals.
+> **Note:** This application is intended for educational and appointment-preparation purposes only. It does not diagnose, prescribe treatment, or replace licensed healthcare professionals.
 
 ## Development Approach and Iterations
 
-This project will be delivered in three development iterations:
+This project will be delivered in four development iterations:
 
 1. **Iteration 1 — Simple Chatbot MVP**
    - Build a simple chatbot experience with a basic text input box or chat window for user interaction.
@@ -20,8 +20,8 @@ This project will be delivered in three development iterations:
    **STAR Summary of Achievement**
    - **Situation:** The project required a lightweight MVP that could support appointment-preparation conversations without introducing unnecessary architectural complexity.
    - **Task:** Deliver an intuitive chatbot experience capable of collecting patient-relevant information, maintaining conversational context, and generating a structured visit summary.
-   - **Action:** A FastAPI-based web interface was developed to provide a simple chat UI, while backend logic was implemented to manage conversational state through session-based memory. The solution incorporated technical concepts such as in-memory session persistence, expiration-based session lifecycle management, and structured data extraction for summary generation. The prompting strategy was designed to guide users step-by-step, reduce ambiguity, and preserve context across turns. From a UI/design perspective, this resulted in a minimal, low-friction interface that prioritized clarity, conversational flow, and readable interaction over complex form-based input.
-   - **Result:** The MVP demonstrated a technically sound approach to stateful interaction by combining session handling, persistence of conversational context, and structured output generation. This improved usability for end users while establishing a scalable foundation for future enhancements such as persistent storage, authentication, and more advanced data management.
+   - **Action:** A FastAPI-based web interface was developed to provide a simple chat UI, while backend logic was implemented to manage conversational state through session-based memory. The solution incorporated technical concepts such as in-memory session persistence, expiration-based session lifecycle management, and structured data extraction for summary generation. The prompting strategy was designed to guide users step-by-step, reduce ambiguity, and preserve context across turns.
+   - **Result:** The MVP demonstrated a technically sound approach to stateful interaction by combining session handling, persistence of conversational context, and structured output generation.
 
 2. **Iteration 2 — AI/API Capability Expansion**
    - Build a more robust AI-driven conversation experience using the concepts introduced in the recent course.
@@ -80,223 +80,204 @@ This project will be delivered in three development iterations:
    - **Basic skills learning:** Response review criteria, rubric-based evaluation, and simple pass/fail checks. *[Status: Implementation Complete]*
    - **Advanced skills learning:** Automated evaluation pipelines, scoring heuristics, human-in-the-loop review, and regression testing for prompt quality. *[Status: In use / Partially complete]*
 
-3. **Iteration 3 — Scaled Platform**
-   - Expand the solution based on the architecture, security, privacy, scalability, and reliability requirements defined in this document.
-   - Add the broader features highlighted in the functional and non-functional requirements, including session management, structured data handling, export capabilities, feedback, and administrative monitoring.
-   - Scale the backend, deployment, and observability approach to meet the target usage and availability expectations.
+3. **Iteration 3 — Production RAG Platform**
+   - Transform the chatbot into a production-ready pre-visit preparation assistant powered by Retrieval-Augmented Generation (RAG).
+   - Add clinic knowledge ingestion, vector search, grounded answers with citations, and an admin portal for managing knowledge sources.
+   - Introduce persistent sessions and editable visit summaries so users can resume conversations safely.
 
-   **Current Implementation Status**
+   **Major Features**
 
-   **Functional Requirements**
+   - Patient experience: user authentication, persistent conversations, resume previous sessions, editable visit summaries, and export summaries in PDF, JSON, and text formats.
+   - Retrieval-Augmented Generation: clinic knowledge base ingestion, document chunking, embedding generation, vector search, hybrid retrieval, metadata filtering, query rewriting, citation-backed answers, and an "I don't know" fallback when evidence is insufficient.
+   - Knowledge sources: appointment preparation guides, clinic FAQs, medication preparation guidance, insurance instructions, telehealth instructions, required documents, and accessibility information.
+   - Admin portal: upload knowledge documents, re-index the vector database, manage document versions, and administer the knowledge base.
+   - Backend: PostgreSQL, pgvector, Redis, FastAPI, and background indexing workers.
+   - Evaluation: retrieval recall@K, citation correctness, faithfulness, groundedness, hallucination detection, and prompt regression tests.
 
-   | Requirement | Status | Notes |
-   |---|---|---|
-   | FR-1 User Authentication | Not complete | There is no login, account creation, or user-owned conversation model yet. |
-   | FR-2 Session Management | Partially complete | The chatbot supports in-memory session creation, reuse, and expiration, but it does not yet support authenticated multi-user session management. |
-   | FR-3 Patient Intake | Complete | The chatbot collects appointment-preparation, symptom, allergy, and medication information through structured workflows. |
-   | FR-4 Conversational Follow-up | Complete | The chatbot asks conditional follow-up questions based on missing or incomplete fields. |
-   | FR-5 Conversation Context | Complete | The chatbot keeps workflow state and message memory separate and reuses collected values across turns. |
-   | FR-6 Emergency Symptom Detection | Complete | Input moderation detects emergency content and routes the conversation into emergency support. |
-   | FR-7 Emergency Escalation | Complete | Emergency cases immediately exit normal intake and return the emergency response. |
-   | FR-8 Safety Guardrails | Complete | The system blocks unsafe medical behavior and keeps responses educational and non-diagnostic. |
-   | FR-9 Educational Assistance | Partially complete | The medication workflow provides general education and safety framing, but the broader educational assistant scope is not fully built out. |
-   | FR-10 Visit Summary Generation | Complete | The system renders a faithful summary from structured visit data and asks for confirmation before completion. |
-   | FR-11 Structured Output | Complete | The chatbot stores and validates typed visit data internally for downstream processing and persistence. |
-   | FR-12 Conversation History | Complete | Message history is maintained per session in memory. |
-   | FR-13 Export Visit Summary | Not complete | The system does not yet export summaries to PDF, text, or downloadable JSON. |
-   | FR-14 User Feedback | Not complete | There is no feedback capture flow for user ratings or comments. |
-   | FR-15 Administrative Monitoring | Not complete | There is no administrator dashboard or reporting surface. |
-   | FR-16 Healthcare Menu Navigation | Complete | The application exposes a healthcare-focused menu for the implemented workflows. |
-   | FR-17 Menu-Based Conversation Routing | Complete | Menu options and simple commands route users to the correct workflow. |
-   | FR-18 Safety-First Emergency Handling | Complete | Emergency-related turns are prioritized and routed away from routine intake. |
+   **Current implementation status**
 
-   **Non-Functional Requirements**
+   **Functional requirements**
 
    | Requirement | Status | Notes |
    |---|---|---|
-   | NFR-1 Performance | Not complete | There is no measured response-time target enforcement yet. |
-   | NFR-2 Availability | Not complete | The application is not deployed with an availability target such as 99.5%. |
-   | NFR-3 Scalability | Not complete | The current runtime is single-process and in-memory rather than horizontally scalable. |
-   | NFR-4 Reliability | Partially complete | The chatbot has bounded retries and safe fallbacks, but it does not yet provide durable recovery across process restarts. |
-   | NFR-5 Security | Partially complete | The application has safety guardrails and session validation, but it does not yet include secure authentication, encryption, or full authorization controls. |
-   | NFR-6 Privacy | Partially complete | The implementation avoids logging patient values in telemetry and keeps confirmed records local, but it does not yet provide production-grade encryption. |
-   | NFR-7 Maintainability | Complete | The implementation is modular and split across routing, extraction, summary, persistence, moderation, and evaluation modules. |
-   | NFR-8 Observability | Partially complete | The chatbot emits privacy-safe chain events and evaluation output, but it does not yet expose a full production metrics stack. |
-   | NFR-9 Extensibility | Complete | The current prompt chain is modular and designed for future expansion. |
-   | NFR-10 Testability | Complete | The repository includes unit tests and deterministic evaluation scripts. |
-   | NFR-11 Cost Efficiency | Not complete | There is no cost monitoring or optimization layer yet. |
-   | NFR-12 Accessibility | Complete | The UI is a simple browser-based chat interface that works across desktop and mobile viewports. |
+   | FR-1 Authentication | Not complete | There is no account creation, login, or authenticated user session model yet. |
+   | FR-2 Session Management | Partially complete | The app supports typed in-memory sessions, but not persistent authenticated session resumption. |
+   | FR-3 Patient Intake | Complete | Structured pre-visit information is already collected through the current intake workflows. |
+   | FR-4 Guided Follow-up | Complete | The chatbot already asks only the follow-up questions needed to fill missing information. |
+   | FR-5 Conversation Context | Partially complete | Workflow state and message memory are preserved in memory, but not across durable resumed sessions. |
+   | FR-6 Emergency Detection | Complete | Emergency symptoms are already detected and routed away from normal intake. |
+   | FR-7 Safety | Complete | The chatbot already avoids diagnosis and prescription behavior. |
+   | FR-8 Educational Assistance | Partially complete | The chatbot provides some general guidance, but not yet citation-backed clinic-document answers. |
+   | FR-9 RAG | Not complete | Retrieval, vector search, citations, and grounded response generation are not implemented yet. |
+   | FR-10 Knowledge Management | Not complete | There is no knowledge upload, versioning, or admin document portal yet. |
+   | FR-11 Visit Summary | Partially complete | Structured summaries already exist, but editable summary workflows are not implemented. |
+   | FR-12 Export | Not complete | PDF, JSON, and text export are not implemented yet. |
+   | FR-13 Feedback | Not complete | User feedback collection is not implemented yet. |
+   | FR-14 Administrative Monitoring | Not complete | Admin dashboards are not implemented yet. |
+   | FR-15 Analytics | Not complete | Retrieval and conversation analytics are not implemented yet. |
 
-# Appendix A — Solution Notes (Implementation Status and Remaining Design Work)
+   **Non-functional requirements**
 
-> **This appendix now records the implementation direction already established in the codebase.**
->
-> The sections below summarize what has been implemented so far and what remains in the scaled-platform scope.
+   | Requirement | Status | Notes |
+   |---|---|---|
+   | NFR-1 Performance | Not complete | There is no measured P95 latency target or production load testing yet. |
+   | NFR-2 Availability | Not complete | The system is not deployed to a 99.5% availability target. |
+   | NFR-3 Scalability | Not complete | The current runtime is still single-process and in-memory. |
+   | NFR-4 Reliability | Partially complete | The code has bounded retries and fallbacks, but no durable recovery layer. |
+   | NFR-5 Security | Partially complete | Guardrails and input validation exist, but authentication, authorization, and encryption are not in place. |
+   | NFR-6 Privacy | Partially complete | Telemetry avoids raw patient values, but production privacy controls are not complete. |
+   | NFR-7 Maintainability | Complete | The current codebase is already modular and separated by concern. |
+   | NFR-8 Observability | Partially complete | Privacy-safe events and evaluation outputs exist, but not a full production observability stack. |
+   | NFR-9 Testability | Partially complete | The repo has unit tests and evaluators, but not a full automated pipeline. |
+   | NFR-10 Cost Efficiency | Not complete | AI token usage monitoring is not implemented yet. |
+   | NFR-11 Accessibility | Complete | The UI is already responsive across desktop and mobile viewports. |
+   | NFR-12 Extensibility | Complete | The architecture already supports future AI capability expansion. |
 
-## System Architecture
+4. **Iteration 4 — Enterprise Production Platform**
+   - Prepare the platform for production deployment, reliability, observability, scalability, and real-world validation.
+   - Add the operational controls needed for secure, scalable, and maintainable deployment.
 
-Implemented direction:
+   **Major Features**
 
-- FastAPI serves the web UI and `/chat` API.
-- `src/app.py` owns typed in-memory session management and session expiry.
-- `src/chatbot.py` orchestrates moderation, routing, extraction, confirmation, and persistence.
-- `src/routing.py` handles menu commands, workflow selection, emergency continuation, and completion handling.
-- `src/extraction.py` performs structured field extraction, validation, and safe merging into visit state.
-- `src/summary_workflow.py` renders the faithful summary and classifies confirmation or correction replies.
-- `src/persistence.py` writes confirmed summaries locally as versioned JSON records.
-- `src/observability.py` emits privacy-safe chain events without logging raw patient values.
-- `src/evaluators/` contains deterministic and model-backed evaluation scripts for regression checks.
+   - Security: RBAC, JWT authentication, encryption, secrets management, and rate limiting.
+   - Reliability: retry policies, timeouts, circuit breakers, idempotency, and graceful degradation.
+   - Observability: OpenTelemetry, distributed tracing, metrics, logging, dashboards, and alerts.
+   - Deployment: Docker, CI/CD, Kubernetes or Azure Container Apps, and infrastructure as code.
+   - Testing: unit tests, integration tests, end-to-end tests, load testing, security testing, and the RAG evaluation pipeline.
+   - Validation: user studies, performance benchmarks, latency measurements, cost analysis, and retrieval quality reports.
 
-Remaining platform design work:
+   **Current implementation status**
 
-- Multi-user authentication and authorization boundaries
-- Durable session storage and shared backend state
-- Production deployment topology and scaling strategy
+   **Functional requirements**
 
----
+   | Requirement | Status | Notes |
+   |---|---|---|
+   | FR-1 Authentication | Not complete | RBAC, JWT, and secure login are not implemented yet. |
+   | FR-2 Session Management | Partially complete | Sessions exist in memory, but not as durable authenticated sessions. |
+   | FR-10 Knowledge Management | Not complete | No admin portal exists for document upload, versioning, or re-indexing. |
+   | FR-11 Visit Summary | Partially complete | Summaries are generated, but editable summary workflows are not present. |
+   | FR-12 Export | Not complete | Export formats are not implemented yet. |
+   | FR-13 Feedback | Not complete | Feedback capture is not implemented yet. |
+   | FR-14 Administrative Monitoring | Not complete | Admin dashboards are not implemented yet. |
+   | FR-15 Analytics | Not complete | Retrieval and operational analytics are not implemented yet. |
 
-## Backend Services
+   **Non-functional requirements**
 
-Implemented direction:
+   | Requirement | Status | Notes |
+   |---|---|---|
+   | NFR-1 Performance | Not complete | No production performance target or load testing is in place. |
+   | NFR-2 Availability | Not complete | No availability target deployment exists yet. |
+   | NFR-3 Scalability | Not complete | No horizontally scalable backend deployment exists yet. |
+   | NFR-4 Reliability | Partially complete | Local retries and fallbacks exist, but no durable production recovery. |
+   | NFR-5 Security | Partially complete | Basic safety checks exist, but not enterprise security controls. |
+   | NFR-6 Privacy | Partially complete | Logging is privacy-conscious, but production privacy hardening is not complete. |
+   | NFR-7 Maintainability | Complete | The codebase is already modular enough to support future expansion. |
+   | NFR-8 Observability | Partially complete | There are chain events and reports, but not full metrics/tracing/dashboards. |
+   | NFR-9 Testability | Partially complete | Tests exist, but not the full CI-backed suite described here. |
+   | NFR-10 Cost Efficiency | Not complete | Cost monitoring and token-usage controls are not implemented yet. |
+   | NFR-11 Accessibility | Complete | The interface is already usable on desktop and mobile. |
+   | NFR-12 Extensibility | Complete | The architecture is intended to support future AI capabilities. |
 
-- Chat service is already implemented in the FastAPI runtime.
-- Conversation management is typed and session-scoped.
-- Summary generation is implemented as a faithful render of `VisitData`.
-- Local persistence is limited to confirmed summaries.
-- Safety, moderation, and routing are split into dedicated modules.
+# Expected Scale
 
-Remaining platform design work:
+## MVP
 
-- Authentication service
-- Notification or messaging service
-- Administrative service
-- Export service
+- 500 users
+- 1,000 conversations per day
 
----
+## Production Target
 
-## Database Design
+- 10,000+ users
+- 100,000+ messages per day
+- Thousands of concurrent sessions
 
-Implemented direction:
+# Appendix A — Solution Architecture
 
-- In-memory session state stores active conversations during runtime.
-- Confirmed summaries are persisted locally as JSON files with UUID-based filenames.
-- Observability records store anonymized session references instead of raw session IDs.
+## Implementation Snapshot
 
-Remaining platform design work:
+| Iteration | Status | Notes |
+|---|---|---|
+| Iteration 1 | Complete | Conversation workflow, typed visit summary, in-memory session handling, and basic safety messaging are already implemented. |
+| Iteration 2 | Complete | Intent routing, moderation, prompt chaining, structured extraction, summary review, confirmation, persistence, and evaluation scaffolding are already implemented. |
+| Iteration 3 | Not complete | The codebase has foundations, but RAG ingestion, citations, persistent auth, exports, and admin knowledge management are still planned. |
+| Iteration 4 | Not complete | Production deployment, security hardening, observability, autoscaling, and real-world validation are still planned. |
 
-- Persistent relational or document storage for users, sessions, visits, and exports
-- Retention and archival rules
-- Audit logging model
-- Encryption at rest design
+## Iteration 1
 
----
+- Implemented: conversation workflow, typed visit summary, in-memory session handling, and basic safety messaging.
 
-## API Design
+## Iteration 2
 
-Implemented direction:
+- Implemented: intent routing, moderation, prompt chaining, structured extraction, summary review, confirmation, persistence, and evaluation scaffolding.
 
-- `GET /` serves the browser chat UI.
-- `POST /chat` accepts a message and a session ID and returns one chatbot reply.
-- Session IDs are validated server-side.
+## Iteration 3
 
-Remaining platform design work:
+- Planned: authentication, PostgreSQL, pgvector, Redis, RAG ingestion pipeline, hybrid retrieval, citations, admin document portal, persistent sessions, exports, and retrieval evaluation.
+- Partial foundation already present in the codebase: typed in-memory sessions, structured summaries, local persistence of confirmed summaries, modular routing, and privacy-safe observability.
 
-- Authentication APIs
-- Session management APIs
-- Export APIs
-- Feedback APIs
-- Administrative APIs
+## Iteration 4
 
----
+- Planned: production deployment, CI/CD, Kubernetes, OpenTelemetry, monitoring, autoscaling, load testing, security hardening, disaster recovery, and real-user validation.
+- Partial foundation already present in the codebase: modular services, unit tests, deterministic evaluation scripts, and simple local deployment support.
 
-## AI Design
+## Design Choices
 
-Implemented direction:
+### System Architecture
 
-- Prompt chaining is split into routing, extraction, summary, confirmation, and guardrail stages.
-- Conversation memory is separated from workflow state.
-- Structured extraction uses typed models and schema validation.
-- Confirmation is classified with a dedicated prompt after summary review.
-- Input and output guardrails run before and after workflow processing.
+- Iteration 1 established the core conversation workflow and typed summary handling.
+- Iteration 2 established prompt chaining, state-aware routing, moderation, extraction, confirmation, and local persistence.
+- Iteration 3 will add RAG ingestion and retrieval paths without replacing the existing prompt-chain foundation.
+- Iteration 4 will add production hardening, scale, and operational controls around the same modular application boundary.
 
-Remaining platform design work:
+### Backend Services
 
-- Higher-coverage evaluation of prompt quality and failure modes
-- Model governance for larger-scale deployment
-- Potential retrieval or knowledge integration for future features
+- The current backend is a FastAPI application with typed session handling and local conversation memory.
+- RAG-era backend services are expected to add PostgreSQL, Redis, and background indexing workers.
+- The later platform stage is expected to split operational concerns such as admin tools, exports, and analytics into dedicated services or modules.
 
----
+### Database Design
 
-## Security Design
+- The current design uses in-memory session state and local JSON persistence for confirmed summaries.
+- Iteration 3 is expected to introduce durable storage for users, sessions, knowledge documents, and vector embeddings.
+- Iteration 4 will extend storage design for operational data, audits, and recovery workflows.
 
-Implemented direction:
+### API Design
 
-- Safety guardrails block or escalate high-risk inputs.
-- Session IDs are validated and not logged as raw identifiers in observability events.
-- Confirmed visit records are saved locally with restricted file handling.
+- The current API surface is intentionally small: the browser UI and a single `/chat` endpoint.
+- Iteration 3 is expected to add APIs for authentication, session resume, export, knowledge management, and administrative operations.
+- Iteration 4 is expected to add operational and monitoring endpoints as needed for the production platform.
 
-Remaining platform design work:
+### AI Design
 
-- Authentication strategy
-- Authorization model
-- Encryption at rest and in transit
-- Role-based admin access
-- Production session hardening
+- The current AI design is a prompt chain with routing, extraction, summary review, confirmation, and guardrails.
+- Iteration 3 adds RAG: document ingestion, chunking, embeddings, vector retrieval, citation-backed answers, and grounded fallback behavior.
+- Iteration 4 focuses on the reliability, evaluation, and governance controls for production AI behavior.
 
----
+### Security Design
 
-## Deployment
+- The current codebase uses guardrails, validation, and privacy-safe observability.
+- Iteration 3 adds authentication, authorization, and stronger session handling for persistent user state.
+- Iteration 4 adds encryption, secrets management, RBAC, and rate limiting for the enterprise platform.
 
-Implemented direction:
+### Deployment
 
-- The application can run locally with FastAPI and `uv`.
-- Tests and evaluators run from the repository for regression checking.
+- The current application runs locally with FastAPI and `uv`.
+- Iteration 3 is expected to introduce durable backend services and worker processes for indexing and retrieval.
+- Iteration 4 is expected to introduce containerization, CI/CD, and production deployment infrastructure.
 
-Remaining platform design work:
+### Monitoring
 
-- Containerization
-- Orchestration
-- CI/CD
-- Environment-specific infrastructure
+- The current implementation emits privacy-safe chain events and evaluator output.
+- Iteration 3 is expected to add retrieval metrics, citation quality checks, and knowledge-base reporting.
+- Iteration 4 is expected to add dashboards, tracing, metrics, and alerting.
 
----
+### Testing Strategy
 
-## Monitoring
+- The current repository already supports unit tests and deterministic evaluation scripts.
+- Iteration 3 adds RAG-specific evaluation such as recall, groundedness, faithfulness, and citation checks.
+- Iteration 4 adds load, security, and end-to-end validation against production-like infrastructure.
 
-Implemented direction:
-
-- Privacy-safe chain events are emitted for key workflow stages.
-- Evaluators generate reports for prompt-chain and safety regression checks.
-
-Remaining platform design work:
-
-- Centralized logging
-- Metrics collection
-- Alerting
-- Distributed tracing
-- Admin reporting dashboards
-
----
-
-## Testing Strategy
-
-Implemented direction:
-
-- Unit tests cover routing, extraction, summary workflow, persistence, observability, session state, and models.
-- Integration-style tests cover the chatbot flow and deterministic chain evaluation.
-- Prompt-injection and intent-classifier evaluators support safety and routing regression checks.
-
-Remaining platform design work:
-
-- Performance testing at target scale
-- End-to-end tests against a deployed environment
-- Load and availability testing
-
----
-
-## Future Enhancements
-
-Examples include:
+### Future Enhancements
 
 - Knowledge retrieval
 - Clinical document ingestion
