@@ -4,7 +4,25 @@ from datetime import date, datetime
 from enum import StrEnum
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+def _parse_date_of_birth(value: object) -> date | object:
+    if value is None or isinstance(value, date):
+        return value
+    if not isinstance(value, str):
+        return value
+
+    text = value.strip()
+    for format_name in ("%m/%d/%Y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(text, format_name).date()
+        except ValueError:
+            continue
+    try:
+        return datetime.fromisoformat(text).date()
+    except ValueError as exc:
+        raise ValueError("Date of birth must use MM/DD/YYYY format.") from exc
 
 
 class DomainModel(BaseModel):
@@ -100,6 +118,11 @@ class VisitData(DomainModel):
     emergency_symptoms: list[str] | None = None
     notes: list[str] | None = None
 
+    @field_validator("date_of_birth", mode="before")
+    @classmethod
+    def validate_date_of_birth(cls, value):
+        return _parse_date_of_birth(value)
+
 
 class VisitDataPatch(DomainModel):
     """Optional visit fields proposed by one extraction call."""
@@ -122,6 +145,11 @@ class VisitDataPatch(DomainModel):
     lifestyle_info: str | None = None
     emergency_symptoms: list[str] | None = None
     notes: list[str] | None = None
+
+    @field_validator("date_of_birth", mode="before")
+    @classmethod
+    def validate_date_of_birth(cls, value):
+        return _parse_date_of_birth(value)
 
 
 class FieldExtractionResult(DomainModel):

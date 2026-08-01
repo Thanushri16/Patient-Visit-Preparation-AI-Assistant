@@ -130,6 +130,26 @@ def _record_turn(messages: list[ChatMessage], prompt: str, response: str) -> Non
         ]
     )
 
+
+def _hydrate_visit_from_repository(
+    state: ConversationState,
+    visit_repository: JsonVisitRepository | None,
+) -> None:
+    """Merge any previously stored person record into the current visit data."""
+
+    if visit_repository is None or not state.visit_data.email:
+        return
+
+    stored_record = visit_repository.load_by_email(state.visit_data.email)
+    if stored_record is None:
+        return
+
+    merged_visit_data = stored_record.visit_data.model_copy(deep=True)
+    for field_name, field_value in state.visit_data.model_dump(exclude_none=True).items():
+        setattr(merged_visit_data, field_name, field_value)
+    merged_visit_data.email = stored_record.email
+    state.visit_data = merged_visit_data
+
 def get_chatbot_response(
     messages: list[ChatMessage],
     prompt: str,
@@ -289,6 +309,11 @@ def get_chatbot_response(
         # Collection input path: extract structured fields from the user's latest message.
         collection_result = process_collection_turn(client, state, prompt)
         if not collection_result.merge_result.errors and not collection_result.merge_result.missing_fields:
+            if state.workflow in {
+                WorkflowType.REVIEW_HEALTH_NOTES,
+                WorkflowType.VIEW_SUMMARY,
+            }:
+                _hydrate_visit_from_repository(state, visit_repository)
             # Collection success path: enough information was collected, so show the summary for review.
             response_text = begin_summary_review(state)
         else:

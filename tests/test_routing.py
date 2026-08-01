@@ -22,7 +22,15 @@ class StateAwareRoutingTests(unittest.TestCase):
         self.assertEqual(state.phase, ConversationPhase.COLLECTING)
         self.assertEqual(
             state.missing_fields,
-            ["chief_complaint", "symptom_duration", "symptom_severity"],
+            [
+                "patient_name",
+                "date_of_birth",
+                "email",
+                "phone",
+                "chief_complaint",
+                "symptom_duration",
+                "symptom_severity",
+            ],
         )
 
     def test_active_workflow_continues_without_reclassifying_answer(self):

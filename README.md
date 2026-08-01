@@ -46,7 +46,8 @@ The current codebase covers the MVP and AI workflow expansion. The SRS now reser
 │   ├── persistence.py                         # Confirmed-visit JSON persistence
 │   ├── observability.py                       # Privacy-safe prompt-chain events
 │   ├── prompts/                               # Model-backed extractor and confirmation prompts
-│   └── evaluators/                            # Intent, injection, and chain evaluations
+│   └── evaluators/                            # Regression and Excel-driven benchmark evaluations
+│       └── benchmarks/                        # Loader, API runner, 3-layer scorer, reports, and CLI
 ├── tests/                                     # Unit and workflow tests
 ├── reports/                                   # Generated evaluation reports
 ├── db/visits/                                 # Runtime-only confirmed visit records
@@ -117,6 +118,12 @@ Run the deterministic prompt-chain regression evaluation:
 uv run python src/evaluators/prompt_chain_evaluator.py
 ```
 
+Run the full iteration-2 evaluation pipeline:
+
+```bash
+uv run python src/evaluators/iteration_2_evaluation_pipeline.py
+```
+
 The prompt-injection and intent-classifier evaluations use the configured OpenAI API and may incur API usage:
 
 ```bash
@@ -125,6 +132,33 @@ uv run python src/evaluators/intent_classifier_evaluator.py
 ```
 
 Evaluation reports are written to `reports/` by default.
+
+### Run the 210-scenario API benchmark
+
+Start the chatbot API in one terminal, then run the benchmark in another:
+
+```bash
+uv run python -m src.evaluators.benchmarks.run_benchmarks \
+  --file src/evaluators/healthcare_assistant_benchmark_210.xlsx
+```
+
+The benchmark runs deterministic contract and state checks plus an LLM-as-judge
+evaluation. It writes full, summary, and failure-only JSON reports under
+`reports/benchmarks/`. Useful options include:
+
+```bash
+# Run one category
+uv run python -m src.evaluators.benchmarks.run_benchmarks \
+  --category "Emergency detection and escalation"
+
+# Run selected scenarios without paid judge calls
+uv run python -m src.evaluators.benchmarks.run_benchmarks \
+  --test-id TC-001 --test-id TC-012 --no-judge
+
+# Target another deployment
+uv run python -m src.evaluators.benchmarks.run_benchmarks \
+  --base-url http://staging:8000 --output-dir reports/staging-benchmark
+```
 
 ## Data and deployment notes
 

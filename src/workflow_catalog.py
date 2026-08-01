@@ -46,8 +46,7 @@ WORKFLOW_DEFINITIONS = (
         menu_option="2",
         menu_label="Report New Symptoms",
         start_response=(
-            "I can help you describe your symptoms. Please tell me what symptoms "
-            "you are having, how long they have been going on, and how severe they feel."
+            "I can help you describe your symptoms. What symptoms are you experiencing today?"
         ),
         few_shot_example="I need to report new symptoms.",
     ),
@@ -55,7 +54,9 @@ WORKFLOW_DEFINITIONS = (
         workflow=WorkflowType.REVIEW_HEALTH_NOTES,
         menu_option="3",
         menu_label="Review My Health Notes",
-        start_response=None,
+        start_response=(
+            "I can help review your health notes. First, I need to confirm your name, date of birth, email, and phone."
+        ),
         few_shot_example="Please review my health notes.",
     ),
     WorkflowDefinition(
@@ -90,7 +91,9 @@ WORKFLOW_DEFINITIONS = (
         workflow=WorkflowType.VIEW_SUMMARY,
         menu_option="7",
         menu_label="View Appointment Summary",
-        start_response=None,
+        start_response=(
+            "I can show your appointment summary. First, I need to confirm your name, date of birth, email, and phone."
+        ),
         few_shot_example="Show me my appointment summary.",
     ),
 )

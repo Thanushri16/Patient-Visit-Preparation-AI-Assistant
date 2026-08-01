@@ -31,11 +31,13 @@ class PromptBuilderTests(unittest.TestCase):
             latest_message="It began three days ago",
             schema=get_workflow_schema(WorkflowType.REPORT_NEW_SYMPTOMS),
             current_data=VisitData(chief_complaint="headache"),
+            requested_field="symptom_duration",
         )
 
         self.assertIn("It began three days ago", prompt)
         self.assertIn("symptom_duration", prompt)
         self.assertIn("headache", prompt)
+        self.assertIn("requested_field", prompt)
         self.assertIn('"updates"', prompt)
 
     def test_confirmation_prompt_defines_one_structured_task(self):

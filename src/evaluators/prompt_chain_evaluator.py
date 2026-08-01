@@ -59,6 +59,12 @@ def run_prompt_chain_evaluation() -> dict[str, Any]:
     results: list[dict[str, Any]] = []
 
     symptom_state = _state(WorkflowType.REPORT_NEW_SYMPTOMS)
+    symptom_state.visit_data = VisitData(
+        patient_name="Dana",
+        date_of_birth="1984-06-05",
+        email="dana@example.com",
+        phone="555-0100",
+    )
     symptom_merge = validate_and_merge_extraction(
         symptom_state,
         FieldExtractionResult(
@@ -90,7 +96,13 @@ def run_prompt_chain_evaluation() -> dict[str, Any]:
 
     correction_state = _state(
         WorkflowType.REPORT_NEW_SYMPTOMS,
-        VisitData(chief_complaint="headache"),
+        VisitData(
+            patient_name="Dana",
+            date_of_birth="1984-06-05",
+            email="dana@example.com",
+            phone="555-0100",
+            chief_complaint="headache",
+        ),
     )
     validate_and_merge_extraction(
         correction_state,
@@ -107,7 +119,13 @@ def run_prompt_chain_evaluation() -> dict[str, Any]:
 
     allergy_state = _state(
         WorkflowType.REPORT_ALLERGY,
-        VisitData(allergies=[{"allergen": "penicillin"}]),
+        VisitData(
+            patient_name="Dana",
+            date_of_birth="1984-06-05",
+            email="dana@example.com",
+            phone="555-0100",
+            allergies=[{"allergen": "penicillin"}],
+        ),
     )
     refresh_state_completeness(allergy_state)
     results.append(
@@ -162,13 +180,18 @@ def write_reports(report: dict[str, Any], output_dir: Path) -> tuple[Path, Path]
     json_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
 
     summary = report["summary"]
+    pass_rate = summary.get("pass_rate")
+    if pass_rate is None:
+        total = summary["total_scenarios"]
+        passed = summary["passed_scenarios"]
+        pass_rate = round(passed / total, 4) if total else 0.0
     lines = [
         "# Prompt Chain Evaluation Report",
         "",
         f"- Total scenarios: {summary['total_scenarios']}",
         f"- Passed: {summary['passed_scenarios']}",
         f"- Failed: {summary['failed_scenarios']}",
-        f"- Pass rate: {summary['pass_rate']}",
+        f"- Pass rate: {pass_rate}",
         "",
         "## Scenarios",
         "",

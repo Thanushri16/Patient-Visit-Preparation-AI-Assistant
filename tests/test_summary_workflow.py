@@ -47,6 +47,10 @@ def complete_symptom_state():
         workflow=WorkflowType.REPORT_NEW_SYMPTOMS,
         phase=ConversationPhase.COLLECTING,
         visit_data=VisitData(
+            patient_name="Dana",
+            date_of_birth="1984-06-05",
+            email="dana@example.com",
+            phone="555-0100",
             chief_complaint="headache",
             symptom_duration="three days",
             symptom_severity=6,
@@ -111,6 +115,10 @@ class SummaryWorkflowTests(unittest.TestCase):
             [
                 FieldExtractionResult(
                     updates=VisitDataPatch(
+                        patient_name="Dana",
+                        date_of_birth="1984-06-05",
+                        email="dana@example.com",
+                        phone="555-0100",
                         chief_complaint="headache",
                         symptom_duration="three days",
                         symptom_severity=6,
@@ -160,13 +168,13 @@ class SummaryWorkflowTests(unittest.TestCase):
     def test_view_summary_menu_option_displays_current_state_immediately(self):
         state = ConversationState(
             session_id="session-123",
-            visit_data=VisitData(chief_complaint="headache"),
+            workflow=WorkflowType.VIEW_SUMMARY,
         )
 
         response = get_chatbot_response([], "7", client=None, state=state)
 
-        self.assertEqual(state.phase, ConversationPhase.AWAITING_CONFIRMATION)
-        self.assertIn("Chief complaint: headache", response)
+        self.assertEqual(state.phase, ConversationPhase.COLLECTING)
+        self.assertIn("First, I need to confirm your name, date of birth, email, and phone", response)
 
 
 if __name__ == "__main__":

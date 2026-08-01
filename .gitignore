@@ -166,6 +166,9 @@ venv.bak/
 # Local healthcare visit records
 db/visits/
 
+# Local reports
+reports/
+
 # Spyder project settings
 .spyderproject
 .spyproject

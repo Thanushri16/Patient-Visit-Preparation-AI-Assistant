@@ -4,7 +4,7 @@ This document is the living architecture diagram and implementation tracker for 
 
 Roadmap note: this tracker covers the implemented prompt chain through the AI/API expansion work. The SRS now reserves Iteration 3 for the production RAG platform and Iteration 4 for the enterprise production platform.
 
-Last updated: 2026-07-26, after Step 12 — Direct Intent Classification
+Last updated: 2026-08-01, after Step 13 — Iteration-2 evaluation pipeline
 
 ## Architecture diagram
 
@@ -104,10 +104,11 @@ The FastAPI runtime uses the typed prompt chain for every request. The legacy mo
 | 6 | Structured extraction, validation, and safe merging | Complete | `src/extraction.py`, `src/models.py`, `src/chatbot.py` |
 | 7 | Iterative questions and conditional branches | Complete | `src/questions.py`, `src/workflow_schemas.py`, `src/extraction.py` |
 | 8 | Summary, confirmation, and corrections | Complete | `src/summary_workflow.py`, `src/chatbot.py` |
-| 9 | Recovery, persistence, observability, and evaluation | Complete | `src/persistence.py`, `src/observability.py`, `src/evaluators/prompt_chain_evaluator.py` |
+| 9 | Recovery, persistence, observability, and evaluation | Complete | `src/persistence.py`, `src/observability.py`, `src/evaluators/prompt_chain_evaluator.py`, `src/evaluators/iteration_2_evaluation_pipeline.py` |
 | 10 | Remove legacy fallback, untyped adapters, and unused prompt templates | Complete | `src/chatbot.py`, `src/app.py`, `src/prompts/` |
 | 11 | Unify menu, intent, and workflow routing metadata | Complete | `src/workflow_catalog.py`, `src/routing.py`, `src/chatbot.py` |
 | 12 | Route unhandled menu messages directly through the model intent classifier | Complete | `src/chatbot.py`, `src/workflow_catalog.py` |
+| 13 | Unified iteration-2 evaluation pipeline | Complete | `src/evaluators/iteration_2_evaluation_pipeline.py`, `src/evaluators/prompt_chain_evaluator.py`, `src/evaluators/prompt_injection_evaluator.py`, `src/evaluators/intent_classifier_evaluator.py` |
 
 ## Documentation maintenance rule
 

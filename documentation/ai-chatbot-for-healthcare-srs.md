@@ -78,7 +78,7 @@ This project will be delivered in four development iterations:
    - The system shall include quality checks for response relevance, completeness, safety, and clarity.
    - The system shall flag responses that fail quality expectations so they can be reviewed or improved before being delivered to the user.
    - **Basic skills learning:** Response review criteria, rubric-based evaluation, and simple pass/fail checks. *[Status: Implementation Complete]*
-   - **Advanced skills learning:** Automated evaluation pipelines, scoring heuristics, human-in-the-loop review, and regression testing for prompt quality. *[Status: In use / Partially complete]*
+   - **Advanced skills learning:** Automated evaluation pipelines, scoring heuristics, human-in-the-loop review, and regression testing for prompt quality. *[Status: Implementation Complete]*
 
 3. **Iteration 3 — Production RAG Platform**
    - Transform the chatbot into a production-ready pre-visit preparation assistant powered by Retrieval-Augmented Generation (RAG).

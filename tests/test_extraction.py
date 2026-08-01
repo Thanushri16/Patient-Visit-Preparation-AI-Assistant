@@ -61,9 +61,17 @@ class StructuredExtractionTests(unittest.TestCase):
         self.assertIs(client.calls[0]["response_format"], FieldExtractionResult)
         self.assertEqual(client.calls[0]["temperature"], 0.0)
         self.assertIn("I have a headache", client.calls[0]["messages"][0]["content"])
+        self.assertIn('"requested_field": null', client.calls[0]["messages"][0]["content"])
 
     def test_valid_updates_are_merged_and_completeness_is_refreshed(self):
-        state = symptom_state()
+        state = symptom_state(
+            VisitData(
+                patient_name="Dana",
+                date_of_birth="1984-06-05",
+                email="dana@example.com",
+                phone="555-0100",
+            )
+        )
         extraction = FieldExtractionResult(
             updates=VisitDataPatch(
                 chief_complaint="headache",
@@ -109,12 +117,14 @@ class StructuredExtractionTests(unittest.TestCase):
 
     def test_field_outside_active_workflow_is_rejected(self):
         state = symptom_state()
-        extraction = FieldExtractionResult(updates=VisitDataPatch(patient_name="Dana"))
+        extraction = FieldExtractionResult(
+            updates=VisitDataPatch(address={"city": "Pittsburgh"})
+        )
 
         result = validate_and_merge_extraction(state, extraction)
 
-        self.assertIn("patient_name", result.rejected_fields)
-        self.assertIsNone(state.visit_data.patient_name)
+        self.assertIn("address", result.rejected_fields)
+        self.assertIsNone(state.visit_data.address)
 
     def test_invalid_email_is_not_merged(self):
         state = ConversationState(
@@ -159,15 +169,15 @@ class StructuredExtractionTests(unittest.TestCase):
     def test_collection_turn_asks_for_next_missing_field(self):
         client = FakeStructuredClient(
             FieldExtractionResult(
-                updates=VisitDataPatch(chief_complaint="headache")
+                updates=VisitDataPatch(patient_name="Dana")
             )
         )
         state = symptom_state()
 
-        result = process_collection_turn(client, state, "I have a headache")
+        result = process_collection_turn(client, state, "Dana")
 
-        self.assertEqual(state.visit_data.chief_complaint, "headache")
-        self.assertIn("How long have you had these symptoms?", result.response)
+        self.assertEqual(state.visit_data.patient_name, "Dana")
+        self.assertIn("What is your date of birth?", result.response)
 
     def test_extraction_failure_does_not_modify_visit_data(self):
         state = symptom_state()
@@ -181,7 +191,7 @@ class StructuredExtractionTests(unittest.TestCase):
     def test_chatbot_collection_path_uses_typed_extractor(self):
         client = FakeStructuredClient(
             FieldExtractionResult(
-                updates=VisitDataPatch(chief_complaint="headache")
+                updates=VisitDataPatch(patient_name="Dana")
             )
         )
         state = symptom_state()
@@ -189,13 +199,13 @@ class StructuredExtractionTests(unittest.TestCase):
 
         response = get_chatbot_response(
             messages,
-            "I have a headache",
+            "Dana",
             client,
             state=state,
         )
 
-        self.assertIn("How long have you had these symptoms?", response)
-        self.assertEqual(state.visit_data.chief_complaint, "headache")
+        self.assertIn("What is your date of birth?", response)
+        self.assertEqual(state.visit_data.patient_name, "Dana")
         self.assertEqual(len(client.calls), 1)
 
 

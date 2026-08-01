@@ -74,7 +74,12 @@ def extract_structured_fields(
         raise ExtractionError("A workflow must be selected before extraction.")
 
     schema = get_workflow_schema(state.workflow)
-    prompt = build_extractor_prompt(latest_message, schema, state.visit_data)
+    prompt = build_extractor_prompt(
+        latest_message,
+        schema,
+        state.visit_data,
+        state.requested_field,
+    )
     response = client.chat.completions.parse(
         model=DEFAULT_MODEL,
         messages=[{"role": "user", "content": prompt}],
@@ -108,6 +113,14 @@ def _validate_field_value(field_name: str, value: object, today: date) -> str | 
 
     if field_name == "date_of_birth" and isinstance(value, date) and value >= today:
         return "Date of birth must be earlier than today."
+
+    if field_name == "symptom_duration":
+        if isinstance(value, (int, float)):
+            return "Please specify whether that means hours, days, weeks, months, or years."
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized.isdigit():
+                return "Please specify whether that means hours, days, weeks, months, or years."
 
     if field_name in {"height", "weight"}:
         unit = getattr(value, "unit", "").strip().lower()
@@ -201,11 +214,15 @@ def validate_and_merge_extraction(
     )
 
 
-def _build_collection_response(state: ConversationState, result: MergeResult) -> str:
+def _build_collection_response(
+    state: ConversationState,
+    result: MergeResult,
+    client: OpenAI | None,
+) -> str:
     if result.errors:
         field_name = result.rejected_fields[0]
         label = field_name.replace("_", " ")
-        question_selection = select_next_question(state)
+        question_selection = select_next_question(state, client)
         clarification = (
             question_selection.question
             if question_selection and question_selection.field_path == field_name
@@ -259,7 +276,7 @@ def process_collection_turn(
             error_category=type(exc).__name__,
         )
         missing_fields = refresh_state_completeness(state)
-        question_selection = select_next_question(state)
+        question_selection = select_next_question(state, client)
         direct_question = (
             f" {question_selection.question}" if question_selection is not None else ""
         )
@@ -304,6 +321,6 @@ def process_collection_turn(
         },
     )
     return CollectionTurnResult(
-        response=_build_collection_response(state, merge_result),
+        response=_build_collection_response(state, merge_result, client),
         merge_result=merge_result,
     )

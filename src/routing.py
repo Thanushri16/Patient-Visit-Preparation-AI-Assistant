@@ -133,10 +133,10 @@ def _start_workflow(
     Workflow handling is explicit by workflow type:
     - `APPOINTMENT_PREPARATION`: clear prior completion metadata, switch to `COLLECTING`, and start guided intake.
     - `REPORT_NEW_SYMPTOMS`: clear prior completion metadata, switch to `COLLECTING`, and start symptom collection.
+    - `REVIEW_HEALTH_NOTES`: clear prior completion metadata, switch to `COLLECTING`, and collect identity/contact details before review.
+    - `VIEW_SUMMARY`: clear prior completion metadata, switch to `COLLECTING`, and collect identity/contact details before summary review.
     - `REPORT_ALLERGY`: clear prior completion metadata, switch to `COLLECTING`, and start allergy collection.
     - `MEDICATION_QUESTION`: clear prior completion metadata, switch to `COLLECTING`, and start medication collection.
-    - `REVIEW_HEALTH_NOTES`: switch to `REVIEWING`, clear missing fields, and wait for summary review.
-    - `VIEW_SUMMARY`: switch to `REVIEWING`, clear missing fields, and wait for summary review.
     - `EMERGENCY_SUPPORT`: switch to `ESCALATED`, mark the emergency flag, and return the emergency response.
 
     The function also clears or resets completion metadata where needed so a new workflow starts cleanly.
@@ -158,9 +158,6 @@ def _start_workflow(
     if workflow is WorkflowType.EMERGENCY_SUPPORT:
         state.phase = ConversationPhase.ESCALATED
         state.emergency_detected = True
-        state.missing_fields = []
-    elif workflow in {WorkflowType.REVIEW_HEALTH_NOTES, WorkflowType.VIEW_SUMMARY}:
-        state.phase = ConversationPhase.REVIEWING
         state.missing_fields = []
     else:
         state.phase = ConversationPhase.COLLECTING

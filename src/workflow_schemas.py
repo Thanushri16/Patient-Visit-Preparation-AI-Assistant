@@ -57,69 +57,103 @@ INTAKE_OPTIONAL_FIELDS = (
     "notes",
 )
 
+SHARED_IDENTITY_CONTACT_FIELDS = (
+    "patient_name",
+    "date_of_birth",
+    "email",
+    "phone",
+)
+
+SHARED_IDENTITY_CONTACT_QUESTIONS = {
+    "patient_name": "What name should I use for this visit summary?",
+    "date_of_birth": "What is your date of birth? Please use MM/DD/YYYY.",
+    "email": "What email address should I include for this visit?",
+    "phone": "What phone number should I include for this visit?",
+}
+
+
+def _shared_identity_contact_questions() -> dict[str, str]:
+    return dict(SHARED_IDENTITY_CONTACT_QUESTIONS)
+
+
+def _shared_required_fields(*workflow_fields: str) -> tuple[str, ...]:
+    return SHARED_IDENTITY_CONTACT_FIELDS + workflow_fields
+
+
+def _all_visit_fields_except_shared_identity() -> tuple[str, ...]:
+    return tuple(
+        field_name
+        for field_name in VisitData.model_fields
+        if field_name not in SHARED_IDENTITY_CONTACT_FIELDS
+    )
+
 
 WORKFLOW_SCHEMAS: dict[WorkflowType, WorkflowSchema] = {
     WorkflowType.APPOINTMENT_PREPARATION: WorkflowSchema(
         workflow=WorkflowType.APPOINTMENT_PREPARATION,
-        required_fields=(
+        required_fields=_shared_required_fields(
             "chief_complaint",
             "symptom_duration",
             "symptom_severity",
             "medical_conditions",
             "current_medications",
             "allergies",
-            "patient_name",
-            "date_of_birth",
-            "email",
-            "phone",
         ),
         optional_fields=INTAKE_OPTIONAL_FIELDS,
         question_by_field={
+            **_shared_identity_contact_questions(),
             "chief_complaint": "What is the main concern you want to discuss with your clinician?",
             "symptom_duration": "How long have you been experiencing this concern?",
             "symptom_severity": "On a scale from 0 to 10, how severe is it?",
             "medical_conditions": "Do you have any existing medical conditions? You can say none.",
             "current_medications": "What medications are you currently taking? You can say none.",
             "allergies": "Do you have any medication or other allergies? You can say none.",
-            "patient_name": "What name would you like included in the appointment summary?",
-            "date_of_birth": "What is your date of birth?",
-            "email": "What email address should be included in your visit information?",
-            "phone": "What phone number should be included in your visit information?",
         },
     ),
     WorkflowType.REPORT_NEW_SYMPTOMS: WorkflowSchema(
         workflow=WorkflowType.REPORT_NEW_SYMPTOMS,
-        required_fields=("chief_complaint", "symptom_duration", "symptom_severity"),
+        required_fields=_shared_required_fields(
+            "chief_complaint",
+            "symptom_duration",
+            "symptom_severity",
+        ),
         optional_fields=("emergency_symptoms", "notes"),
         question_by_field={
+            **_shared_identity_contact_questions(),
             "chief_complaint": "What symptoms are you experiencing?",
-            "symptom_duration": "How long have you had these symptoms?",
+            "symptom_duration": "How long have you had these symptoms? If you only know a number, please include the unit, like hours, days, weeks, months, or years.",
             "symptom_severity": "On a scale from 0 to 10, how severe are the symptoms?",
         },
     ),
     WorkflowType.REPORT_ALLERGY: WorkflowSchema(
         workflow=WorkflowType.REPORT_ALLERGY,
-        required_fields=("allergies",),
+        required_fields=_shared_required_fields("allergies"),
         optional_fields=("emergency_symptoms", "notes"),
         question_by_field={
+            **_shared_identity_contact_questions(),
             "allergies": "What are you allergic to, and what reaction do you experience?",
         },
     ),
     WorkflowType.MEDICATION_QUESTION: WorkflowSchema(
         workflow=WorkflowType.MEDICATION_QUESTION,
-        required_fields=("current_medications",),
+        required_fields=_shared_required_fields("current_medications"),
         optional_fields=("allergies", "medical_conditions", "notes"),
         question_by_field={
+            **_shared_identity_contact_questions(),
             "current_medications": "Which medication would you like to discuss?",
         },
     ),
     WorkflowType.REVIEW_HEALTH_NOTES: WorkflowSchema(
         workflow=WorkflowType.REVIEW_HEALTH_NOTES,
-        optional_fields=tuple(VisitData.model_fields),
+        required_fields=SHARED_IDENTITY_CONTACT_FIELDS,
+        optional_fields=_all_visit_fields_except_shared_identity(),
+        question_by_field=_shared_identity_contact_questions(),
     ),
     WorkflowType.VIEW_SUMMARY: WorkflowSchema(
         workflow=WorkflowType.VIEW_SUMMARY,
-        optional_fields=tuple(VisitData.model_fields),
+        required_fields=SHARED_IDENTITY_CONTACT_FIELDS,
+        optional_fields=_all_visit_fields_except_shared_identity(),
+        question_by_field=_shared_identity_contact_questions(),
     ),
     WorkflowType.EMERGENCY_SUPPORT: WorkflowSchema(
         workflow=WorkflowType.EMERGENCY_SUPPORT,

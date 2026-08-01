@@ -18,12 +18,14 @@ def build_extractor_prompt(
     latest_message: str,
     schema: WorkflowSchema,
     current_data: VisitData,
+    requested_field: str | None = None,
 ) -> str:
     allowed_fields = schema.required_fields + schema.optional_fields
     context = {
         "workflow": schema.workflow.value,
         "allowed_fields": allowed_fields,
         "current_data": current_data.model_dump(mode="json"),
+        "requested_field": requested_field,
         "latest_message": latest_message,
     }
     return f"""{HEALTHCARE_ROLE_AND_SAFETY_PROMPT}
@@ -32,6 +34,8 @@ Task: Extract only information explicitly stated in the latest message.
 Context: {json.dumps(context)}
 
 Do not infer missing values. Do not return fields outside allowed_fields.
+If requested_field is present, use it as the primary clue for which field the latest answer belongs to.
+If the latest message is a short acknowledgement, filler word, or an answer that does not clearly match a field, do not guess a field; leave updates and corrections empty for that message and place the ambiguous field in uncertain_fields if needed.
 Put newly supplied values in updates and replacements of existing values in corrections.
 Put ambiguous field names in uncertain_fields.
 The structured response schema requires every patch field. Set fields that were not supplied or corrected to null.

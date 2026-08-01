@@ -21,7 +21,13 @@ def completed_state():
         workflow=WorkflowType.REPORT_NEW_SYMPTOMS,
         phase=ConversationPhase.COMPLETED,
         confirmed=True,
-        visit_data=VisitData(chief_complaint="headache"),
+        visit_data=VisitData(
+            patient_name="Dana",
+            date_of_birth="1984-06-05",
+            email="dana@example.com",
+            phone="555-0100",
+            chief_complaint="headache",
+        ),
         summary_text="Summary: headache",
     )
     return state
@@ -52,6 +58,10 @@ class ConfirmedVisitPersistenceTests(unittest.TestCase):
             self.assertEqual(payload["status"], "confirmed")
             self.assertEqual(payload["schema_version"], "1.0")
             self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
+            self.assertEqual(
+                sorted(p.name for p in Path(directory).glob("*.json")),
+                sorted(["person_index.json", f"{state.visit_id}.json"]),
+            )
             self.assertEqual(list(Path(directory).glob("*.tmp")), [])
 
     def test_save_is_idempotent_for_same_confirmed_state(self):
@@ -63,7 +73,42 @@ class ConfirmedVisitPersistenceTests(unittest.TestCase):
             second_path = repository.save_confirmed(state)
 
             self.assertEqual(first_path, second_path)
-            self.assertEqual(len(list(Path(directory).glob("*.json"))), 1)
+            self.assertEqual(
+                sorted(p.name for p in Path(directory).glob("*.json")),
+                sorted(["person_index.json", f"{state.visit_id}.json"]),
+            )
+            self.assertEqual(repository.load_by_email("dana@example.com").visit_id, state.visit_id)
+
+    def test_save_merges_updates_into_existing_email_record(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repository = JsonVisitRepository(Path(directory))
+            initial_state = completed_state()
+            repository.save_confirmed(initial_state)
+
+            updated_state = ConversationState(
+                session_id="private-session-id-2",
+                workflow=WorkflowType.REPORT_NEW_SYMPTOMS,
+                phase=ConversationPhase.COMPLETED,
+                confirmed=True,
+                visit_data=VisitData(
+                    patient_name="Dana S.",
+                    date_of_birth="1984-06-05",
+                    email="DANA@example.com",
+                    phone="555-0100",
+                    chief_complaint="headache",
+                    symptom_duration="three days",
+                ),
+                summary_text="Summary: headache with duration",
+            )
+
+            updated_path = repository.save_confirmed(updated_state)
+            loaded_record = repository.load_by_email("dana@example.com")
+
+            self.assertEqual(updated_path.name, f"{initial_state.visit_id}.json")
+            self.assertEqual(loaded_record.visit_id, initial_state.visit_id)
+            self.assertEqual(loaded_record.visit_data.symptom_duration, "three days")
+            self.assertEqual(loaded_record.visit_data.patient_name, "Dana S.")
+            self.assertEqual(loaded_record.email, "dana@example.com")
 
     def test_chatbot_confirmation_persists_when_repository_is_provided(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -72,6 +117,10 @@ class ConfirmedVisitPersistenceTests(unittest.TestCase):
                 session_id="session-123",
                 workflow=WorkflowType.REPORT_NEW_SYMPTOMS,
                 visit_data=VisitData(
+                    patient_name="Dana",
+                    date_of_birth="1984-06-05",
+                    email="dana@example.com",
+                    phone="555-0100",
                     chief_complaint="headache",
                     symptom_duration="three days",
                     symptom_severity=5,

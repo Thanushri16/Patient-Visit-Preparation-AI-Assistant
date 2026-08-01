@@ -44,10 +44,20 @@ class WorkflowSchemaTests(unittest.TestCase):
 
         missing = get_missing_fields(WorkflowType.REPORT_NEW_SYMPTOMS, visit_data)
 
-        self.assertEqual(missing, ["symptom_duration", "symptom_severity"])
+        self.assertEqual(
+            missing,
+            [
+                "patient_name",
+                "date_of_birth",
+                "email",
+                "phone",
+                "symptom_duration",
+                "symptom_severity",
+            ],
+        )
         self.assertEqual(
             get_next_missing_field(WorkflowType.REPORT_NEW_SYMPTOMS, visit_data),
-            "symptom_duration",
+            "patient_name",
         )
 
     def test_appointment_requires_identity_and_contact_fields(self):
@@ -85,6 +95,10 @@ class WorkflowSchemaTests(unittest.TestCase):
 
     def test_zero_severity_counts_as_answered(self):
         visit_data = VisitData(
+            patient_name="Dana",
+            date_of_birth="1984-06-05",
+            email="dana@example.com",
+            phone="555-0100",
             chief_complaint="follow-up",
             symptom_duration="one week",
             symptom_severity=0,
@@ -100,8 +114,14 @@ class WorkflowSchemaTests(unittest.TestCase):
 
         result = refresh_state_completeness(state)
 
-        self.assertEqual(result, ["allergies"])
-        self.assertEqual(state.missing_fields, ["allergies"])
+        self.assertEqual(
+            result,
+            ["patient_name", "date_of_birth", "email", "phone", "allergies"],
+        )
+        self.assertEqual(
+            state.missing_fields,
+            ["patient_name", "date_of_birth", "email", "phone", "allergies"],
+        )
 
     def test_schema_provides_deterministic_question_for_next_field(self):
         question = get_question_for_field(
@@ -109,7 +129,10 @@ class WorkflowSchemaTests(unittest.TestCase):
             "symptom_duration",
         )
 
-        self.assertEqual(question, "How long have you had these symptoms?")
+        self.assertEqual(
+            question,
+            "How long have you had these symptoms? If you only know a number, please include the unit, like hours, days, weeks, months, or years.",
+        )
 
     def test_partial_address_adds_conditional_missing_fields(self):
         visit_data = VisitData(
@@ -127,7 +150,13 @@ class WorkflowSchemaTests(unittest.TestCase):
         )
 
     def test_reported_allergy_requires_reaction(self):
-        visit_data = VisitData(allergies=[{"allergen": "penicillin"}])
+        visit_data = VisitData(
+            patient_name="Dana",
+            date_of_birth="1984-06-05",
+            email="dana@example.com",
+            phone="555-0100",
+            allergies=[{"allergen": "penicillin"}],
+        )
 
         missing = get_conditional_missing_fields(
             WorkflowType.REPORT_ALLERGY,
