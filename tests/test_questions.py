@@ -33,23 +33,19 @@ class QuestionSelectionTests(unittest.TestCase):
         )
         refresh_state_completeness(state)
 
+        # Without a model client the deterministic schema question is used, and
+        # the clinical complaint is what a symptom report opens with.
         selection = select_next_question(state)
 
-        self.assertEqual(selection.field_path, "patient_name")
-        self.assertEqual(selection.reason, "required")
-        self.assertEqual(state.requested_field, "patient_name")
+        self.assertEqual(selection.field_path, "chief_complaint")
+        self.assertEqual(selection.reason, "adaptive")
+        self.assertEqual(state.requested_field, "chief_complaint")
 
     def test_selects_contextual_allergy_reaction_question(self):
         state = ConversationState(
             session_id="session-123",
             workflow=WorkflowType.REPORT_ALLERGY,
-            visit_data=VisitData(
-                patient_name="Dana",
-                date_of_birth="1984-06-05",
-                email="dana@example.com",
-                phone="555-0100",
-                allergies=[{"allergen": "penicillin"}],
-            ),
+            visit_data=VisitData(allergies=[{"allergen": "penicillin"}]),
         )
         refresh_state_completeness(state)
 
@@ -63,40 +59,54 @@ class QuestionSelectionTests(unittest.TestCase):
         state = ConversationState(
             session_id="session-123",
             workflow=WorkflowType.APPOINTMENT_PREPARATION,
-            visit_data=VisitData(
-                patient_name="Dana",
-                date_of_birth="1984-06-05",
-                email="dana@example.com",
-                phone="555-0100",
-            ),
+            visit_data=VisitData(patient_name="Dana"),
         )
         refresh_state_completeness(state)
         client = FakeStructuredClient(
             AdaptiveQuestionResult(
-                field_path="chief_complaint",
+                field_path="visit_reason",
                 question="What is the main reason for your visit today?",
             )
         )
 
         selection = select_next_question(state, client)
 
-        self.assertEqual(selection.field_path, "chief_complaint")
+        self.assertEqual(selection.field_path, "visit_reason")
         self.assertEqual(selection.reason, "adaptive")
         self.assertEqual(len(client.calls), 1)
-        self.assertEqual(state.requested_field, "chief_complaint")
+        self.assertEqual(state.requested_field, "visit_reason")
+
+    def test_nested_detail_bypasses_the_adaptive_generator(self):
+        state = ConversationState(
+            session_id="session-123",
+            workflow=WorkflowType.MEDICATION_QUESTION,
+            visit_data=VisitData(current_medications=[{"name": "metformin"}]),
+        )
+        refresh_state_completeness(state)
+        client = FakeStructuredClient(
+            AdaptiveQuestionResult(field_path="allergies", question="Any allergies?")
+        )
+
+        selection = select_next_question(state, client)
+
+        # A named medication missing its dose has one precise question, so the
+        # model is never consulted and cannot redirect to an unrelated field.
+        self.assertEqual(selection.field_path, "current_medications.0.dosage")
+        self.assertEqual(selection.reason, "conditional")
+        self.assertIn("metformin", selection.question)
+        self.assertEqual(client.calls, [])
 
     def test_complete_workflow_clears_requested_field(self):
         state = ConversationState(
             session_id="session-123",
             workflow=WorkflowType.REPORT_NEW_SYMPTOMS,
             visit_data=VisitData(
-                patient_name="Dana",
-                date_of_birth="1984-06-05",
-                email="dana@example.com",
-                phone="555-0100",
                 chief_complaint="headache",
+                symptom_location="forehead",
+                symptom_onset="Monday",
                 symptom_duration="three days",
                 symptom_severity=5,
+                symptom_pattern="comes and goes",
             ),
             requested_field="symptom_severity",
         )

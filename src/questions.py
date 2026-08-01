@@ -36,7 +36,37 @@ NESTED_FIELD_QUESTIONS = {
     "address.state": "What state is the address in?",
     "address.postal_code": "What is the postal or ZIP code?",
     "insurance_info.provider_name": "What is the name of your insurance provider?",
-    "insurance_info.policy_number": "What is your insurance policy number?",
+    "insurance_info.policy_number": (
+        "What is your plan type, member ID, or group number for that insurance?"
+    ),
+}
+
+
+def _medication_detail_question(state: ConversationState, field_path: str) -> str:
+    """Ask for a named medication's missing dose or frequency."""
+
+    _, raw_index, detail = field_path.split(".")
+    try:
+        medication = state.visit_data.current_medications[int(raw_index)]
+    except (AttributeError, IndexError, TypeError, ValueError):
+        return "What dosage and how often do you take it?"
+
+    name = medication.name
+    # An unnamed or vaguely described medication needs its name before anything else.
+    if not name or name.lower() in VAGUE_MEDICATION_NAMES:
+        return "Do you know the name of the medication?"
+    if detail == "dosage":
+        return f"What dosage of {name} do you take?"
+    return f"How often do you typically take {name}?"
+
+
+VAGUE_MEDICATION_NAMES = {
+    "unknown",
+    "unspecified",
+    "the little blue pill",
+    "little blue pill",
+    "blue pill",
+    "a pill",
 }
 
 def _is_administrative_field(field_path: str) -> bool:
@@ -51,12 +81,18 @@ def _is_adaptive_field(field_path: str) -> bool:
     return not _is_administrative_field(field_path) and not _is_nested_structured_field(field_path)
 
 
+# The generator phrases the question and breaks ties between the next couple of
+# gaps; it does not get to reorder the collection sequence. Handing it the whole
+# missing list let it skip past "where does it hurt" to "when did it start".
+ADAPTIVE_CANDIDATE_LIMIT = 2
+
+
 def _adaptive_field_candidates(state: ConversationState) -> list[str]:
     return [
         field_name
         for field_name in state.missing_fields
         if _is_adaptive_field(field_name)
-    ]
+    ][:ADAPTIVE_CANDIDATE_LIMIT]
 
 
 def _build_adaptive_question(
@@ -117,7 +153,10 @@ def _allergy_reaction_question(state: ConversationState, field_path: str) -> str
         allergy = state.visit_data.allergies[allergy_index]
     except (AttributeError, IndexError, TypeError, ValueError):
         return "What reaction do you experience with that allergy?"
-    return f"What reaction do you experience with {allergy.allergen}?"
+    return (
+        f"What happens when you take {allergy.allergen}? "
+        "Also tell me if there are other allergies to add."
+    )
 
 
 def select_next_question(
@@ -131,7 +170,10 @@ def select_next_question(
         return None
 
     field_path = state.missing_fields[0]
-    if not _is_administrative_field(field_path):
+    # Nested detail (a medication's dose, an allergy's reaction) has a precise
+    # deterministic question, so only genuinely open top-level gaps are handed
+    # to the adaptive generator.
+    if _is_adaptive_field(field_path):
         adaptive_selection = _build_adaptive_question(state, client)
         if adaptive_selection is not None:
             state.requested_field = adaptive_selection.field_path
@@ -139,6 +181,9 @@ def select_next_question(
 
     if field_path.startswith("allergies.") and field_path.endswith(".reaction"):
         question = _allergy_reaction_question(state, field_path)
+        reason = "conditional"
+    elif field_path.startswith("current_medications."):
+        question = _medication_detail_question(state, field_path)
         reason = "conditional"
     elif field_path in NESTED_FIELD_QUESTIONS:
         question = NESTED_FIELD_QUESTIONS[field_path]

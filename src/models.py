@@ -71,6 +71,11 @@ class InsuranceInfo(DomainModel):
     provider_name: str | None = None
     policy_number: str | None = None
     group_number: str | None = None
+    plan_type: str | None = None
+    member_id: str | None = None
+    # ``False`` records an explicit "I have no insurance"; ``None`` means unasked.
+    has_insurance: bool | None = None
+    details_available: bool | None = None
 
 
 class Measurement(DomainModel):
@@ -96,7 +101,8 @@ class VisitData(DomainModel):
 
     A value of ``None`` means that the user has not answered the field. For
     collection fields, an empty list means that the user explicitly reported
-    none.
+    none — for example, an empty ``allergies`` list is a recorded "no known
+    drug allergies" rather than an unanswered question.
     """
 
     patient_name: str | None = Field(default=None, max_length=200)
@@ -108,9 +114,36 @@ class VisitData(DomainModel):
     phone: str | None = Field(default=None, max_length=50)
     address: Address | None = None
     insurance_info: InsuranceInfo | None = None
+
+    # Appointment logistics.
+    visit_reason: str | None = Field(default=None, max_length=1_000)
+    provider_name: str | None = Field(default=None, max_length=200)
+    appointment_date: str | None = Field(default=None, max_length=200)
+    appointment_time: str | None = Field(default=None, max_length=100)
+    visit_type: str | None = Field(default=None, max_length=200)
+    referral_source: str | None = Field(default=None, max_length=300)
+    new_patient: bool | None = None
+    patient_context: str | None = Field(default=None, max_length=500)
+
+    # Pre-visit preparation details.
+    documents_status: str | None = Field(default=None, max_length=500)
+    fasting_status: str | None = Field(default=None, max_length=300)
+    accessibility_needs: list[str] | None = None
+    special_instructions: list[str] | None = None
+    transportation_needs: str | None = Field(default=None, max_length=500)
+    companion: str | None = Field(default=None, max_length=300)
+
+    # Clinical detail.
     chief_complaint: str | None = Field(default=None, max_length=1_000)
+    symptom_location: str | None = Field(default=None, max_length=300)
+    symptom_onset: str | None = Field(default=None, max_length=200)
     symptom_duration: str | None = Field(default=None, max_length=200)
     symptom_severity: int | None = Field(default=None, ge=0, le=10)
+    symptom_pattern: str | None = Field(default=None, max_length=300)
+    symptom_progression: str | None = Field(default=None, max_length=300)
+    aggravating_factors: str | None = Field(default=None, max_length=300)
+    relieving_factors: str | None = Field(default=None, max_length=300)
+    associated_symptoms: list[str] | None = None
     medical_conditions: list[str] | None = None
     current_medications: list[Medication] | None = None
     allergies: list[Allergy] | None = None
@@ -124,32 +157,13 @@ class VisitData(DomainModel):
         return _parse_date_of_birth(value)
 
 
-class VisitDataPatch(DomainModel):
-    """Optional visit fields proposed by one extraction call."""
+class VisitDataPatch(VisitData):
+    """Optional visit fields proposed by one extraction call.
 
-    patient_name: str | None = None
-    date_of_birth: date | None = None
-    gender: str | None = None
-    height: Measurement | None = None
-    weight: Measurement | None = None
-    email: str | None = None
-    phone: str | None = None
-    address: Address | None = None
-    insurance_info: InsuranceInfo | None = None
-    chief_complaint: str | None = None
-    symptom_duration: str | None = None
-    symptom_severity: int | None = Field(default=None, ge=0, le=10)
-    medical_conditions: list[str] | None = None
-    current_medications: list[Medication] | None = None
-    allergies: list[Allergy] | None = None
-    lifestyle_info: str | None = None
-    emergency_symptoms: list[str] | None = None
-    notes: list[str] | None = None
-
-    @field_validator("date_of_birth", mode="before")
-    @classmethod
-    def validate_date_of_birth(cls, value):
-        return _parse_date_of_birth(value)
+    Every field is already optional on ``VisitData``, so a patch is structurally
+    the same document. Deriving it keeps the extractor's response schema from
+    drifting away from the canonical model when fields are added.
+    """
 
 
 class FieldExtractionResult(DomainModel):

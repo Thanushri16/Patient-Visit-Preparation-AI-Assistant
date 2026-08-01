@@ -39,69 +39,64 @@ class WorkflowSchemaTests(unittest.TestCase):
                 optional_fields=("chief_complaint",),
             )
 
-    def test_missing_fields_follow_configured_collection_order(self):
+    def test_clinical_fields_are_collected_before_identity_details(self):
         visit_data = VisitData(chief_complaint="headache")
 
         missing = get_missing_fields(WorkflowType.REPORT_NEW_SYMPTOMS, visit_data)
 
+        # Identity and contact details are optional, so a patient reporting a
+        # headache is asked about the headache rather than for an email address.
         self.assertEqual(
             missing,
             [
-                "patient_name",
-                "date_of_birth",
-                "email",
-                "phone",
-                "symptom_duration",
+                "symptom_location",
                 "symptom_severity",
+                "symptom_duration",
+                "symptom_onset",
+                "symptom_pattern",
             ],
         )
         self.assertEqual(
             get_next_missing_field(WorkflowType.REPORT_NEW_SYMPTOMS, visit_data),
-            "patient_name",
+            "symptom_location",
         )
 
-    def test_appointment_requires_identity_and_contact_fields(self):
+    def test_appointment_intake_requires_visit_logistics(self):
         missing = get_missing_fields(
             WorkflowType.APPOINTMENT_PREPARATION,
-            VisitData(
-                chief_complaint="annual checkup",
-                symptom_duration="not applicable",
-                symptom_severity=0,
-                medical_conditions=[],
-                current_medications=[],
-                allergies=[],
-            ),
+            VisitData(chief_complaint="annual checkup"),
         )
 
-        self.assertEqual(missing, ["patient_name", "date_of_birth", "email", "phone"])
+        self.assertEqual(
+            missing,
+            ["visit_reason", "appointment_date", "provider_name", "insurance_info"],
+        )
 
     def test_empty_lists_count_as_explicitly_answered(self):
         visit_data = VisitData(
-            patient_name="Dana",
-            date_of_birth="1984-06-05",
-            email="dana@example.com",
-            phone="555-0100",
             chief_complaint="annual checkup",
+            symptom_location="not applicable",
+            symptom_onset="not applicable",
             symptom_duration="not applicable",
             symptom_severity=0,
+            symptom_pattern="not applicable",
             medical_conditions=[],
             current_medications=[],
             allergies=[],
         )
 
         self.assertTrue(
-            is_workflow_complete(WorkflowType.APPOINTMENT_PREPARATION, visit_data)
+            is_workflow_complete(WorkflowType.REPORT_NEW_SYMPTOMS, visit_data)
         )
 
     def test_zero_severity_counts_as_answered(self):
         visit_data = VisitData(
-            patient_name="Dana",
-            date_of_birth="1984-06-05",
-            email="dana@example.com",
-            phone="555-0100",
             chief_complaint="follow-up",
+            symptom_location="left knee",
+            symptom_onset="last Monday",
             symptom_duration="one week",
             symptom_severity=0,
+            symptom_pattern="constant",
         )
 
         self.assertTrue(is_workflow_complete(WorkflowType.REPORT_NEW_SYMPTOMS, visit_data))
@@ -114,13 +109,17 @@ class WorkflowSchemaTests(unittest.TestCase):
 
         result = refresh_state_completeness(state)
 
+        self.assertEqual(result, ["allergies"])
+        self.assertEqual(state.missing_fields, ["allergies"])
+
+    def test_named_medication_without_dose_asks_for_its_detail_first(self):
+        visit_data = VisitData(current_medications=[{"name": "metformin"}])
+
+        missing = get_missing_fields(WorkflowType.MEDICATION_QUESTION, visit_data)
+
         self.assertEqual(
-            result,
-            ["patient_name", "date_of_birth", "email", "phone", "allergies"],
-        )
-        self.assertEqual(
-            state.missing_fields,
-            ["patient_name", "date_of_birth", "email", "phone", "allergies"],
+            missing,
+            ["current_medications.0.dosage", "current_medications.0.frequency"],
         )
 
     def test_schema_provides_deterministic_question_for_next_field(self):
@@ -150,13 +149,7 @@ class WorkflowSchemaTests(unittest.TestCase):
         )
 
     def test_reported_allergy_requires_reaction(self):
-        visit_data = VisitData(
-            patient_name="Dana",
-            date_of_birth="1984-06-05",
-            email="dana@example.com",
-            phone="555-0100",
-            allergies=[{"allergen": "penicillin"}],
-        )
+        visit_data = VisitData(allergies=[{"allergen": "penicillin"}])
 
         missing = get_conditional_missing_fields(
             WorkflowType.REPORT_ALLERGY,

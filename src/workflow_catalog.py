@@ -132,18 +132,55 @@ MENU_PROMPT_RESPONSE = "\n".join(
 )
 
 
+ROUTING_RULES = (
+    "Routing rules:",
+    "- Anything about an upcoming visit — its reason, date, time, provider, "
+    "insurance, documents, fasting, transport, accommodations, or nerves about "
+    "it — is appointment_preparation.",
+    "- A bodily complaint or new/changed symptom is report_new_symptoms.",
+    "- A named drug, dose, frequency, or a question about a treatment is "
+    "medication_question.",
+    "- An allergy or a reaction to a substance is report_allergy.",
+    "- Asking to see, generate, or check the collected summary is view_summary.",
+    "- Asking to revisit previously stored notes is review_health_notes.",
+    "- Only pick show_menu when the user asks what you can do or wants the "
+    "option list; never pick it just because a message is short.",
+    "- If the message mixes several of these, choose the one carrying the most "
+    "clinically urgent or most specific information.",
+    "- A greeting or farewell attached to real content is classified by that "
+    "content, not as a menu request.",
+)
+
+EXTRA_FEW_SHOT_EXAMPLES = (
+    {"text": "I need a checkup", "intent": "appointment_preparation"},
+    {"text": "My appointment is January 15th at 2:30 PM", "intent": "appointment_preparation"},
+    {"text": "I have Blue Cross Blue Shield, policy number BC12345", "intent": "appointment_preparation"},
+    {"text": "What documents do I need to bring?", "intent": "appointment_preparation"},
+    {"text": "I'm really nervous about this appointment", "intent": "appointment_preparation"},
+    {"text": "My stomach hurts", "intent": "report_new_symptoms"},
+    {"text": "Hi! I've been having trouble sleeping lately", "intent": "report_new_symptoms"},
+    {"text": "I take metformin 500mg twice a day", "intent": "medication_question"},
+    {"text": "I take the little blue pill for cholesterol", "intent": "medication_question"},
+    {"text": "I'm allergic to penicillin", "intent": "report_allergy"},
+    {"text": "Show me what you have so far", "intent": "view_summary"},
+    {"text": "Generate my visit summary", "intent": "view_summary"},
+)
+
+
 def build_intent_classifier_prompt(latest_message: str) -> str:
     """Build the classifier prompt from catalog-generated labels and examples."""
 
     lines = [
         "You are an intent classifier for a healthcare appointment preparation chatbot.",
-        "Classify the user message into one of these intents:",
+        "Classify the user message into exactly one of these intents:",
         f"{', '.join(INTENT_LABELS)}.",
-        "Respond with only the intent label.",
+        "Respond with only the intent label and nothing else.",
+        "",
+        *ROUTING_RULES,
         "",
         "Examples:",
     ]
-    for example in FEW_SHOT_EXAMPLES:
+    for example in (*FEW_SHOT_EXAMPLES, *EXTRA_FEW_SHOT_EXAMPLES):
         lines.extend(
             [
                 f"User: {example['text']}",

@@ -10,13 +10,22 @@ This project is for educational and appointment-preparation purposes. It does no
 
 The implemented prompt chain supports:
 
-- Appointment preparation and patient intake
+- Appointment preparation and patient intake, including visit reason, provider,
+  date and time, insurance, documents, accessibility needs, and pre-visit
+  instructions
 - Symptom, allergy, and medication-information workflows
-- Healthcare menu and intent-based routing
-- Required identity and contact details for appointment preparation
-- Conditional questions for address, insurance, and allergy reactions
-- Emergency symptom detection and escalation
-- Structured summary review, correction, and confirmation
+- Healthcare menu and intent-based routing, where a message that selects a
+  workflow is also extracted rather than discarded
+- Clinical detail collected before administrative detail, so a reported symptom
+  is followed up on before contact information is requested
+- Conditional questions for medication doses, allergy reactions, insurance
+  details, and address
+- Emergency detection with guidance specific to the emergency, and past,
+  resolved events treated as history rather than escalated
+- Educational answers to general preparation questions, acknowledgement of
+  expressed worry, and answers to questions about what has already been recorded
+- Structured summary review, correction, and confirmation, in prose for reading
+  and as a schema-complete JSON document when one is requested
 - Local storage of confirmed summaries under UUID visit IDs
 
 See [the SRS](documentation/ai-chatbot-for-healthcare-srs.md) for full product requirements and future platform scope. See [the prompt-chaining architecture](documentation/prompt_chaining_architecture.md) for the runtime diagram and implementation tracker.
@@ -39,15 +48,23 @@ The current codebase covers the MVP and AI workflow expansion. The SRS now reser
 │   ├── routing.py                             # State-aware workflow routing
 │   ├── workflow_catalog.py                    # Menu and intent metadata source of truth
 │   ├── workflow_schemas.py                    # Required fields and completeness rules
-│   ├── extraction.py                          # Structured extraction and validation
-│   ├── questions.py                           # Deterministic next-question selection
+│   ├── extraction.py                          # Structured extraction, validation, and merging
+│   ├── questions.py                           # Next-question selection and adaptive follow-ups
+│   ├── guidance.py                            # Educational answers, empathy, and state recall
 │   ├── summary_workflow.py                    # Summary and confirmation workflow
 │   ├── moderation.py                          # Input/output safety checks
 │   ├── persistence.py                         # Confirmed-visit JSON persistence
 │   ├── observability.py                       # Privacy-safe prompt-chain events
-│   ├── prompts/                               # Model-backed extractor and confirmation prompts
+│   ├── prompts/                               # Model-backed extractor, follow-up, and confirmation prompts
 │   └── evaluators/                            # Regression and Excel-driven benchmark evaluations
-│       └── benchmarks/                        # Loader, API runner, 3-layer scorer, reports, and CLI
+│       └── benchmarks/
+│           ├── test_loader.py                 # Excel scenario loader
+│           ├── test_runner.py                 # Governed API execution
+│           ├── evaluator.py                   # Contract, state, and LLM-judge scoring
+│           ├── rate_limiter.py                # Adaptive concurrency and jittered backoff
+│           ├── checkpoint.py                  # Batch checkpointing and resume
+│           ├── report_generator.py            # Console and JSON reports
+│           └── run_benchmarks.py              # CLI entry point
 ├── tests/                                     # Unit and workflow tests
 ├── reports/                                   # Generated evaluation reports
 ├── db/visits/                                 # Runtime-only confirmed visit records
@@ -112,6 +129,12 @@ Run one test module, for example:
 uv run python -m unittest tests.test_routing -v
 ```
 
+The suite is offline and deterministic: model clients are faked, so no test
+makes a paid API call. It covers the workflow schemas and completeness rules,
+routing and global commands, extraction and merging, question selection, the
+summary and confirmation workflow, the safety guardrails, and the benchmark
+runner's rate-limit and checkpoint behaviour.
+
 Run the deterministic prompt-chain regression evaluation:
 
 ```bash
@@ -144,7 +167,32 @@ uv run python -m src.evaluators.benchmarks.run_benchmarks \
 
 The benchmark runs deterministic contract and state checks plus an LLM-as-judge
 evaluation. It writes full, summary, and failure-only JSON reports under
-`reports/benchmarks/`. Useful options include:
+`reports/benchmarks/`.
+
+#### Rate-limit handling
+
+The suite drives an API that itself makes several model calls per turn, so the
+practical ceiling on throughput is the provider's rate limit. Rather than
+hard-coding a concurrency figure, the runner discovers a safe one:
+
+- Scenarios run in small batches, starting at a deliberately low parallelism.
+  An AIMD governor raises the limit by one after a sustained run of clean
+  responses and halves it the moment a rate limit appears, so the suite settles
+  at a level the provider tolerates.
+- Every call — both benchmark turns and judge calls — retries throttling and
+  transient server errors with exponential backoff and full jitter, honouring a
+  server-supplied `Retry-After` when one is present.
+- Each finished batch is appended to a checkpoint file. Re-running the same
+  command resumes from it and evaluates only what is left; pass `--fresh` to
+  start over.
+- A case that exhausts its retry budget is recorded as `ERROR` and skipped. A
+  rate limit never fails the run, and the full report is always produced.
+
+The end of the run prints the counters that describe this — attempts, rate-limit
+hits, retries, permanent failures, concurrency changes, and total time spent
+backing off.
+
+Useful options include:
 
 ```bash
 # Run one category
@@ -158,6 +206,10 @@ uv run python -m src.evaluators.benchmarks.run_benchmarks \
 # Target another deployment
 uv run python -m src.evaluators.benchmarks.run_benchmarks \
   --base-url http://staging:8000 --output-dir reports/staging-benchmark
+
+# Stay deliberately gentle on a constrained API key
+uv run python -m src.evaluators.benchmarks.run_benchmarks \
+  --start-concurrency 1 --max-concurrency 2 --batch-size 5 --batch-pause 2
 ```
 
 ## Data and deployment notes

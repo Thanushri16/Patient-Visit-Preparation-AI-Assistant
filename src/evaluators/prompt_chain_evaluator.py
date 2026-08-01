@@ -70,8 +70,11 @@ def run_prompt_chain_evaluation() -> dict[str, Any]:
         FieldExtractionResult(
             updates=VisitDataPatch(
                 chief_complaint="headache",
+                symptom_location="forehead",
+                symptom_onset="Monday",
                 symptom_duration="three days",
                 symptom_severity=5,
+                symptom_pattern="comes and goes",
             )
         ),
     )

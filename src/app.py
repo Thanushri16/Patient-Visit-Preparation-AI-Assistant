@@ -236,7 +236,10 @@ async def chat(request: Request):
     if not prompt:
         return JSONResponse(
             {
-                "reply": "Please enter a message.",
+                "reply": (
+                    "I didn't receive a message. Type what you'd like help with, "
+                    "or say menu to see the options."
+                ),
                 "intent": "unknown",
                 "state": {},
                 "is_emergency": False,
@@ -270,7 +273,11 @@ async def chat(request: Request):
             "intent": session.state.workflow.value if session.state.workflow else "unknown",
             "state": session.state.model_dump(mode="json"),
             "is_emergency": session.state.emergency_detected,
-            "safety_triggered": input_moderation.action in {"block", "escalate"},
+            # Every guardrail action that changed what the assistant would
+            # otherwise have said counts as triggered, including a request that
+            # was declined and an embedded payload that was stripped out.
+            "safety_triggered": input_moderation.action
+            in {"block", "escalate", "redirect", "neutralize"},
         }
     )
 

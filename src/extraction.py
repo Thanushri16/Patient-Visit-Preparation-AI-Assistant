@@ -14,6 +14,7 @@ try:
         DomainModel,
         FieldExtractionResult,
         VisitData,
+        VisitDataPatch,
     )
     from .observability import emit_chain_event
     from .prompts.extractor import EXTRACTOR_PROMPT_VERSION, build_extractor_prompt
@@ -24,7 +25,13 @@ try:
     )
 except ImportError:  # pragma: no cover - allows running as a script
     from chatbot_content import DEFAULT_MODEL
-    from models import ConversationState, DomainModel, FieldExtractionResult, VisitData
+    from models import (
+        ConversationState,
+        DomainModel,
+        FieldExtractionResult,
+        VisitData,
+        VisitDataPatch,
+    )
     from observability import emit_chain_event
     from prompts.extractor import EXTRACTOR_PROMPT_VERSION, build_extractor_prompt
     from questions import select_next_question
@@ -52,6 +59,12 @@ class MergeResult(DomainModel):
     rejected_fields: list[str] = Field(default_factory=list)
     errors: dict[str, str] = Field(default_factory=dict)
     missing_fields: list[str] = Field(default_factory=list)
+    # Fields whose previous value this turn replaced, so the reply can confirm
+    # the change rather than silently overwriting the record.
+    corrected_fields: list[str] = Field(default_factory=list)
+    # Fields the extractor proposed that the active workflow does not collect.
+    # Recorded for diagnosis; never shown to the user.
+    ignored_fields: list[str] = Field(default_factory=list)
 
 
 class CollectionTurnResult(DomainModel):
@@ -59,6 +72,57 @@ class CollectionTurnResult(DomainModel):
 
     response: str
     merge_result: MergeResult
+
+
+PLACEHOLDER_VALUES = {
+    "unknown",
+    "not sure",
+    "unsure",
+    "n/a",
+    "na",
+    "none specified",
+    "not specified",
+    "not provided",
+    "tbd",
+    "unspecified",
+}
+
+NOT_KNOWING_PATTERN = re.compile(
+    r"\b(not sure|unsure|don'?t know|do not know|no idea|can'?t remember|"
+    r"cannot remember|haven'?t decided|not certain)\b",
+    flags=re.IGNORECASE,
+)
+
+
+def drop_unsupported_placeholders(
+    extraction: FieldExtractionResult,
+    latest_message: str,
+) -> FieldExtractionResult:
+    """Remove placeholder values the user never actually expressed.
+
+    Asked to record "unknown" when a patient says they do not know something,
+    the extractor will sometimes volunteer "unknown" for fields the message
+    never mentioned — which writes fabricated data into the record. A
+    placeholder is kept only when the message really does express not knowing.
+    """
+
+    if NOT_KNOWING_PATTERN.search(latest_message):
+        return extraction
+
+    def cleaned(patch: VisitDataPatch) -> VisitDataPatch:
+        payload = patch.model_dump(exclude_none=True)
+        kept = {
+            field_name: value
+            for field_name, value in payload.items()
+            if not (isinstance(value, str) and value.strip().lower() in PLACEHOLDER_VALUES)
+        }
+        return VisitDataPatch.model_validate(kept)
+
+    return FieldExtractionResult(
+        updates=cleaned(extraction.updates),
+        corrections=cleaned(extraction.corrections),
+        uncertain_fields=extraction.uncertain_fields,
+    )
 
 
 def extract_structured_fields(
@@ -119,7 +183,17 @@ def _validate_field_value(field_name: str, value: object, today: date) -> str | 
             return "Please specify whether that means hours, days, weeks, months, or years."
         if isinstance(value, str):
             normalized = value.strip().lower()
-            if normalized.isdigit():
+            # "about 3" carries a number but no unit, which is unusable — 3 hours
+            # and 3 months are very different clinical pictures.
+            has_number = bool(re.search(r"\d", normalized))
+            has_unit = bool(
+                re.search(
+                    r"\b(hour|hr|day|week|wk|month|mo|year|yr)s?\b|"
+                    r"\b(today|yesterday|overnight|since)\b",
+                    normalized,
+                )
+            )
+            if has_number and not has_unit:
                 return "Please specify whether that means hours, days, weeks, months, or years."
 
     if field_name in {"height", "weight"}:
@@ -127,6 +201,18 @@ def _validate_field_value(field_name: str, value: object, today: date) -> str | 
         allowed_units = HEIGHT_UNITS if field_name == "height" else WEIGHT_UNITS
         if unit not in allowed_units:
             return f"Use a supported {field_name} unit."
+
+    if field_name == "current_medications" and isinstance(value, list):
+        for item in value:
+            dosage = item.get("dosage") if isinstance(item, dict) else getattr(item, "dosage", None)
+            # "500 of metformin" is not a dose — 500 mg and 500 mcg differ
+            # thousandfold, so a bare number has to be clarified.
+            if (
+                isinstance(dosage, str)
+                and re.search(r"\d", dosage)
+                and not re.search(r"[a-z]", dosage, flags=re.IGNORECASE)
+            ):
+                return "Please include the unit, such as mg, mcg, g, ml, or IU."
 
     if field_name in {"medical_conditions", "emergency_symptoms", "notes"}:
         if not isinstance(value, list) or any(
@@ -137,7 +223,56 @@ def _validate_field_value(field_name: str, value: object, today: date) -> str | 
     return None
 
 
+LIST_ITEM_KEY = {
+    "current_medications": "name",
+    "allergies": "allergen",
+}
+
+
+def _merge_list_value(field_name: str, current_value: object, value: object) -> object:
+    """Accumulate list entries across turns instead of replacing them.
+
+    "I take lisinopril" followed by "Also metformin" has to end with both
+    medications recorded. Entries are matched on their identifying key so a later
+    turn supplying a dose fills in the existing entry rather than duplicating it.
+    An explicitly empty list is a deliberate "none", and replaces what is there.
+    """
+
+    if not isinstance(current_value, list) or not isinstance(value, list) or not value:
+        return value
+
+    key = LIST_ITEM_KEY.get(field_name)
+    if key is None:
+        merged = list(current_value)
+        merged.extend(item for item in value if item not in merged)
+        return merged
+
+    def identity(item: object) -> str:
+        if isinstance(item, dict):
+            return str(item.get(key, "")).strip().lower()
+        return str(getattr(item, key, "")).strip().lower()
+
+    merged: list[dict] = [
+        item.model_dump(exclude_none=True) if hasattr(item, "model_dump") else dict(item)
+        for item in current_value
+    ]
+    index_by_identity = {identity(item): position for position, item in enumerate(merged)}
+    for item in value:
+        payload = item.model_dump(exclude_none=True) if hasattr(item, "model_dump") else dict(item)
+        position = index_by_identity.get(identity(item))
+        if position is None:
+            index_by_identity[identity(item)] = len(merged)
+            merged.append(payload)
+        else:
+            merged[position] = {**merged[position], **payload}
+    return merged
+
+
 def _merge_nested_value(field_name: str, current_value: object, value: object) -> object:
+    """Combine a proposed value with what state already holds for that field."""
+
+    if field_name in LIST_ITEM_KEY or isinstance(current_value, list):
+        return _merge_list_value(field_name, current_value, value)
     if field_name not in {"address", "insurance_info"}:
         return value
     if current_value is None or not isinstance(value, dict):
@@ -163,25 +298,28 @@ def validate_and_merge_extraction(
     proposed_fields = {**updates, **corrections}
     errors: dict[str, str] = {}
     accepted: dict[str, object] = {}
+    corrected: list[str] = []
 
-    for field_name in extraction.uncertain_fields:
-        if field_name in allowed_fields:
-            errors[field_name] = "Please clarify this value."
-        else:
-            errors[field_name] = "This field is not collected by the active workflow."
+    # An uncertain field is a gap to ask about, not a failed write.
+    uncertain = [name for name in extraction.uncertain_fields if name in allowed_fields]
+    # A field outside the active workflow is dropped in silence. Which fields a
+    # workflow happens to collect is an internal concern, and asking a patient
+    # who just reported an allergy to restate their "symptoms" because the
+    # extractor also proposed a chief complaint is nonsense to them.
+    ignored = [
+        name
+        for name in {*proposed_fields, *extraction.uncertain_fields}
+        if name not in allowed_fields
+    ]
 
     current_payload = state.visit_data.model_dump()
     for field_name, value in proposed_fields.items():
         if field_name not in allowed_fields:
-            errors[field_name] = "This field is not collected by the active workflow."
             continue
 
         current_value = getattr(state.visit_data, field_name)
         value = _merge_nested_value(field_name, current_value, value)
-        if field_name in updates and current_value is not None and field_name not in corrections:
-            if current_payload[field_name] == value:
-                continue
-            errors[field_name] = "Use an explicit correction to replace the existing value."
+        if current_value is not None and current_payload[field_name] == value:
             continue
 
         if field_error := _validate_field_value(field_name, value, validation_date):
@@ -194,6 +332,11 @@ def validate_and_merge_extraction(
         except ValidationError:
             errors[field_name] = "The value does not match the required format."
             continue
+        # The latest statement wins. A patient who says "actually it's Dr. Jones"
+        # is correcting the record whether or not the extractor labelled it as a
+        # correction, so the overwrite is applied and reported back for confirmation.
+        if current_value is not None:
+            corrected.append(field_name)
         accepted[field_name] = value
 
     if accepted:
@@ -205,13 +348,106 @@ def validate_and_merge_extraction(
     else:
         state.validation_attempt_count = 0
     missing_fields = refresh_state_completeness(state)
+    # A field the patient tried to answer but answered vaguely — "about 3",
+    # "pretty bad" — is the most useful thing to ask about next, ahead of
+    # fields they have not touched at all.
+    if uncertain:
+        prioritized = [name for name in uncertain if name in missing_fields]
+        missing_fields = prioritized + [
+            name for name in missing_fields if name not in prioritized
+        ]
+        state.missing_fields = missing_fields
 
     return MergeResult(
         accepted_fields=list(accepted),
         rejected_fields=list(errors),
         errors=errors,
         missing_fields=missing_fields,
+        corrected_fields=corrected,
+        ignored_fields=sorted(ignored),
     )
+
+
+FIELD_LABELS = {
+    "visit_reason": "reason for the visit",
+    "provider_name": "provider",
+    "appointment_date": "appointment date",
+    "appointment_time": "appointment time",
+    "visit_type": "visit type",
+    "referral_source": "referral",
+    "chief_complaint": "symptoms",
+    "symptom_location": "location",
+    "symptom_onset": "onset",
+    "symptom_duration": "duration",
+    "symptom_severity": "severity",
+    "symptom_pattern": "pattern",
+    "current_medications": "medications",
+    "medical_conditions": "medical conditions",
+    "insurance_info": "insurance",
+    "accessibility_needs": "accessibility needs",
+    "special_instructions": "pre-visit instructions",
+    "documents_status": "documents",
+    "fasting_status": "fasting instructions",
+    "transportation_needs": "transportation",
+    "patient_name": "name",
+    "date_of_birth": "date of birth",
+}
+
+
+def describe_field_value(field_name: str, value: object) -> str:
+    """Render one recorded field as a short phrase for the acknowledgement line."""
+
+    label = FIELD_LABELS.get(field_name, field_name.replace("_", " "))
+    if isinstance(value, list):
+        if not value:
+            # An explicit denial is clinical information. "No known drug
+            # allergies (NKDA)" is how it is recorded on a chart, and saying so
+            # shows the denial was understood rather than merely left blank.
+            if field_name == "allergies":
+                return "no known drug allergies (NKDA)"
+            return f"no {label}"
+        parts = []
+        for item in value:
+            if hasattr(item, "name"):
+                detail = " ".join(
+                    filter(None, [item.name, item.dosage or "", item.frequency or ""])
+                )
+                parts.append(detail.strip())
+            elif hasattr(item, "allergen"):
+                reaction = f" ({item.reaction})" if item.reaction else ""
+                parts.append(f"{item.allergen}{reaction}")
+            else:
+                parts.append(str(item))
+        return f"{label}: {', '.join(parts)}"
+    if hasattr(value, "model_dump"):
+        rendered = ", ".join(
+            str(item) for item in value.model_dump(exclude_none=True).values()
+        )
+        return f"{label}: {rendered}" if rendered else label
+    if field_name == "symptom_severity":
+        return f"severity {value}/10"
+    return f"{label}: {value}"
+
+
+def build_acknowledgement(state: ConversationState, result: MergeResult) -> str:
+    """Summarise what this turn recorded, so the user can see it was understood."""
+
+    if not result.accepted_fields:
+        return ""
+    described = [
+        describe_field_value(field_name, getattr(state.visit_data, field_name))
+        for field_name in result.accepted_fields
+    ]
+    corrected = [
+        FIELD_LABELS.get(field_name, field_name.replace("_", " "))
+        for field_name in result.corrected_fields
+    ]
+    lead = (
+        f"I've updated your {', '.join(corrected)}."
+        if corrected
+        else "Thanks — I've recorded that."
+    )
+    return f"{lead} So far I have {'; '.join(described)}."
 
 
 def _build_collection_response(
@@ -219,32 +455,31 @@ def _build_collection_response(
     result: MergeResult,
     client: OpenAI | None,
 ) -> str:
+    """Compose the turn's reply: what was captured, then the single next question."""
+
     if result.errors:
         field_name = result.rejected_fields[0]
-        label = field_name.replace("_", " ")
+        label = FIELD_LABELS.get(field_name, field_name.replace("_", " "))
         question_selection = select_next_question(state, client)
         clarification = (
             question_selection.question
             if question_selection and question_selection.field_path == field_name
-            else "Please provide that information again."
+            else "Could you give me that detail again?"
         )
         if state.validation_attempt_count >= MAX_VALIDATION_ATTEMPTS:
             return (
-                f"I still couldn't validate {label}: {result.errors[field_name]} "
+                f"I still couldn't record the {label}: {result.errors[field_name]} "
                 f"{clarification} You can also type menu or restart if you cannot provide it."
             )
-        return f"I couldn't record {label}: {result.errors[field_name]} {clarification}"
+        return f"I need one clarification on the {label}. {result.errors[field_name]} {clarification}"
 
-    question_selection = select_next_question(state)
+    acknowledgement = build_acknowledgement(state, result)
+    question_selection = select_next_question(state, client)
     if question_selection:
-        prefix = "Thanks, I've recorded that. " if result.accepted_fields else ""
-        return prefix + question_selection.question
+        return f"{acknowledgement} {question_selection.question}".strip()
 
-    if not result.missing_fields:
-        state.requested_field = None
-        return "Thanks, I have collected all required information for this workflow."
-
-    return "Please provide the next requested detail."
+    state.requested_field = None
+    return (acknowledgement or "Thanks — I've recorded that.").strip()
 
 
 def process_collection_turn(
@@ -297,6 +532,7 @@ def process_collection_turn(
             merge_result=MergeResult(missing_fields=missing_fields),
         )
 
+    extraction = drop_unsupported_placeholders(extraction, latest_message)
     state.extraction_retry_count = 0
     emit_chain_event(
         state,

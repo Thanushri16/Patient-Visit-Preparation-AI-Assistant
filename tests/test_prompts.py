@@ -1,5 +1,6 @@
 """Unit tests for versioned prompts used by model-backed chain nodes."""
 
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -24,7 +25,12 @@ class PromptBuilderTests(unittest.TestCase):
         }
 
         self.assertEqual(len(versions), 2)
-        self.assertTrue(all(version.endswith("_v1") for version in versions))
+        # Each prompt is versioned on its own so one can be revised without
+        # invalidating the observability history of the others.
+        self.assertTrue(
+            all(re.search(r"_v\d+$", version) for version in versions),
+            versions,
+        )
 
     def test_extractor_receives_schema_state_and_latest_message(self):
         prompt = build_extractor_prompt(

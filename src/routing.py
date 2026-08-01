@@ -68,6 +68,12 @@ class RouteDecision(DomainModel):
     confidence: float = Field(default=1.0, ge=0, le=1)
     source: str
     response: str | None = None
+    # True when the routed message still carries content the workflow should
+    # extract. Picking a numbered menu option conveys nothing to extract, but
+    # "I've had a headache for three days" both selects the workflow and answers
+    # its first questions — dropping it would make the bot re-ask what it was
+    # just told.
+    collect_message: bool = False
 
 
 GLOBAL_COMMANDS = {
@@ -176,6 +182,9 @@ def _start_workflow(
         confidence=confidence,
         source=source,
         response=start_response,
+        collect_message=(
+            source == "intent_classifier" and workflow is not WorkflowType.EMERGENCY_SUPPORT
+        ),
     )
 
 
@@ -312,6 +321,6 @@ def route_message(
     return _menu_decision(
         state,
         RouteAction.FALLBACK,
-        "I couldn't determine which workflow you need. Please choose an option.\n\n"
-        + MENU_PROMPT_RESPONSE,
+        "I'm sorry, I didn't understand that. Could you rephrase it in a short "
+        "sentence, or pick one of these options?\n\n" + MENU_PROMPT_RESPONSE,
     )

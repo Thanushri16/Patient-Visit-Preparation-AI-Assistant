@@ -61,7 +61,7 @@ class BoundedRecoveryTests(unittest.TestCase):
         third = process_collection_turn(client, state, "invalid")
 
         self.assertEqual(state.validation_attempt_count, 3)
-        self.assertIn("still couldn't validate email", third.response)
+        self.assertIn("still couldn't record the email", third.response)
         self.assertIn("menu or restart", third.response)
 
     def test_third_unclear_confirmation_uses_bounded_fallback(self):

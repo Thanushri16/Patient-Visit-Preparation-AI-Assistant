@@ -1,18 +1,36 @@
 """Orchestrates the typed healthcare prompt chain for each conversation turn."""
 
 import os
+import re
 from pathlib import Path
 from time import perf_counter
 
 from openai import OpenAI, OpenAIError
 
 try:
-    from .extraction import process_collection_turn
+    from .extraction import build_acknowledgement, process_collection_turn
+    from .guidance import (
+        AMBIGUOUS_RESPONSE,
+        FAREWELL_RESPONSE,
+        OFF_TOPIC_RESPONSE,
+        answer_state_query,
+        build_supplementary_response,
+        detect_ambiguous,
+        detect_farewell,
+        detect_off_topic,
+        is_low_information,
+        looks_non_english,
+    )
     from .moderation import moderate_text
     from .models import ChatMessage, ConversationPhase, ConversationState, WorkflowType
     from .observability import emit_chain_event
     from .persistence import JsonVisitRepository
-    from .routing import ROUTER_VERSION, route_message
+    from .routing import (
+        ROUTER_VERSION,
+        detect_global_command,
+        normalize_route_text,
+        route_message,
+    )
     from .summary_workflow import (
         begin_summary_review,
         classify_confirmation,
@@ -22,19 +40,40 @@ try:
         API_KEY_ERROR_MESSAGE,
         BLOCKED_RESPONSE,
         DEFAULT_MODEL,
+        INJECTION_NEUTRALIZED_NOTICE,
+        NON_ENGLISH_RESPONSE,
+        UNCLEAR_INPUT_RESPONSE,
     )
     from .workflow_catalog import (
         INTENT_LABELS,
+        MENU_OPTION_TO_WORKFLOW,
         MENU_PROMPT_RESPONSE,
         build_intent_classifier_prompt,
     )
 except ImportError:  # pragma: no cover - allows running as a script
-    from extraction import process_collection_turn
+    from extraction import build_acknowledgement, process_collection_turn
+    from guidance import (
+        AMBIGUOUS_RESPONSE,
+        FAREWELL_RESPONSE,
+        OFF_TOPIC_RESPONSE,
+        answer_state_query,
+        build_supplementary_response,
+        detect_ambiguous,
+        detect_farewell,
+        detect_off_topic,
+        is_low_information,
+        looks_non_english,
+    )
     from moderation import moderate_text
     from models import ChatMessage, ConversationPhase, ConversationState, WorkflowType
     from observability import emit_chain_event
     from persistence import JsonVisitRepository
-    from routing import ROUTER_VERSION, route_message
+    from routing import (
+        ROUTER_VERSION,
+        detect_global_command,
+        normalize_route_text,
+        route_message,
+    )
     from summary_workflow import (
         begin_summary_review,
         classify_confirmation,
@@ -44,9 +83,13 @@ except ImportError:  # pragma: no cover - allows running as a script
         API_KEY_ERROR_MESSAGE,
         BLOCKED_RESPONSE,
         DEFAULT_MODEL,
+        INJECTION_NEUTRALIZED_NOTICE,
+        NON_ENGLISH_RESPONSE,
+        UNCLEAR_INPUT_RESPONSE,
     )
     from workflow_catalog import (
         INTENT_LABELS,
+        MENU_OPTION_TO_WORKFLOW,
         MENU_PROMPT_RESPONSE,
         build_intent_classifier_prompt,
     )
@@ -150,6 +193,65 @@ def _hydrate_visit_from_repository(
     merged_visit_data.email = stored_record.email
     state.visit_data = merged_visit_data
 
+# Workflows whose whole purpose is to display the record rather than add to it.
+SUMMARY_WORKFLOWS = {WorkflowType.VIEW_SUMMARY, WorkflowType.REVIEW_HEALTH_NOTES}
+
+
+def _finalize(
+    state: ConversationState,
+    messages: list[ChatMessage],
+    prompt: str,
+    response_text: str,
+) -> str:
+    """Apply output moderation, record the turn, and return the safe reply."""
+
+    output_moderation = moderate_text(response_text, stage="output")
+    if output_moderation.action in {"block", "sanitize"}:
+        response_text = output_moderation.response or BLOCKED_RESPONSE
+    _record_turn(messages, prompt, response_text)
+    return response_text
+
+
+def _compose(*segments: str) -> str:
+    """Join the non-empty parts of a reply into one paragraph."""
+
+    return " ".join(segment.strip() for segment in segments if segment and segment.strip())
+
+
+# A sign-off that still carries an ask must be answered, not just acknowledged.
+FAREWELL_CARRIES_REQUEST = re.compile(
+    r"\b(summary|show|can you|could you|before i go|one more|also)\b",
+    flags=re.IGNORECASE,
+)
+
+# Wording that asks for the summary as a document to be produced or checked,
+# rather than as something to read.
+JSON_SUMMARY_REQUEST = re.compile(
+    r"\b(generate|json|schema|validate|export|structured)\b", flags=re.IGNORECASE
+)
+
+
+def _render_summary(state: ConversationState, prompt: str) -> str:
+    """Render the visit summary in whichever form the request called for.
+
+    A request to generate or validate a summary produces the JSON document that
+    consumers check against the schema. A conversational request produces prose,
+    and an empty record says so in words instead of returning a wall of nulls.
+    """
+
+    if JSON_SUMMARY_REQUEST.search(prompt):
+        return begin_summary_review(state, as_json=True)
+
+    summary = begin_summary_review(state)
+    if not state.visit_data.model_dump(exclude_none=True):
+        return (
+            "I don't have anything recorded for this visit yet, so there's "
+            "nothing to summarise. Tell me the reason for your appointment, your "
+            "symptoms, or your medications and I'll start building it."
+        )
+    return summary
+
+
 def get_chatbot_response(
     messages: list[ChatMessage],
     prompt: str,
@@ -160,12 +262,15 @@ def get_chatbot_response(
     """Run one chat turn through moderation, routing, extraction, confirmation, and persistence.
 
     Flow:
-    1. Moderate the user input and block or escalate unsafe content immediately.
-    2. Route control commands or menu-style messages before any workflow processing.
-    3. If the chatbot is awaiting confirmation, classify the reply as confirm, correct, or unclear.
-    4. If the user is correcting the summary, send the correction back through extraction and validation.
-    5. Otherwise continue the active workflow with structured extraction, validation, and the next question.
-    6. When the summary is confirmed, save the visit locally if a repository is available.
+    1. Moderate the user input: escalate emergencies, refuse unsafe requests, and
+       strip embedded instruction payloads from otherwise legitimate messages.
+    2. Answer questions that only read back already-recorded state.
+    3. Route control commands or menu-style messages before any workflow processing.
+    4. If routing started a workflow from a content-bearing message, feed that same
+       message into extraction rather than discarding it.
+    5. If the chatbot is awaiting confirmation, classify the reply as confirm, correct, or unclear.
+    6. Otherwise continue the active workflow with structured extraction, validation, and the next question.
+    7. When the summary is confirmed, save the visit locally if a repository is available.
     """
     input_moderation = moderate_text(prompt, stage="input")
     emit_chain_event(
@@ -179,20 +284,68 @@ def get_chatbot_response(
         },
     )
     # Flow 1: stop unsafe input before any routing or workflow processing.
-    if input_moderation.action in {"block", "escalate"}:
-        # Input moderation output path: return the safety response immediately.
-        safe_reply = input_moderation.response or BLOCKED_RESPONSE
-        if input_moderation.action == "escalate":
-            # Input moderation escalation path: switch the conversation into emergency support.
-            state.phase = ConversationPhase.ESCALATED
-            state.workflow = WorkflowType.EMERGENCY_SUPPORT
-            state.emergency_detected = True
-            state.missing_fields = []
+    if input_moderation.action == "escalate":
+        # An active emergency ends intake and returns guidance specific to it.
+        state.phase = ConversationPhase.ESCALATED
+        state.workflow = WorkflowType.EMERGENCY_SUPPORT
+        state.emergency_detected = True
+        state.missing_fields = []
+        state.visit_data.emergency_symptoms = [prompt]
+        safe_reply = _compose(
+            input_moderation.response or BLOCKED_RESPONSE,
+            "I've noted what you told me so it is here when you come back.",
+        )
         _record_turn(messages, prompt, safe_reply)
         return safe_reply
+
+    if input_moderation.action in {"block", "redirect"}:
+        # Refuse the unsafe request itself while leaving the conversation open.
+        safe_reply = input_moderation.response or BLOCKED_RESPONSE
+        _record_turn(messages, prompt, safe_reply)
+        return safe_reply
+
+    injection_notice = ""
+    if input_moderation.action == "neutralize" and input_moderation.sanitized_text:
+        # The message carried real health information around an instruction
+        # payload; keep the information, drop the payload, and say so.
+        prompt = input_moderation.sanitized_text
+        injection_notice = INJECTION_NEUTRALIZED_NOTICE
     # Input moderation else path: continue to routing because the message is safe enough to process.
 
-    # Flow 2: route menu commands and global controls before workflow extraction.
+    # Flow 2: unreadable input never reaches the classifier or the extractor.
+    # A bare menu number or a global command carries no prose and would look
+    # like gibberish to that check, so routing gets first refusal on them.
+    routable = (
+        normalize_route_text(prompt) in MENU_OPTION_TO_WORKFLOW
+        or detect_global_command(prompt) is not None
+    )
+    if not routable:
+        if is_low_information(prompt):
+            return _finalize(state, messages, prompt, UNCLEAR_INPUT_RESPONSE)
+        if looks_non_english(prompt):
+            return _finalize(state, messages, prompt, NON_ENGLISH_RESPONSE)
+        # Decline out-of-scope requests by name and answer a goodbye as a
+        # goodbye. Falling through to the option list would answer neither.
+        if detect_off_topic(prompt):
+            return _finalize(state, messages, prompt, OFF_TOPIC_RESPONSE)
+        # A goodbye that also asks for something — "that's everything, can you
+        # show me the summary before I go?" — is a request first and a farewell
+        # second, so it continues to routing and picks up the sign-off later.
+        if (
+            detect_farewell(prompt)
+            and state.phase is not ConversationPhase.COLLECTING
+            and not FAREWELL_CARRIES_REQUEST.search(prompt)
+        ):
+            return _finalize(state, messages, prompt, FAREWELL_RESPONSE)
+        if detect_ambiguous(prompt):
+            return _finalize(state, messages, prompt, AMBIGUOUS_RESPONSE)
+
+    # Flow 3: questions about what has already been said are answered from state,
+    # never by re-running extraction over the question itself.
+    if state_answer := answer_state_query(prompt, state.visit_data):
+        return _finalize(state, messages, prompt, state_answer)
+
+    # Flow 4: route menu commands and global controls before workflow extraction.
     routing_phase_before = state.phase.value
     routing_started = perf_counter()
     route_decision = route_message(
@@ -213,26 +366,27 @@ def get_chatbot_response(
         },
         phase_before=routing_phase_before,
     )
-    # Flow 2a: if routing handled the turn, return the routed response immediately.
+    # Flow 4a: if routing fully handled the turn, return the routed response.
     # Routing is handled when the message is an explicit global command, a menu option,
-    # an intent-classified workflow start, or a state-based continuation such as completed or escalated.
-    if route_decision.handled:
+    # or a state-based continuation such as completed or escalated. A workflow started
+    # from a content-bearing message is *not* finished here: `collect_message` marks
+    # that the same message still has to go through extraction below.
+    if route_decision.handled and not route_decision.collect_message:
+        # A summary workflow has nothing to collect before it can answer: it
+        # renders whatever the session already holds, however partial.
+        if route_decision.workflow in SUMMARY_WORKFLOWS:
+            _hydrate_visit_from_repository(state, visit_repository)
+            route_reply = _render_summary(state, prompt)
         # Routing handled output path: show the review summary when the user entered review mode.
-        if state.phase is ConversationPhase.REVIEWING:
+        elif state.phase is ConversationPhase.REVIEWING:
             route_reply = begin_summary_review(state)
         # Routing handled output path: otherwise return the router's own response or the menu prompt.
         else:
             route_reply = route_decision.response or MENU_PROMPT_RESPONSE
-        # Output moderation path for routed replies: sanitize or block the response if needed.
-        route_output_moderation = moderate_text(route_reply, stage="output")
-        if route_output_moderation.action in {"block", "sanitize"}:
-            # Output moderation nested path: replace unsafe routed text with a safe response.
-            route_reply = route_output_moderation.response or BLOCKED_RESPONSE
-        _record_turn(messages, prompt, route_reply)
-        return route_reply
+        return _finalize(state, messages, prompt, route_reply)
     # Routing else path: no control command was handled, so continue into workflow processing.
 
-    # Flow 3: if the chatbot is waiting on review, classify confirm vs correction.
+    # Flow 5: if the chatbot is waiting on review, classify confirm vs correction.
     if state.phase is ConversationPhase.AWAITING_CONFIRMATION:
         # Confirmation input path: classify the user's reply against the displayed summary.
         confirmation_phase_before = state.phase.value
@@ -296,39 +450,51 @@ def get_chatbot_response(
                         error_category=type(exc).__name__,
                     )
 
-        output_moderation = moderate_text(response_text, stage="output")
-        if output_moderation.action in {"block", "sanitize"}:
-            # Confirmation output moderation path: replace unsafe confirmation text before returning it.
-            response_text = output_moderation.response or BLOCKED_RESPONSE
-        _record_turn(messages, prompt, response_text)
-        return response_text
+        return _finalize(state, messages, prompt, response_text)
     # Confirmation else path: the chatbot is not awaiting review, so continue to active collection.
 
     # Flow 6: continue the active collection workflow with extraction and validation.
     if state.phase is ConversationPhase.COLLECTING:
+        # Everything in the message that is not a field — a greeting, an expressed
+        # worry, a general question about preparing — is answered alongside the
+        # structured intake rather than instead of it.
+        supplementary = build_supplementary_response(state, prompt)
+        summary_requested = state.workflow in SUMMARY_WORKFLOWS
+
         # Collection input path: extract structured fields from the user's latest message.
         collection_result = process_collection_turn(client, state, prompt)
-        if not collection_result.merge_result.errors and not collection_result.merge_result.missing_fields:
-            if state.workflow in {
-                WorkflowType.REVIEW_HEALTH_NOTES,
-                WorkflowType.VIEW_SUMMARY,
-            }:
+        merge_result = collection_result.merge_result
+        if not merge_result.errors and not merge_result.missing_fields:
+            if summary_requested:
                 _hydrate_visit_from_repository(state, visit_repository)
-            # Collection success path: enough information was collected, so show the summary for review.
-            response_text = begin_summary_review(state)
+            # Collection success path: enough information was collected, so show the summary.
+            acknowledgement = build_acknowledgement(state, merge_result)
+            summary = (
+                _render_summary(state, prompt)
+                if summary_requested
+                else begin_summary_review(state)
+            )
+            farewell = (
+                "Take care, and good luck at your appointment."
+                if detect_farewell(prompt)
+                else ""
+            )
+            response_text = (
+                summary
+                if summary_requested
+                else _compose(
+                    injection_notice, supplementary, acknowledgement, summary, farewell
+                )
+            )
         else:
             # Collection continuation path: return the next question or validation feedback.
-            response_text = collection_result.response
-        # Collection output moderation path: sanitize or block any unsafe response text.
-        output_moderation = moderate_text(response_text, stage="output")
-        if output_moderation.action in {"block", "sanitize"}:
-            # Collection nested output path: replace unsafe extracted-flow text with a safe response.
-            response_text = output_moderation.response or BLOCKED_RESPONSE
-        _record_turn(messages, prompt, response_text)
-        return response_text
+            response_text = _compose(
+                injection_notice, supplementary, collection_result.response
+            )
+        return _finalize(state, messages, prompt, response_text)
     # Collection else path: no collection workflow is active, so fall back to the menu response.
 
     # Flow 7: fallback to the menu prompt when no workflow branch applies.
-    fallback = MENU_PROMPT_RESPONSE
+    fallback = _compose(build_supplementary_response(state, prompt), MENU_PROMPT_RESPONSE)
     _record_turn(messages, prompt, fallback)
     return fallback

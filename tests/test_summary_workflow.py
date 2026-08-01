@@ -1,5 +1,6 @@
 """Unit and integration tests for summaries, confirmation, and correction loops."""
 
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -52,8 +53,11 @@ def complete_symptom_state():
             email="dana@example.com",
             phone="555-0100",
             chief_complaint="headache",
+            symptom_location="forehead",
+            symptom_onset="Monday",
             symptom_duration="three days",
             symptom_severity=6,
+            symptom_pattern="comes and goes",
         ),
     )
 
@@ -67,7 +71,7 @@ class SummaryWorkflowTests(unittest.TestCase):
             )
         )
 
-        self.assertIn("Chief complaint: headache", summary)
+        self.assertIn("Symptoms: headache", summary)
         self.assertIn("Current medications: None reported", summary)
         self.assertNotIn("Date of birth", summary)
 
@@ -120,8 +124,11 @@ class SummaryWorkflowTests(unittest.TestCase):
                         email="dana@example.com",
                         phone="555-0100",
                         chief_complaint="headache",
+                        symptom_location="forehead",
+                        symptom_onset="Monday",
                         symptom_duration="three days",
                         symptom_severity=6,
+                        symptom_pattern="comes and goes",
                     )
                 )
             ]
@@ -173,8 +180,30 @@ class SummaryWorkflowTests(unittest.TestCase):
 
         response = get_chatbot_response([], "7", client=None, state=state)
 
-        self.assertEqual(state.phase, ConversationPhase.COLLECTING)
-        self.assertIn("First, I need to confirm your name, date of birth, email, and phone", response)
+        # Viewing a summary collects nothing first — but with an empty record it
+        # says so in words rather than returning a wall of nulls.
+        self.assertEqual(state.phase, ConversationPhase.AWAITING_CONFIRMATION)
+        self.assertIn("nothing to summarise", response)
+
+    def test_generating_a_summary_returns_the_schema_complete_document(self):
+        state = ConversationState(
+            session_id="session-123",
+            workflow=WorkflowType.VIEW_SUMMARY,
+            phase=ConversationPhase.COLLECTING,
+            visit_data=VisitData(chief_complaint="headache"),
+        )
+
+        response = get_chatbot_response(
+            [], "Generate my visit summary", client=None, state=state
+        )
+
+        # A request to generate or validate the summary produces the JSON that
+        # downstream consumers check against the schema: every field present,
+        # unanswered ones explicitly null.
+        document = json.loads(response)
+        self.assertEqual(document["visit_summary"]["chief_complaint"], "headache")
+        self.assertIsNone(document["visit_summary"]["provider_name"])
+        self.assertIn("provider_name", document["missing_fields"])
 
 
 if __name__ == "__main__":
