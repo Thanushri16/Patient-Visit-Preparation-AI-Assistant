@@ -29,6 +29,10 @@ class StateAwareRoutingTests(unittest.TestCase):
                 "symptom_duration",
                 "symptom_onset",
                 "symptom_pattern",
+                "patient_name",
+                "date_of_birth",
+                "email",
+                "phone",
             ],
         )
 

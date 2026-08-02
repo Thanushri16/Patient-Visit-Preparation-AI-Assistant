@@ -17,6 +17,7 @@ try:
         VisitDataPatch,
     )
     from .observability import emit_chain_event
+    from .rendering import render_value
     from .prompts.extractor import EXTRACTOR_PROMPT_VERSION, build_extractor_prompt
     from .questions import select_next_question
     from .workflow_schemas import (
@@ -33,6 +34,7 @@ except ImportError:  # pragma: no cover - allows running as a script
         VisitDataPatch,
     )
     from observability import emit_chain_event
+    from rendering import render_value
     from prompts.extractor import EXTRACTOR_PROMPT_VERSION, build_extractor_prompt
     from questions import select_next_question
     from workflow_schemas import (
@@ -62,6 +64,8 @@ class MergeResult(DomainModel):
     # Fields whose previous value this turn replaced, so the reply can confirm
     # the change rather than silently overwriting the record.
     corrected_fields: list[str] = Field(default_factory=list)
+    # Fields the patient retracted this turn.
+    cleared_fields: list[str] = Field(default_factory=list)
     # Fields the extractor proposed that the active workflow does not collect.
     # Recorded for diagnosis; never shown to the user.
     ignored_fields: list[str] = Field(default_factory=list)
@@ -87,6 +91,28 @@ PLACEHOLDER_VALUES = {
     "unspecified",
 }
 
+# A message opening with one of these is adding information, not answering the
+# question that was just asked. Passing the pending field as context for "also
+# nausea" made the extractor file nausea as the symptom's *location*.
+ADDITIVE_OPENING = re.compile(
+    r"^\s*(and|also|plus|oh|as well|another|additionally|too\b|i also|"
+    r"one more|by the way)\b",
+    flags=re.IGNORECASE,
+)
+
+# An empty list from the extractor is ambiguous: it can mean "the patient said
+# none" or "this message mentioned nothing". Recording the first when the second
+# was true wipes real clinical data — a garbled spelling correction once erased
+# a patient's whole medication and allergy list. An explicit none is therefore
+# only accepted when the message actually contains a denial.
+DENIAL_PATTERN = re.compile(
+    r"\b(no|none|nothing|not?)\b[^.?!]{0,30}\b(allerg|medication|meds|drugs|"
+    r"condition|taking|take)\b"
+    r"|\bnkda\b|\bno known\b|\bdon'?t (take|have)\b|\bnot taking\b"
+    r"|\bnone\b",
+    flags=re.IGNORECASE,
+)
+
 NOT_KNOWING_PATTERN = re.compile(
     r"\b(not sure|unsure|don'?t know|do not know|no idea|can'?t remember|"
     r"cannot remember|haven'?t decided|not certain)\b",
@@ -109,19 +135,17 @@ def drop_unsupported_placeholders(
     if NOT_KNOWING_PATTERN.search(latest_message):
         return extraction
 
-    def cleaned(patch: VisitDataPatch) -> VisitDataPatch:
-        payload = patch.model_dump(exclude_none=True)
-        kept = {
-            field_name: value
-            for field_name, value in payload.items()
-            if not (isinstance(value, str) and value.strip().lower() in PLACEHOLDER_VALUES)
-        }
-        return VisitDataPatch.model_validate(kept)
-
+    payload = extraction.fields.model_dump(exclude_none=True)
+    kept = {
+        field_name: value
+        for field_name, value in payload.items()
+        if not (isinstance(value, str) and value.strip().lower() in PLACEHOLDER_VALUES)
+    }
     return FieldExtractionResult(
-        updates=cleaned(extraction.updates),
-        corrections=cleaned(extraction.corrections),
+        fields=VisitDataPatch.model_validate(kept),
         uncertain_fields=extraction.uncertain_fields,
+        cleared_fields=extraction.cleared_fields,
+        removed_items=extraction.removed_items,
     )
 
 
@@ -138,11 +162,16 @@ def extract_structured_fields(
         raise ExtractionError("A workflow must be selected before extraction.")
 
     schema = get_workflow_schema(state.workflow)
+    # An additive message is not an answer to the pending question, so the
+    # pending field is withheld rather than offered as somewhere to put it.
+    requested_field = (
+        None if ADDITIVE_OPENING.match(latest_message) else state.requested_field
+    )
     prompt = build_extractor_prompt(
         latest_message,
         schema,
         state.visit_data,
-        state.requested_field,
+        requested_field,
     )
     response = client.chat.completions.parse(
         model=DEFAULT_MODEL,
@@ -178,7 +207,7 @@ def _validate_field_value(field_name: str, value: object, today: date) -> str | 
     if field_name == "date_of_birth" and isinstance(value, date) and value >= today:
         return "Date of birth must be earlier than today."
 
-    if field_name == "symptom_duration":
+    if field_name in {"symptom_duration", "symptom_onset"}:
         if isinstance(value, (int, float)):
             return "Please specify whether that means hours, days, weeks, months, or years."
         if isinstance(value, str):
@@ -221,6 +250,36 @@ def _validate_field_value(field_name: str, value: object, today: date) -> str | 
             return "Provide non-empty text values."
 
     return None
+
+
+# Free-text fields that describe a growing set rather than a single answer. A
+# patient listing symptoms over several turns is adding to the picture, not
+# replacing it, so "also nausea" must not discard the headache.
+ACCUMULATING_TEXT_FIELDS = {"chief_complaint"}
+
+# Wording that means the patient is replacing what they said, not adding to it.
+# "Actually it's a migraine" must overwrite the headache; "also nausea" must not.
+REPLACEMENT_SIGNAL = re.compile(
+    r"\b(actually|instead|rather than|not |wrong|mistake|correction|"
+    r"i meant|change|correct)\b",
+    flags=re.IGNORECASE,
+)
+
+
+def _merge_accumulating_text(current_value: object, value: object) -> object:
+    """Combine a newly-mentioned item with what is already recorded."""
+
+    if not isinstance(current_value, str) or not isinstance(value, str):
+        return value
+    existing = [part.strip() for part in re.split(r",| and ", current_value) if part.strip()]
+    additions = [part.strip() for part in re.split(r",| and ", value) if part.strip()]
+    lowered = {part.lower() for part in existing}
+    # Anything the model returned that is already recorded is a repeat, and a
+    # value that restates the whole list is a rewrite rather than an addition.
+    novel = [part for part in additions if part.lower() not in lowered]
+    if not novel:
+        return current_value
+    return ", ".join(existing + novel)
 
 
 LIST_ITEM_KEY = {
@@ -268,9 +327,79 @@ def _merge_list_value(field_name: str, current_value: object, value: object) -> 
     return merged
 
 
-def _merge_nested_value(field_name: str, current_value: object, value: object) -> object:
+def _without_item(current_value: object, target: str) -> object:
+    """Drop one named entry, leaving the rest of the field intact.
+
+    Handles both shapes a multi-entry field takes: a comma-separated complaint
+    string and a list of records keyed by name or allergen.
+    """
+
+    needle = target.strip().lower()
+    if isinstance(current_value, str):
+        kept = [
+            part.strip()
+            for part in re.split(r",| and ", current_value)
+            if part.strip() and needle not in part.strip().lower()
+        ]
+        return ", ".join(kept) if kept else None
+    if isinstance(current_value, list):
+        kept = [
+            item
+            for item in current_value
+            if needle
+            not in str(
+                (item.get("name") or item.get("allergen") or item)
+                if isinstance(item, dict)
+                else item
+            ).lower()
+        ]
+        return kept if len(kept) != len(current_value) else current_value
+    return current_value
+
+
+def _coerce_to_field_type(field_name: str, value: object) -> object:
+    """Convert a proposed value into the form state stores it in.
+
+    Returns the value untouched when it cannot be converted, so validation
+    downstream still reports the problem rather than this silently swallowing it.
+    """
+
+    try:
+        return getattr(VisitData.model_validate({field_name: value}), field_name)
+    except ValidationError:
+        return value
+
+
+def _without_nones(value: object) -> object:
+    """Strip unanswered keys so two shapes of the same value compare equal."""
+
+    if hasattr(value, "model_dump"):
+        value = value.model_dump()
+    if isinstance(value, dict):
+        return {key: _without_nones(item) for key, item in value.items() if item is not None}
+    if isinstance(value, list):
+        return [_without_nones(item) for item in value]
+    return value
+
+
+def _merge_nested_value(
+    field_name: str,
+    current_value: object,
+    value: object,
+    latest_message: str = "",
+) -> object:
     """Combine a proposed value with what state already holds for that field."""
 
+    # Accumulate only on positive evidence that the turn is additive: a message
+    # to read, with no wording that signals a replacement. Without the message
+    # there is nothing to judge by, so the later value simply wins.
+    if (
+        field_name in ACCUMULATING_TEXT_FIELDS
+        and current_value
+        and latest_message.strip()
+        and not REPLACEMENT_SIGNAL.search(latest_message)
+    ):
+        return _merge_accumulating_text(current_value, value)
     if field_name in LIST_ITEM_KEY or isinstance(current_value, list):
         return _merge_list_value(field_name, current_value, value)
     if field_name not in {"address", "insurance_info"}:
@@ -284,6 +413,7 @@ def validate_and_merge_extraction(
     state: ConversationState,
     extraction: FieldExtractionResult,
     today: date | None = None,
+    latest_message: str = "",
 ) -> MergeResult:
     """Validate allowed fields and atomically merge each accepted value into state."""
 
@@ -291,11 +421,12 @@ def validate_and_merge_extraction(
         raise ValueError("A workflow must be selected before merging extracted data.")
 
     validation_date = today or date.today()
-    schema = get_workflow_schema(state.workflow)
-    allowed_fields = set(schema.required_fields) | set(schema.optional_fields)
-    updates = extraction.updates.model_dump(exclude_none=True)
-    corrections = extraction.corrections.model_dump(exclude_none=True)
-    proposed_fields = {**updates, **corrections}
+    # A workflow governs what the assistant *asks for*, not what a patient is
+    # allowed to tell it. There is one visit record, so anything the patient
+    # volunteers about it is kept — someone reporting leg pain who mentions
+    # their insurance should not have it thrown away for being off-topic.
+    allowed_fields = set(VisitData.model_fields)
+    proposed_fields = extraction.fields.model_dump(exclude_none=True)
     errors: dict[str, str] = {}
     accepted: dict[str, object] = {}
     corrected: list[str] = []
@@ -313,13 +444,47 @@ def validate_and_merge_extraction(
     ]
 
     current_payload = state.visit_data.model_dump()
+    # Retractions are applied first so a replacement supplied in the same
+    # message lands on a cleared field rather than merging into the old value.
+    cleared: list[str] = []
+    for field_name in extraction.cleared_fields:
+        if field_name in allowed_fields and current_payload.get(field_name) is not None:
+            current_payload[field_name] = None
+            cleared.append(field_name)
+    for entry in extraction.removed_items:
+        field_name, _, target = entry.partition(":")
+        field_name, target = field_name.strip(), target.strip()
+        if not target or field_name not in allowed_fields:
+            continue
+        remaining = _without_item(current_payload.get(field_name), target)
+        if remaining != current_payload.get(field_name):
+            current_payload[field_name] = remaining
+            cleared.append(field_name)
+
+    if cleared:
+        state.visit_data = VisitData.model_validate(current_payload)
+
     for field_name, value in proposed_fields.items():
         if field_name not in allowed_fields:
             continue
 
         current_value = getattr(state.visit_data, field_name)
-        value = _merge_nested_value(field_name, current_value, value)
-        if current_value is not None and current_payload[field_name] == value:
+
+        # Guard the ambiguous empty list before anything else can act on it.
+        if value == [] and current_value not in (None, []):
+            if not DENIAL_PATTERN.search(latest_message):
+                continue
+
+        value = _merge_nested_value(field_name, current_value, value, latest_message)
+        # Compare like with like. The patch carries a date of birth as the text
+        # the patient wrote while state holds a parsed date, so an unchanged
+        # value looked different every turn and was reported as "updated".
+        value = _coerce_to_field_type(field_name, value)
+        # Compare with unanswered keys stripped from both sides. A merged nested
+        # value drops its ``None`` entries while the stored dump keeps them, so a
+        # direct comparison never matched and every turn reported having
+        # "updated" insurance the user had not mentioned.
+        if current_value is not None and _without_nones(current_payload[field_name]) == _without_nones(value):
             continue
 
         if field_error := _validate_field_value(field_name, value, validation_date):
@@ -347,6 +512,19 @@ def validate_and_merge_extraction(
         state.validation_attempt_count += 1
     else:
         state.validation_attempt_count = 0
+    # Whether a second symptom is filed as the complaint or as an associated
+    # symptom is a modelling detail; the record should name every symptom in
+    # one place either way.
+    associated = state.visit_data.associated_symptoms
+    if associated:
+        combined = _merge_accumulating_text(
+            state.visit_data.chief_complaint or "", ", ".join(associated)
+        )
+        if combined and combined != state.visit_data.chief_complaint:
+            state.visit_data.chief_complaint = combined
+            if "chief_complaint" not in accepted:
+                accepted["chief_complaint"] = combined
+
     missing_fields = refresh_state_completeness(state)
     # A field the patient tried to answer but answered vaguely — "about 3",
     # "pretty bad" — is the most useful thing to ask about next, ahead of
@@ -364,6 +542,7 @@ def validate_and_merge_extraction(
         errors=errors,
         missing_fields=missing_fields,
         corrected_fields=corrected,
+        cleared_fields=cleared,
         ignored_fields=sorted(ignored),
     )
 
@@ -398,35 +577,16 @@ def describe_field_value(field_name: str, value: object) -> str:
     """Render one recorded field as a short phrase for the acknowledgement line."""
 
     label = FIELD_LABELS.get(field_name, field_name.replace("_", " "))
-    if isinstance(value, list):
-        if not value:
-            # An explicit denial is clinical information. "No known drug
-            # allergies (NKDA)" is how it is recorded on a chart, and saying so
-            # shows the denial was understood rather than merely left blank.
-            if field_name == "allergies":
-                return "no known drug allergies (NKDA)"
-            return f"no {label}"
-        parts = []
-        for item in value:
-            if hasattr(item, "name"):
-                detail = " ".join(
-                    filter(None, [item.name, item.dosage or "", item.frequency or ""])
-                )
-                parts.append(detail.strip())
-            elif hasattr(item, "allergen"):
-                reaction = f" ({item.reaction})" if item.reaction else ""
-                parts.append(f"{item.allergen}{reaction}")
-            else:
-                parts.append(str(item))
-        return f"{label}: {', '.join(parts)}"
-    if hasattr(value, "model_dump"):
-        rendered = ", ".join(
-            str(item) for item in value.model_dump(exclude_none=True).values()
-        )
-        return f"{label}: {rendered}" if rendered else label
+    rendered = render_value(field_name, value)
+    if rendered is None:
+        return label
+    # An explicit "none" already reads as a full statement, so labelling it
+    # again would produce "allergies: no known drug allergies".
+    if isinstance(value, list) and not value:
+        return rendered
     if field_name == "symptom_severity":
-        return f"severity {value}/10"
-    return f"{label}: {value}"
+        return f"severity {rendered}"
+    return f"{label}: {rendered}"
 
 
 def build_acknowledgement(state: ConversationState, result: MergeResult) -> str:
@@ -542,7 +702,7 @@ def process_collection_turn(
         prompt_version=EXTRACTOR_PROMPT_VERSION,
     )
     validation_started = perf_counter()
-    merge_result = validate_and_merge_extraction(state, extraction)
+    merge_result = validate_and_merge_extraction(state, extraction, latest_message=latest_message)
     emit_chain_event(
         state,
         "validation_merge",

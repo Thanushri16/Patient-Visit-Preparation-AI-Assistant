@@ -163,11 +163,11 @@ measured failure, and each is enforced in code rather than by prompt wording.
 | 6 | Structured extraction, validation, and safe merging | Complete | `src/extraction.py`, `src/models.py`, `src/chatbot.py` |
 | 7 | Iterative questions and conditional branches | Complete | `src/questions.py`, `src/workflow_schemas.py`, `src/extraction.py` |
 | 8 | Summary, confirmation, and corrections | Complete | `src/summary_workflow.py`, `src/chatbot.py` |
-| 9 | Recovery, persistence, observability, and evaluation | Complete | `src/persistence.py`, `src/observability.py`, `src/evaluators/prompt_chain_evaluator.py`, `src/evaluators/iteration_2_evaluation_pipeline.py` |
+| 9 | Recovery, persistence, observability, and evaluation | Complete | `src/persistence.py`, `src/observability.py`, `src/evaluators/regression_suite.py` |
 | 10 | Remove legacy fallback, untyped adapters, and unused prompt templates | Complete | `src/chatbot.py`, `src/app.py`, `src/prompts/` |
 | 11 | Unify menu, intent, and workflow routing metadata | Complete | `src/workflow_catalog.py`, `src/routing.py`, `src/chatbot.py` |
 | 12 | Route unhandled menu messages directly through the model intent classifier | Complete | `src/chatbot.py`, `src/workflow_catalog.py` |
-| 13 | Unified iteration-2 evaluation pipeline | Complete | `src/evaluators/iteration_2_evaluation_pipeline.py`, `src/evaluators/prompt_chain_evaluator.py`, `src/evaluators/prompt_injection_evaluator.py`, `src/evaluators/intent_classifier_evaluator.py` |
+| 13 | Unified regression suite: prompt-chain, prompt-injection, and intent-classifier evaluations behind one entry point | Complete | `src/evaluators/regression_suite.py` |
 | 14 | Rate-limit-aware benchmark execution: adaptive concurrency, jittered backoff, batch checkpointing and resume | Complete | `src/evaluators/benchmarks/rate_limiter.py`, `src/evaluators/benchmarks/checkpoint.py`, `src/evaluators/benchmarks/run_benchmarks.py`, `src/evaluators/benchmarks/test_runner.py` |
 | 15 | Benchmark-driven conversation quality: keep the routed message for extraction, collect clinical detail first, and compose replies that acknowledge what was captured | Complete | `src/chatbot.py`, `src/routing.py`, `src/extraction.py`, `src/workflow_schemas.py`, `src/prompts/extractor.py`, `src/prompts/followup.py` |
 | 16 | Conversational layer beside intake: educational guidance, empathy, greetings and farewells, off-topic declines, and state recall | Complete | `src/guidance.py`, `src/chatbot.py` |
@@ -175,8 +175,8 @@ measured failure, and each is enforced in code rather than by prompt wording.
 
 ## How this chain is measured
 
-`src/evaluators/benchmarks/` drives 210 scenarios from
-`healthcare_assistant_benchmark_210.xlsx` against the running API and scores each
+`src/evaluators/benchmarks/` drives 215 scenarios from
+`healthcare_assistant_benchmark.xlsx` against the running API and scores each
 one in three layers. A scenario passes only when every applicable layer passes.
 
 | Layer | What it checks | Why it exists |

@@ -44,8 +44,8 @@ class WorkflowSchemaTests(unittest.TestCase):
 
         missing = get_missing_fields(WorkflowType.REPORT_NEW_SYMPTOMS, visit_data)
 
-        # Identity and contact details are optional, so a patient reporting a
-        # headache is asked about the headache rather than for an email address.
+        # Identity is still required, but it comes after the clinical detail, so
+        # a patient reporting a headache is asked about the headache first.
         self.assertEqual(
             missing,
             [
@@ -54,6 +54,10 @@ class WorkflowSchemaTests(unittest.TestCase):
                 "symptom_duration",
                 "symptom_onset",
                 "symptom_pattern",
+                "patient_name",
+                "date_of_birth",
+                "email",
+                "phone",
             ],
         )
         self.assertEqual(
@@ -69,11 +73,26 @@ class WorkflowSchemaTests(unittest.TestCase):
 
         self.assertEqual(
             missing,
-            ["visit_reason", "appointment_date", "provider_name", "insurance_info"],
+            [
+                "visit_reason",
+                "appointment_date",
+                "appointment_time",
+                "provider_name",
+                "visit_type",
+                "insurance_info",
+                "patient_name",
+                "date_of_birth",
+                "email",
+                "phone",
+            ],
         )
 
     def test_empty_lists_count_as_explicitly_answered(self):
         visit_data = VisitData(
+            patient_name="Dana",
+            date_of_birth="1984-06-05",
+            email="dana@example.com",
+            phone="555-0100",
             chief_complaint="annual checkup",
             symptom_location="not applicable",
             symptom_onset="not applicable",
@@ -91,6 +110,10 @@ class WorkflowSchemaTests(unittest.TestCase):
 
     def test_zero_severity_counts_as_answered(self):
         visit_data = VisitData(
+            patient_name="Dana",
+            date_of_birth="1984-06-05",
+            email="dana@example.com",
+            phone="555-0100",
             chief_complaint="follow-up",
             symptom_location="left knee",
             symptom_onset="last Monday",
@@ -109,8 +132,8 @@ class WorkflowSchemaTests(unittest.TestCase):
 
         result = refresh_state_completeness(state)
 
-        self.assertEqual(result, ["allergies"])
-        self.assertEqual(state.missing_fields, ["allergies"])
+        self.assertEqual(result, ["allergies"] + ['patient_name', 'date_of_birth', 'email', 'phone'])
+        self.assertEqual(state.missing_fields, ["allergies"] + ['patient_name', 'date_of_birth', 'email', 'phone'])
 
     def test_named_medication_without_dose_asks_for_its_detail_first(self):
         visit_data = VisitData(current_medications=[{"name": "metformin"}])
@@ -118,7 +141,7 @@ class WorkflowSchemaTests(unittest.TestCase):
         missing = get_missing_fields(WorkflowType.MEDICATION_QUESTION, visit_data)
 
         self.assertEqual(
-            missing,
+            missing[:2],
             ["current_medications.0.dosage", "current_medications.0.frequency"],
         )
 

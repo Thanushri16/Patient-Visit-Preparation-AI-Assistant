@@ -20,18 +20,18 @@ from src.evaluators.benchmarks.test_runner import execute_scenario  # noqa: E402
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-BENCHMARK_FILE = PROJECT_ROOT / "src" / "evaluators" / "healthcare_assistant_benchmark_210.xlsx"
+BENCHMARK_FILE = PROJECT_ROOT / "src" / "evaluators" / "healthcare_assistant_benchmark.xlsx"
 
 
 class BenchmarkLoaderTests(unittest.TestCase):
-    def test_loads_all_210_scenarios(self):
+    def test_loads_every_workbook_scenario(self):
         scenarios = load_scenarios(BENCHMARK_FILE)
         singles, multi_turn = split_scenarios(scenarios)
 
-        self.assertEqual(len(scenarios), 210)
-        self.assertEqual(len(singles) + len(multi_turn), 210)
+        self.assertEqual(len(scenarios), 215)
+        self.assertEqual(len(singles) + len(multi_turn), 215)
         self.assertEqual(scenarios[0].test_id, "TC-001")
-        self.assertEqual(scenarios[-1].test_id, "TC-210")
+        self.assertEqual(scenarios[-1].test_id, "TC-215")
 
     def test_parses_inline_turns(self):
         turns = parse_inline_turns(

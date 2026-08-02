@@ -15,8 +15,10 @@ import re
 
 try:
     from .models import ConversationState, VisitData
+    from .rendering import render_value
 except ImportError:  # pragma: no cover - allows running as a script
     from models import ConversationState, VisitData
+    from rendering import render_value
 
 
 # (name, trigger patterns, answer). Order matters: the first match wins.
@@ -105,6 +107,33 @@ EDUCATIONAL_TOPICS = (
     ),
 )
 
+# Reactions that describe anaphylaxis. A recorded allergy is not enough here —
+# the patient should be told plainly what it means and what to do next time.
+ANAPHYLAXIS_PATTERNS = (
+    r"throat (swell|clos|tighten)",
+    r"tongue (swell|swollen)",
+    r"can'?t breathe|trouble breathing|difficulty breathing",
+    r"\bepipen\b|\bepi-?pen\b|epinephrine",
+    r"\banaphyla",
+    r"passed out|collapsed|blacked out",
+)
+
+ANAPHYLAXIS_NOTE = (
+    "I've flagged that as a possible severe reaction. A reaction involving "
+    "throat swelling, trouble breathing, or one needing an EpiPen is treated as "
+    "anaphylaxis, so it belongs at the top of your record — tell the clinic when "
+    "you check in. If it ever happens again, use your auto-injector if you have "
+    "one and call 911 straight away; an EpiPen is not a substitute for emergency "
+    "care."
+)
+
+
+def detect_anaphylaxis_risk(message: str) -> bool:
+    """Report whether a described allergic reaction reads as anaphylaxis."""
+
+    return _matches(ANAPHYLAXIS_PATTERNS, message)
+
+
 EMOTIONAL_PATTERNS = (
     r"\b(nervous|anxious|anxiety|scared|afraid|worried|frightened|terrified|dreading)\b",
     r"\bstressed( out)?\b",
@@ -119,6 +148,52 @@ EMOTIONAL_ACKNOWLEDGEMENT = (
 GREETING_PATTERNS = (
     r"^(hi|hey|hello|good morning|good afternoon|good evening|greetings)\b",
 )
+
+# A greeting on its own deserves a greeting back and a short offer. Answering it
+# with the full numbered option list reads as ignoring the person.
+BARE_GREETING_PATTERN = re.compile(
+    r"^(hi|hey|hello|good morning|good afternoon|good evening|greetings)"
+    r"[\s,.!]*(there|everyone)?[\s,.!]*$",
+    flags=re.IGNORECASE,
+)
+
+GREETING_RESPONSE = (
+    "Hello, and welcome. I'm here to help you get ready for a healthcare "
+    "appointment — I can take down your symptoms, medications, and allergies, "
+    "capture the visit details, and turn all of it into a summary you can bring "
+    "with you. What would you like to start with?"
+)
+
+
+def detect_bare_greeting(message: str) -> bool:
+    return bool(BARE_GREETING_PATTERN.match(message.strip()))
+
+
+# Shapes that mean the message carries something worth recording, even when the
+# intent classifier has no label for it. "I'm Dana Whitfield, dana@example.com"
+# is not a menu request, and answering it with the option list loses the data.
+VISIT_INFORMATION_PATTERNS = (
+    # Stated absences. These are answers about the visit, so they must route
+    # into intake rather than falling through to the menu and being lost.
+    r"\b(no|none|nkda)\b[^.?!]{0,30}\b(allerg|medication|meds|drugs|condition)",
+    r"\bdon'?t (take|have)\b[^.?!]{0,30}\b(allerg|medication|meds|drugs)",
+    r"\bno known\b",
+    r"[^@\s]+@[^@\s]+\.[^@\s]+",
+    r"\b\d{3}[-.\s]?\d{3,4}[-.\s]?\d{0,4}\b",
+    r"\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b",
+    r"\b(my name is|i'?m|i am|call me)\b\s+[A-Z]",
+    r"\b(born|date of birth|dob)\b",
+    r"\b(my (email|phone|number|address))\b",
+)
+
+
+def looks_like_visit_information(message: str) -> bool:
+    """Report whether a message carries recordable detail about the visit."""
+
+    return any(
+        re.search(pattern, message, flags=re.IGNORECASE)
+        for pattern in VISIT_INFORMATION_PATTERNS
+    )
 
 FAREWELL_PATTERNS = (
     r"\b(bye|goodbye|see you|take care)\b",
@@ -170,12 +245,33 @@ AMBIGUOUS_RESPONSE = (
 
 # Questions asking the assistant to read state back, mapped to the fields to report.
 STATE_QUERY_TOPICS = (
-    ("current_medications", (r"\b(medications?|meds|drugs)\b.{0,30}\b(do i have|have i|listed|so far|mentioned|taking)\b", r"what (medications?|meds) do i")),
-    ("allergies", (r"\ballerg\w*\b.{0,30}\b(do i have|have i|listed|so far|mentioned)\b",)),
-    ("chief_complaint", (r"\bsymptoms?\b.{0,30}\b(have i|did i|listed|so far|mentioned)\b",)),
-    ("visit_reason", (r"\b(reason|why)\b.{0,30}\b(visit|appointment)\b.{0,20}\b(was|is|said|again)\b", r"remind me .{0,30}reason")),
-    ("provider_name", (r"\b(who|which doctor)\b.{0,30}\b(am i|i'?m)\b.{0,15}seeing",)),
-    ("appointment_date", (r"\bwhen\b.{0,20}\bmy appointment\b",)),
+    ("current_medications", (
+        r"\b(medications?|meds|drugs)\b.{0,30}\b(do i have|have i|listed|so far|mentioned|taking)\b",
+        r"what (medications?|meds) do i",
+        r"check\b.{0,25}\bmedications?\b",
+    )),
+    ("allergies", (
+        r"\ballerg\w*\b.{0,30}\b(do i have|have i|listed|so far|mentioned)\b",
+        r"check\b.{0,25}\ballerg\w*\b",
+    )),
+    ("chief_complaint", (
+        r"\bsymptoms?\b.{0,30}\b(have i|did i|listed|so far|mentioned)\b",
+        r"check\b.{0,25}\bsymptoms?\b",
+    )),
+    ("visit_reason", (
+        r"\b(reason|why)\b.{0,30}\b(visit|appointment)\b.{0,20}\b(was|is|said|again)\b",
+        r"remind me .{0,30}reason",
+        r"check\b.{0,25}\breason\b",
+    )),
+    ("provider_name", (
+        r"\b(who|which doctor)\b.{0,30}\b(am i|i'?m)\b.{0,15}seeing",
+        r"check\b.{0,25}\bprovider\b",
+    )),
+    ("appointment_date", (
+        r"\bwhen\b.{0,20}\bmy appointment\b",
+        r"check\b.{0,25}\b(date|time)\b",
+    )),
+    ("insurance_info", (r"check\b.{0,25}\binsurance\b",)),
 )
 
 # A state query has to actually be a question. "I'm not sure which doctor I'm
@@ -183,7 +279,7 @@ STATE_QUERY_TOPICS = (
 # replying "I don't have a provider recorded" instead of recording that.
 STATE_QUERY_TRIGGER = re.compile(
     r"(\?\s*$)|^(what|which|who|when|do i|have i|can you (show|tell)|show me|"
-    r"remind me|list )",
+    r"remind me|list |check )",
     flags=re.IGNORECASE,
 )
 
@@ -247,14 +343,24 @@ def looks_non_english(message: str) -> bool:
 
 
 def is_low_information(message: str) -> bool:
-    """Detect gibberish or punctuation-only input that carries no request."""
+    """Detect gibberish or punctuation-only input that carries no request.
+
+    Digits are never gibberish. A policy number, a time, a dose, a date and a
+    severity rating are all bare numbers, and they are usually the precise
+    answer to the question just asked — rejecting "209156" as unreadable right
+    after asking for a member ID is worse than useless.
+    """
 
     stripped = message.strip()
     if not stripped:
         return True
-    letters = re.sub(r"[^a-z]", "", stripped.lower())
-    if not letters:
+    alphanumeric = re.sub(r"[^a-z0-9]", "", stripped.lower())
+    if not alphanumeric:
+        # Punctuation and symbols only, with nothing to read.
         return True
+    if re.search(r"\d", alphanumeric):
+        return False
+    letters = re.sub(r"[^a-z]", "", alphanumeric)
     if len(stripped) < 40 and not re.search(r"[aeiou]", letters):
         return True
     # Long runs of consonant-only "words" are keyboard mash rather than language.
@@ -265,24 +371,9 @@ def is_low_information(message: str) -> bool:
 
 
 def _describe(field_name: str, value: object) -> str | None:
-    if value is None:
-        return None
-    if isinstance(value, list):
-        if not value:
-            return "none recorded"
-        parts = []
-        for item in value:
-            if hasattr(item, "name"):
-                parts.append(
-                    " ".join(filter(None, [item.name, item.dosage or "", item.frequency or ""])).strip()
-                )
-            elif hasattr(item, "allergen"):
-                reaction = f" (reaction: {item.reaction})" if item.reaction else ""
-                parts.append(f"{item.allergen}{reaction}")
-            else:
-                parts.append(str(item))
-        return ", ".join(parts)
-    return str(value)
+    """Read one field back to the patient in the same words used elsewhere."""
+
+    return render_value(field_name, value)
 
 
 def answer_state_query(message: str, visit_data: VisitData) -> str | None:
@@ -303,23 +394,44 @@ def answer_state_query(message: str, visit_data: VisitData) -> str | None:
         described = _describe(field_name, getattr(visit_data, field_name, None))
         readable = field_name.replace("_", " ")
         if described is None:
-            return f"I don't have any {readable} recorded yet for this visit."
-        return f"Here is the {readable} I have recorded: {described}."
+            # Say what the record holds for the field rather than only that it
+            # is absent: "not provided" is the value, and it is deliberate.
+            return (
+                f"The {readable} field is empty — not provided. Nothing has been "
+                f"recorded for it in this visit summary, and it is left blank "
+                f"rather than guessed. You can give it to me now if you'd like."
+            )
+        answer = f"Here is the {readable} I have recorded: {described}."
+        # A symptom question is answered with the detail collected alongside it,
+        # since that is what makes the list useful to a clinician.
+        if field_name == "chief_complaint":
+            detail = [
+                f"{label}: {value}"
+                for label, value in (
+                    ("location", visit_data.symptom_location),
+                    ("onset", visit_data.symptom_onset),
+                    ("duration", visit_data.symptom_duration),
+                    ("severity", visit_data.symptom_severity),
+                    ("pattern", visit_data.symptom_pattern),
+                )
+                if value is not None
+            ]
+            if detail:
+                answer += f" Recorded detail — {'; '.join(detail)}."
+        return answer
     return None
 
 
 def build_supplementary_response(state: ConversationState, message: str) -> str:
-    """Build the non-intake part of a reply: greeting, empathy, and guidance.
-
-    The pieces are returned as one string so the caller can place them ahead of
-    the extraction acknowledgement and the next intake question.
-    """
+    """Build the non-intake part of a reply: greeting, empathy, and guidance."""
 
     segments: list[str] = []
     if detect_greeting(message):
         segments.append("Hello, and thanks for reaching out.")
     if detect_emotional_content(message):
         segments.append(EMOTIONAL_ACKNOWLEDGEMENT)
+    if detect_anaphylaxis_risk(message):
+        segments.append(ANAPHYLAXIS_NOTE)
     topic = detect_educational_topic(message)
     if topic is not None:
         segments.append(topic[1])

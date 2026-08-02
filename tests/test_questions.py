@@ -101,6 +101,10 @@ class QuestionSelectionTests(unittest.TestCase):
             session_id="session-123",
             workflow=WorkflowType.REPORT_NEW_SYMPTOMS,
             visit_data=VisitData(
+                patient_name="Dana",
+                date_of_birth="1984-06-05",
+                email="dana@example.com",
+                phone="555-0100",
                 chief_complaint="headache",
                 symptom_location="forehead",
                 symptom_onset="Monday",

@@ -72,7 +72,7 @@ class SummaryWorkflowTests(unittest.TestCase):
         )
 
         self.assertIn("Symptoms: headache", summary)
-        self.assertIn("Current medications: None reported", summary)
+        self.assertIn("Current medications: no medications", summary)
         self.assertNotIn("Date of birth", summary)
 
     def test_begin_review_stores_summary_and_changes_phase(self):
@@ -118,7 +118,7 @@ class SummaryWorkflowTests(unittest.TestCase):
         client = FakeStructuredClient(
             [
                 FieldExtractionResult(
-                    updates=VisitDataPatch(
+                    fields=VisitDataPatch(
                         patient_name="Dana",
                         date_of_birth="1984-06-05",
                         email="dana@example.com",
@@ -156,7 +156,7 @@ class SummaryWorkflowTests(unittest.TestCase):
         client = FakeStructuredClient(
             [
                 FieldExtractionResult(
-                    corrections=VisitDataPatch(symptom_duration="four days")
+                    fields=VisitDataPatch(symptom_duration="four days")
                 )
             ]
         )
@@ -180,10 +180,12 @@ class SummaryWorkflowTests(unittest.TestCase):
 
         response = get_chatbot_response([], "7", client=None, state=state)
 
-        # Viewing a summary collects nothing first — but with an empty record it
-        # says so in words rather than returning a wall of nulls.
+        # An empty record still returns the canonical summary, so a summary
+        # request always answers in the same structure.
         self.assertEqual(state.phase, ConversationPhase.AWAITING_CONFIRMATION)
-        self.assertIn("nothing to summarise", response)
+        self.assertIn("every field is still open", response)
+        self.assertIn("appointment summary", response.lower())
+        self.assertEqual(state.summary_text, build_summary_text(state.visit_data))
 
     def test_generating_a_summary_returns_the_schema_complete_document(self):
         state = ConversationState(

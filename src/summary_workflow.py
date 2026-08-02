@@ -3,7 +3,6 @@
 import json
 import re
 from datetime import date
-from enum import Enum
 
 from openai import OpenAI, OpenAIError
 from pydantic import BaseModel, ValidationError
@@ -18,6 +17,7 @@ try:
         VisitData,
     )
     from .observability import emit_chain_event
+    from .rendering import render_value
     from .prompts.confirmation import build_confirmation_prompt
 except ImportError:  # pragma: no cover - allows running as a script
     from chatbot_content import APPOINTMENT_SUMMARY_FIELDS, APPOINTMENT_SUMMARY_HEADER, DEFAULT_MODEL
@@ -29,6 +29,7 @@ except ImportError:  # pragma: no cover - allows running as a script
         VisitData,
     )
     from observability import emit_chain_event
+    from rendering import render_value
     from prompts.confirmation import build_confirmation_prompt
 
 
@@ -74,25 +75,6 @@ CORRECTION_SIGNALS = (
 MAX_CONFIRMATION_ATTEMPTS = 3
 
 
-def _format_summary_value(value: object) -> str:
-    if isinstance(value, date):
-        return value.isoformat()
-    if isinstance(value, Enum):
-        return str(value.value)
-    if isinstance(value, BaseModel):
-        value = value.model_dump(exclude_none=True)
-    if isinstance(value, dict):
-        return ", ".join(
-            f"{key.replace('_', ' ')}: {_format_summary_value(item)}"
-            for key, item in value.items()
-        )
-    if isinstance(value, list):
-        if not value:
-            return "None reported"
-        return "; ".join(_format_summary_value(item) for item in value)
-    return str(value)
-
-
 # Naming every unanswered field would bury the summary in noise, so the prose
 # rendering only flags the handful a visit record is incomplete without. The
 # JSON document still reports every gap for programmatic consumers.
@@ -108,6 +90,26 @@ KEY_SUMMARY_FIELDS = (
 )
 
 
+def build_change_summary(visit_data: VisitData, changed_fields: list[str]) -> str:
+    """Render only the fields a correction touched, so the change is visible.
+
+    After a correction the whole record is not the answer — the patient asked
+    about one thing and needs to see that one thing. Printing all thirty-odd
+    fields buried the change in a wall of text and made it genuinely hard to
+    tell whether it had been applied.
+    """
+
+    labels = dict(APPOINTMENT_SUMMARY_FIELDS)
+    lines = []
+    for field_name in changed_fields:
+        if field_name not in labels:
+            continue
+        rendered = render_value(field_name, getattr(visit_data, field_name, None))
+        if rendered is not None:
+            lines.append(f"- {labels[field_name]}: {rendered}")
+    return "\n".join(lines)
+
+
 def build_summary_text(visit_data: VisitData) -> str:
     """Render only canonical VisitData values without asking a model to add prose."""
 
@@ -120,7 +122,7 @@ def build_summary_text(visit_data: VisitData) -> str:
             if field_name in KEY_SUMMARY_FIELDS:
                 missing.append(label.lower())
             continue
-        lines.append(f"- {label}: {_format_summary_value(value)}")
+        lines.append(f"- {label}: {render_value(field_name, value)}")
         provided.append(label)
 
     if not provided:

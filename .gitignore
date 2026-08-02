@@ -167,7 +167,7 @@ venv.bak/
 db/visits/
 
 # Local reports
-reports/
+# reports/
 
 # Spyder project settings
 .spyderproject
@@ -229,3 +229,6 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 reports/benchmarks/*/checkpoint.jsonl
+
+# Iteration 3 RAG source material, not used by the current code
+clinical_docs/

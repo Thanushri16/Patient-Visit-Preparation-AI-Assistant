@@ -43,7 +43,7 @@ else:
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_FILE = PROJECT_ROOT / "src" / "evaluators" / "healthcare_assistant_benchmark_210.xlsx"
+DEFAULT_FILE = PROJECT_ROOT / "src" / "evaluators" / "healthcare_assistant_benchmark.xlsx"
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "reports" / "benchmarks"
 DEFAULT_CHECKPOINT = DEFAULT_OUTPUT_DIR / "checkpoint.jsonl"
 

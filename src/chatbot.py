@@ -12,10 +12,12 @@ try:
     from .guidance import (
         AMBIGUOUS_RESPONSE,
         FAREWELL_RESPONSE,
+        GREETING_RESPONSE,
         OFF_TOPIC_RESPONSE,
         answer_state_query,
         build_supplementary_response,
         detect_ambiguous,
+        detect_bare_greeting,
         detect_farewell,
         detect_off_topic,
         is_low_information,
@@ -28,11 +30,13 @@ try:
     from .routing import (
         ROUTER_VERSION,
         detect_global_command,
+        is_summary_request,
         normalize_route_text,
         route_message,
     )
     from .summary_workflow import (
         begin_summary_review,
+        build_change_summary,
         classify_confirmation,
         confirmation_response,
     )
@@ -55,10 +59,12 @@ except ImportError:  # pragma: no cover - allows running as a script
     from guidance import (
         AMBIGUOUS_RESPONSE,
         FAREWELL_RESPONSE,
+        GREETING_RESPONSE,
         OFF_TOPIC_RESPONSE,
         answer_state_query,
         build_supplementary_response,
         detect_ambiguous,
+        detect_bare_greeting,
         detect_farewell,
         detect_off_topic,
         is_low_information,
@@ -71,11 +77,13 @@ except ImportError:  # pragma: no cover - allows running as a script
     from routing import (
         ROUTER_VERSION,
         detect_global_command,
+        is_summary_request,
         normalize_route_text,
         route_message,
     )
     from summary_workflow import (
         begin_summary_review,
+        build_change_summary,
         classify_confirmation,
         confirmation_response,
     )
@@ -218,6 +226,7 @@ def _compose(*segments: str) -> str:
     return " ".join(segment.strip() for segment in segments if segment and segment.strip())
 
 
+
 # A sign-off that still carries an ask must be answered, not just acknowledged.
 FAREWELL_CARRIES_REQUEST = re.compile(
     r"\b(summary|show|can you|could you|before i go|one more|also)\b",
@@ -235,8 +244,11 @@ def _render_summary(state: ConversationState, prompt: str) -> str:
     """Render the visit summary in whichever form the request called for.
 
     A request to generate or validate a summary produces the JSON document that
-    consumers check against the schema. A conversational request produces prose,
-    and an empty record says so in words instead of returning a wall of nulls.
+    consumers check against the schema; a conversational request produces prose.
+    Either way the canonical summary is what comes back. Substituting a sentence
+    when the record is empty made the reply structurally different from every
+    other summary and, being unrepeatable, not idempotent either — an empty
+    summary is still a summary, and it shows exactly which fields are open.
     """
 
     if JSON_SUMMARY_REQUEST.search(prompt):
@@ -244,10 +256,10 @@ def _render_summary(state: ConversationState, prompt: str) -> str:
 
     summary = begin_summary_review(state)
     if not state.visit_data.model_dump(exclude_none=True):
-        return (
-            "I don't have anything recorded for this visit yet, so there's "
-            "nothing to summarise. Tell me the reason for your appointment, your "
-            "symptoms, or your medications and I'll start building it."
+        return _compose(
+            "Nothing has been recorded for this visit yet, so every field is "
+            "still open:",
+            summary,
         )
     return summary
 
@@ -315,8 +327,16 @@ def get_chatbot_response(
     # Flow 2: unreadable input never reaches the classifier or the extractor.
     # A bare menu number or a global command carries no prose and would look
     # like gibberish to that check, so routing gets first refusal on them.
+    # A reply to a question the assistant just asked is data, whatever it looks
+    # like. Screening it as unreadable, off-topic or non-English rejects the very
+    # answer that was requested — an interpreter's name, a member ID, a dose.
+    answering_a_question = (
+        state.requested_field is not None
+        and state.phase is ConversationPhase.COLLECTING
+    )
     routable = (
-        normalize_route_text(prompt) in MENU_OPTION_TO_WORKFLOW
+        answering_a_question
+        or normalize_route_text(prompt) in MENU_OPTION_TO_WORKFLOW
         or detect_global_command(prompt) is not None
     )
     if not routable:
@@ -326,6 +346,8 @@ def get_chatbot_response(
             return _finalize(state, messages, prompt, NON_ENGLISH_RESPONSE)
         # Decline out-of-scope requests by name and answer a goodbye as a
         # goodbye. Falling through to the option list would answer neither.
+        if detect_bare_greeting(prompt):
+            return _finalize(state, messages, prompt, GREETING_RESPONSE)
         if detect_off_topic(prompt):
             return _finalize(state, messages, prompt, OFF_TOPIC_RESPONSE)
         # A goodbye that also asks for something — "that's everything, can you
@@ -388,6 +410,13 @@ def get_chatbot_response(
 
     # Flow 5: if the chatbot is waiting on review, classify confirm vs correction.
     if state.phase is ConversationPhase.AWAITING_CONFIRMATION:
+        # Asking to see the summary is not agreeing to it. Classifying "show me
+        # my summary" as a confirmation silently finalised records the patient
+        # had only asked to read.
+        if is_summary_request(normalize_route_text(prompt)):
+            return _finalize(
+                state, messages, prompt, _render_summary(state, prompt)
+            )
         # Confirmation input path: classify the user's reply against the displayed summary.
         confirmation_phase_before = state.phase.value
         confirmation = classify_confirmation(
@@ -406,12 +435,26 @@ def get_chatbot_response(
                 state,
                 confirmation.correction_text or prompt,
             )
-            if correction_result.merge_result.errors or correction_result.merge_result.missing_fields:
-                # Correction output path with errors or missing data: keep asking for the missing or invalid fields.
+            if correction_result.merge_result.errors:
+                # Only an invalid correction sends the user back for detail. A
+                # correction that merely leaves other fields unanswered still
+                # gets the corrected summary shown, because reviewing it is what
+                # the user was in the middle of doing.
                 response_text = correction_result.response
             else:
-                # Correction output path with a clean merge: regenerate the summary for another confirmation pass.
-                response_text = begin_summary_review(state)
+                # Correction output path with a clean merge: show what changed,
+                # then re-offer the record for confirmation. Leading with the
+                # delta is what the patient asked about; the full summary
+                # follows so nothing is hidden.
+                merge = correction_result.merge_result
+                changed = merge.accepted_fields + merge.cleared_fields
+                delta = build_change_summary(state.visit_data, changed)
+                summary = begin_summary_review(state)
+                response_text = _compose(
+                    f"Updated:\n{delta}" if delta else "",
+                    ("Nothing else has changed. " if delta else ""),
+                    summary,
+                )
         else:
             # Flow 5: confirm or unclear replies use the confirmation response path.
             response_text = confirmation_response(state, confirmation)
@@ -488,8 +531,19 @@ def get_chatbot_response(
             )
         else:
             # Collection continuation path: return the next question or validation feedback.
+            # A message that both supplies information and asks to see the record
+            # gets both: the update is applied and the summary is shown, rather
+            # than silently dropping the half that did not drive the routing.
+            trailing_summary = (
+                begin_summary_review(state)
+                if is_summary_request(normalize_route_text(prompt))
+                else ""
+            )
             response_text = _compose(
-                injection_notice, supplementary, collection_result.response
+                injection_notice,
+                supplementary,
+                collection_result.response,
+                trailing_summary,
             )
         return _finalize(state, messages, prompt, response_text)
     # Collection else path: no collection workflow is active, so fall back to the menu response.

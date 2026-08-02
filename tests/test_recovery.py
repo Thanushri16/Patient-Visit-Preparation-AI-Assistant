@@ -53,7 +53,7 @@ class BoundedRecoveryTests(unittest.TestCase):
             phase=ConversationPhase.COLLECTING,
         )
         client = FakeStructuredClient(
-            FieldExtractionResult(updates=VisitDataPatch(email="invalid"))
+            FieldExtractionResult(fields=VisitDataPatch(email="invalid"))
         )
 
         process_collection_turn(client, state, "invalid")

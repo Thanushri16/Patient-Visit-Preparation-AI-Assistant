@@ -84,6 +84,20 @@ async def execute_scenario(
     session_id = f"bench-{scenario.test_id.lower()}-{uuid4().hex[:8]}"
     turns: list[TurnResult] = []
 
+    # Establish the state the scenario says already exists. These turns share the
+    # session but are not recorded, so scoring still sees only the scored turns.
+    for setup_message in scenario.setup_messages:
+        await retry_with_backoff(
+            lambda message=setup_message: client.post(
+                "/chat", json={"message": message, "session_id": session_id}
+            ),
+            policy=retry_policy,
+            stats=retry_stats,
+            governor=governor,
+        )
+        if turn_delay > 0:
+            await asyncio.sleep(turn_delay)
+
     for index, message in enumerate(scenario.messages, start=1):
         started = perf_counter()
 

@@ -15,6 +15,7 @@ from pydantic import Field
 
 try:
     from .chatbot_content import EMERGENCY_ESCALATION_RESPONSE
+    from .guidance import looks_like_visit_information
     from .models import (
         ConversationPhase,
         ConversationState,
@@ -33,6 +34,7 @@ try:
     )
 except ImportError:  # pragma: no cover - allows running as a script
     from chatbot_content import EMERGENCY_ESCALATION_RESPONSE
+    from guidance import looks_like_visit_information
     from models import ConversationPhase, ConversationState, DomainModel, VisitData, WorkflowType
     from workflow_schemas import refresh_state_completeness
     from workflow_catalog import (
@@ -85,17 +87,51 @@ GLOBAL_COMMANDS = {
 }
 
 
+# A request to look at the record, as opposed to add to it.
+SUMMARY_REQUEST_PATTERN = re.compile(
+    r"\b(show|see|view|display|generate|check|validate)\b[^.?!]{0,40}\b"
+    r"(summary|what you have|what i(?:'ve| have) (?:told|said|given))\b"
+    r"|\bmy (visit |appointment )?summary\b"
+    r"|\bwhat (do )?you have so far\b",
+    flags=re.IGNORECASE,
+)
+
+# Wording that asks for something already recorded to be changed or removed.
+CORRECTION_REQUEST_PATTERN = re.compile(
+    r"\b(actually|instead|correction|wrong|incorrect|not right|mistake)\b"
+    r"|\b(change|update|correct|fix|remove|delete|add|redo)\b"
+    r"|\bi never said\b|\bi forgot\b|\bshould be\b|\bnot [a-z0-9]+,? (but|it'?s)\b",
+    flags=re.IGNORECASE,
+)
+
+
+def is_summary_request(text: str) -> bool:
+    return bool(SUMMARY_REQUEST_PATTERN.search(text))
+
+
+def is_correction_request(text: str) -> bool:
+    return bool(CORRECTION_REQUEST_PATTERN.search(text))
+
+
 def normalize_route_text(text: str) -> str:
     """Normalize free-text commands so exact command matching is reliable."""
     return re.sub(r"\s+", " ", text).strip().lower()
 
 
 def detect_global_command(text: str) -> RouteAction | None:
-    """Detect whether the message is a deterministic global control command."""
-    normalized = normalize_route_text(text)
+    """Detect whether the message is a deterministic global control command.
+
+    Multi-word commands also match inside a sentence, because people ask for
+    them politely — "actually, can we start over?" is a restart. Single words
+    stay exact-match, so "back pain" is not read as "go back".
+    """
+    normalized = normalize_route_text(text).rstrip("?!.")
     for action, commands in GLOBAL_COMMANDS.items():
-        if normalized in commands:
-            return action
+        for command in commands:
+            if normalized == command:
+                return action
+            if " " in command and command in normalized:
+                return action
     return None
 
 
@@ -182,8 +218,11 @@ def _start_workflow(
         confidence=confidence,
         source=source,
         response=start_response,
+        # Any workflow started from a content-bearing message must extract that
+        # message. Only a bare menu number conveys nothing to extract.
         collect_message=(
-            source == "intent_classifier" and workflow is not WorkflowType.EMERGENCY_SUPPORT
+            source in {"intent_classifier", "visit_information"}
+            and workflow is not WorkflowType.EMERGENCY_SUPPORT
         ),
     )
 
@@ -275,20 +314,64 @@ def route_message(
     if global_action := detect_global_command(text):
         return _handle_global_command(state, global_action)
 
+    normalized = normalize_route_text(text)
+
     if state.phase is ConversationPhase.COMPLETED:
+        # Confirming a summary is not the end of the conversation. Someone who
+        # remembers an allergy a moment later must be able to add it, so a
+        # correction reopens collection instead of hitting a dead end.
+        if is_correction_request(normalized):
+            state.phase = ConversationPhase.COLLECTING
+            state.confirmed = False
+            state.confirmation_attempt_count = 0
+            refresh_state_completeness(state)
+            return RouteDecision(
+                action=RouteAction.CHANGE_ANSWER,
+                handled=False,
+                workflow=state.workflow,
+                source="completed_state_correction",
+            )
+        if is_summary_request(normalized):
+            state.phase = ConversationPhase.REVIEWING
+            return RouteDecision(
+                action=RouteAction.CONTINUE,
+                handled=True,
+                workflow=state.workflow,
+                source="completed_state",
+            )
         return RouteDecision(
             action=RouteAction.CONTINUE,
             handled=True,
             workflow=state.workflow,
             source="completed_state",
             response=(
-                "This visit summary is already confirmed. "
-                "Choose menu, restart, or change answer to continue."
+                "Your visit summary is confirmed. You can say summary to see it "
+                "again, tell me anything you want to change, or say restart to "
+                "begin a new one."
             ),
         )
 
-    normalized = normalize_route_text(text)
-    if normalized in MENU_OPTION_TO_WORKFLOW:
+    # An explicit request to see the summary is honoured even mid-workflow;
+    # otherwise the only way to see what has been collected is to finish.
+    if is_summary_request(normalized) and state.workflow is not None:
+        # Asking to see the record is the view-summary intent, whatever workflow
+        # collected it, and the reported intent should say so. The collected data
+        # is untouched, and the summary workflow accepts every field, so a
+        # correction made from the summary still merges.
+        state.workflow = WorkflowType.VIEW_SUMMARY
+        state.phase = ConversationPhase.REVIEWING
+        return RouteDecision(
+            action=RouteAction.CONTINUE,
+            handled=True,
+            workflow=state.workflow,
+            source="summary_request",
+        )
+    # A menu number is only a menu choice while the menu is what is on screen.
+    # Mid-collection a bare number is an answer — a severity of 7, a policy
+    # number, a house number — and reading it as "option 7" both discards the
+    # answer and silently switches the workflow out from under the patient.
+    at_the_menu = state.workflow is None or state.phase is ConversationPhase.MENU
+    if at_the_menu and normalized in MENU_OPTION_TO_WORKFLOW:
         return _start_workflow(
             state,
             MENU_OPTION_TO_WORKFLOW[normalized],
@@ -304,11 +387,18 @@ def route_message(
             source="active_state",
         )
 
+    # Content the patient supplied outranks a weak classifier label. The
+    # classifier reaches for show_menu whenever a message does not look like a
+    # workflow request, and "I'm Dana Whitfield, dana@example.com, 555-0100" is
+    # exactly that shape — answering it with the option list threw the details
+    # away. Nothing carrying recordable information is ever met with the menu.
+    carries_information = looks_like_visit_information(text)
+
     intent_result = intent_classifier(text) if intent_classifier else {}
     intent = str(intent_result.get("intent", "unknown"))
     confidence = float(intent_result.get("confidence", 0.0))
 
-    if intent == SHOW_MENU_INTENT:
+    if intent == SHOW_MENU_INTENT and not carries_information:
         return _menu_decision(state, RouteAction.SHOW_MENU)
 
     try:
@@ -317,6 +407,17 @@ def route_message(
         workflow = None
     if workflow is not None and confidence >= INTENT_CONFIDENCE_THRESHOLD:
         return _start_workflow(state, workflow, confidence, source="intent_classifier")
+
+    # The classifier has no label for "here are my contact details", but such a
+    # message plainly belongs in the record. Starting intake keeps it; showing
+    # the menu throws away what the patient just typed.
+    if carries_information:
+        return _start_workflow(
+            state,
+            WorkflowType.APPOINTMENT_PREPARATION,
+            confidence=INTENT_CONFIDENCE_THRESHOLD,
+            source="visit_information",
+        )
 
     return _menu_decision(
         state,

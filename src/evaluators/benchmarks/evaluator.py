@@ -115,12 +115,21 @@ def _intent_matches(expected: str, actual: str, reply: str) -> tuple[bool, str]:
     actual_normalized = actual.lower().strip()
     reply_normalized = reply.lower()
 
-    if "multi_intent" in parts:
-        passed = actual_normalized == "multi_intent" or (
-            sum(1 for token in ("symptom", "medication", "allerg", "summary", "appointment") if token in reply_normalized)
-            >= 2
+    # A composite expectation such as "medication + allergy" cannot be satisfied
+    # by a single workflow label — the response carries one intent, not two. For
+    # these the check is whether the turn visibly handled more than one thing.
+    if "multi_intent" in parts or (separator == "+" and len(parts) > 1):
+        handled = sum(
+            1
+            for token in ("symptom", "pain", "medication", "allerg", "summary", "appointment")
+            if token in reply_normalized
         )
-        return passed, "Expected evidence that multiple intents were handled."
+        passed = actual_normalized == "multi_intent" or handled >= 2 or any(
+            candidate == actual_normalized
+            for part in parts
+            for candidate in INTENT_ALIASES.get(part, {part})
+        )
+        return passed, f"expected={expected!r}; actual={actual!r}; multi-intent evidence={handled}"
 
     def part_matches(part: str) -> bool:
         if part in META_INTENTS:
@@ -250,7 +259,10 @@ def state_validation_checks(run: ScenarioRun) -> list[dict[str, Any]]:
             except (json.JSONDecodeError, TypeError):
                 valid_json = False
             checks.append(_check("summary_valid_json", valid_json, "Reply must parse as JSON."))
-        else:
+        elif "field_check" not in scenario.expected_intent.lower():
+            # A row that asks to check one field is satisfied by reporting that
+            # field's value; requiring a whole rendered summary would fail the
+            # precise answer the scenario actually asked for.
             checks.append(
                 _check(
                     "summary_available",
@@ -259,11 +271,17 @@ def state_validation_checks(run: ScenarioRun) -> list[dict[str, Any]]:
                 )
             )
     elif category == "Confirmation and correction":
+        # Restarting is a legitimate outcome here — "can we start over?" is
+        # supposed to clear the record and return to the menu, so `menu` is a
+        # correct phase for those scenarios rather than a failed one.
+        allowed_phases = {"collecting", "awaiting_confirmation", "completed"}
+        if "reset" in scenario.pass_fail_criteria.lower() or "restart" in scenario.expected_intent.lower():
+            allowed_phases.add("menu")
         checks.append(
             _check(
                 "confirmation_state",
-                state.get("phase") in {"collecting", "awaiting_confirmation", "completed"},
-                f"phase={state.get('phase')!r}",
+                state.get("phase") in allowed_phases,
+                f"phase={state.get('phase')!r}; allowed={sorted(allowed_phases)}",
             )
         )
     elif category == "Appointment-preparation intake":

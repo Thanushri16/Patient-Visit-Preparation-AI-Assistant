@@ -23,7 +23,9 @@ class ConfirmedVisitRecord(DomainModel):
     """Versioned storage record created only after explicit user confirmation."""
 
     visit_id: str
-    email: str
+    # The lookup key for matching repeat visits. ``None`` when the patient never
+    # gave an address; the record is still valid, it simply is not indexed.
+    email: str | None = None
     session_reference: str
     schema_version: str = VISIT_SCHEMA_VERSION
     status: Literal["confirmed"] = "confirmed"
@@ -124,19 +126,24 @@ class JsonVisitRepository:
             raise ValueError("Only completed and confirmed visits may be persisted.")
         if not state.summary_text:
             raise ValueError("A confirmed visit must have a summary.")
-        if not state.visit_data.email:
-            raise ValueError("A confirmed visit must include an email address.")
 
-        normalized_email = self._normalize_email(state.visit_data.email)
+        # An email is how repeat visits are matched to an existing record, not a
+        # condition of being a valid one. Clinical detail is collected before
+        # contact details, so a patient can reasonably confirm a summary without
+        # ever giving an address; that visit is still saved, just unindexed.
+        normalized_email = self._normalize_email(state.visit_data.email or "")
         index = self._load_index()
-        existing_visit_id = index.get(normalized_email)
         existing_record = None
-        if existing_visit_id:
-            existing_path = self._path_for(existing_visit_id)
-            if existing_path.exists():
-                existing_record = self._load_record_by_visit_id(existing_visit_id)
-        if existing_record is None:
-            existing_record = self._find_record_by_email(normalized_email)
+        # Without an email there is nothing to match on, and matching every
+        # anonymous visit to every other would merge unrelated patients.
+        if normalized_email:
+            existing_visit_id = index.get(normalized_email)
+            if existing_visit_id:
+                existing_path = self._path_for(existing_visit_id)
+                if existing_path.exists():
+                    existing_record = self._load_record_by_visit_id(existing_visit_id)
+            if existing_record is None:
+                existing_record = self._find_record_by_email(normalized_email)
 
         now = datetime.now(timezone.utc)
         if existing_record is not None:
@@ -153,11 +160,11 @@ class JsonVisitRepository:
             merged_visit_data = state.visit_data
             summary_text = state.summary_text
 
-        merged_visit_data.email = normalized_email
+        merged_visit_data.email = normalized_email or None
 
         record = ConfirmedVisitRecord(
             visit_id=visit_id,
-            email=normalized_email,
+            email=normalized_email or None,
             session_reference=anonymize_session_id(state.session_id),
             created_at=created_at,
             updated_at=now,
@@ -167,8 +174,9 @@ class JsonVisitRepository:
 
         final_path = self._path_for(visit_id)
         self._write_atomic_json(final_path, record.model_dump(mode="json"))
-        index[normalized_email] = visit_id
-        self._write_index(index)
+        if normalized_email:
+            index[normalized_email] = visit_id
+            self._write_index(index)
 
         state.visit_id = visit_id
         state.persisted_at = now

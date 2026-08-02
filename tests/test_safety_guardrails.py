@@ -168,7 +168,7 @@ class GuidanceTests(unittest.TestCase):
     def test_state_question_with_nothing_recorded_says_so(self):
         answer = answer_state_query("What medications do I have listed?", VisitData())
 
-        self.assertIn("don't have any", answer)
+        self.assertIn("not provided", answer)
 
     def test_an_ordinary_report_is_not_treated_as_a_state_question(self):
         self.assertIsNone(
@@ -180,6 +180,13 @@ class GuidanceTests(unittest.TestCase):
         self.assertTrue(is_low_information("!@#$%^&*()"))
         self.assertTrue(is_low_information("   "))
         self.assertFalse(is_low_information("I have a cough"))
+
+    def test_numbers_are_never_gibberish(self):
+        # These are all precise answers to questions the assistant asks: a
+        # member ID, a policy number, an appointment time, a severity rating.
+        for message in ("209156", "39507599", "5653845566666663", "2:30pm", "7", "10/05/1984"):
+            with self.subTest(message=message):
+                self.assertFalse(is_low_information(message))
 
     def test_non_english_input_is_detected(self):
         self.assertTrue(looks_non_english("Tengo dolor de cabeza"))

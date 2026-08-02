@@ -7,22 +7,55 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
+# Dates people actually type. Parsing is the application's job precisely so that
+# no model has to reformat one — a date silently rewritten is a wrong date in a
+# clinical record, and unlike a missing field it looks perfectly valid.
+DATE_OF_BIRTH_FORMATS = (
+    "%m/%d/%Y",
+    "%m-%d-%Y",
+    "%m.%d.%Y",
+    "%Y-%m-%d",
+    "%Y/%m/%d",
+    "%d %B %Y",
+    "%B %d %Y",
+    "%B %d, %Y",
+    "%b %d %Y",
+    "%b %d, %Y",
+)
+
+EARLIEST_PLAUSIBLE_BIRTH_YEAR = 1900
+
+
 def _parse_date_of_birth(value: object) -> date | object:
-    if value is None or isinstance(value, date):
+    if value is None:
         return value
-    if not isinstance(value, str):
+    if isinstance(value, date):
+        parsed = value
+    elif isinstance(value, str):
+        text = value.strip()
+        parsed = None
+        for format_name in DATE_OF_BIRTH_FORMATS:
+            try:
+                parsed = datetime.strptime(text, format_name).date()
+                break
+            except ValueError:
+                continue
+        if parsed is None:
+            try:
+                parsed = datetime.fromisoformat(text).date()
+            except ValueError as exc:
+                raise ValueError(
+                    "Date of birth must use MM/DD/YYYY format."
+                ) from exc
+    else:
         return value
 
-    text = value.strip()
-    for format_name in ("%m/%d/%Y", "%Y-%m-%d"):
-        try:
-            return datetime.strptime(text, format_name).date()
-        except ValueError:
-            continue
-    try:
-        return datetime.fromisoformat(text).date()
-    except ValueError as exc:
-        raise ValueError("Date of birth must use MM/DD/YYYY format.") from exc
+    # A year outside living memory means the value was mistyped or mangled in
+    # transit. Rejecting it forces the question to be asked again, which is far
+    # better than storing a birth date of 0605.
+    if parsed.year < EARLIEST_PLAUSIBLE_BIRTH_YEAR:
+        raise ValueError("Date of birth must use MM/DD/YYYY format.")
+    return parsed
 
 
 class DomainModel(BaseModel):
@@ -165,13 +198,45 @@ class VisitDataPatch(VisitData):
     drifting away from the canonical model when fields are added.
     """
 
+    # Taken as free text, not as a typed date. Asking the model for an ISO date
+    # made it reformat what the patient said, and it got that wrong — "06/05/1984"
+    # came back as "0605-04-06". The application parses the date it was given.
+    date_of_birth: str | None = None
+
+    # Shares the parent's validator name so it replaces rather than compounds it;
+    # the patch keeps the date exactly as written and never parses it.
+    @field_validator("date_of_birth", mode="before")
+    @classmethod
+    def validate_date_of_birth(cls, value):
+        if value is None:
+            return None
+        return value.isoformat() if isinstance(value, date) else str(value)
+
 
 class FieldExtractionResult(DomainModel):
-    """Typed output returned by the visit-field extractor prompt."""
+    """Typed output returned by the visit-field extractor prompt.
 
-    updates: VisitDataPatch = Field(default_factory=VisitDataPatch)
-    corrections: VisitDataPatch = Field(default_factory=VisitDataPatch)
+    One patch, not two. Splitting the output into "updates" and "corrections"
+    asked the model to classify intent as well as extract, and it reliably got
+    the classification backwards — echoing the whole existing record as updates
+    and putting the *superseded* value under corrections, which then overwrote
+    the new one. Whether a value is new or replaces an earlier answer is a
+    question the application can settle by comparing against its own state, so
+    the model is only asked what the message says.
+    """
+
+    fields: VisitDataPatch = Field(default_factory=VisitDataPatch)
     uncertain_fields: list[str] = Field(default_factory=list)
+    # Fields the patient is taking back — "I never said I had nausea", "the
+    # medications are all wrong, let me redo them". Retracting is not the same
+    # as correcting: there may be no replacement value, and leaving the old one
+    # in place would keep something in the record they have disowned.
+    cleared_fields: list[str] = Field(default_factory=list)
+    # Individual entries to drop, as "field:value" — "chief_complaint:nausea",
+    # "current_medications:metformin". Clearing a whole field is too blunt when
+    # a patient disowns one item out of several: "I never said I had nausea"
+    # must not also erase the headache they did report.
+    removed_items: list[str] = Field(default_factory=list)
 
 
 class ConfirmationResult(DomainModel):

@@ -128,7 +128,7 @@ This project will be delivered in four development iterations:
    | NFR-6 Privacy | Partially complete | Telemetry avoids raw patient values, but production privacy controls are not complete. |
    | NFR-7 Maintainability | Complete | The current codebase is already modular and separated by concern. |
    | NFR-8 Observability | Partially complete | Privacy-safe events and evaluation outputs exist, but not a full production observability stack. |
-   | NFR-9 Testability | Partially complete | The repo has an offline deterministic unit suite, deterministic evaluators, and a 210-scenario behavioural benchmark against the running API, but not a full CI-backed automated pipeline. |
+   | NFR-9 Testability | Partially complete | The repo has an offline deterministic unit suite, a consolidated regression suite whose deterministic half runs without credentials, a 215-scenario behavioural benchmark, and a 34-conversation session-integrity benchmark, but not a full CI-backed automated pipeline. |
    | NFR-10 Cost Efficiency | Not complete | AI token usage monitoring is not implemented yet. |
    | NFR-11 Accessibility | Complete | The UI is already responsive across desktop and mobile viewports. |
    | NFR-12 Extensibility | Complete | The architecture already supports future AI capability expansion. |
@@ -173,7 +173,7 @@ This project will be delivered in four development iterations:
    | NFR-6 Privacy | Partially complete | Logging is privacy-conscious, but production privacy hardening is not complete. |
    | NFR-7 Maintainability | Complete | The codebase is already modular enough to support future expansion. |
    | NFR-8 Observability | Partially complete | There are chain events and reports, but not full metrics/tracing/dashboards. |
-   | NFR-9 Testability | Partially complete | Unit tests, evaluators, and a 210-scenario API benchmark exist, but not the full CI-backed suite described here. |
+   | NFR-9 Testability | Partially complete | Unit tests, evaluators, and a 215-scenario API benchmark exist, but not the full CI-backed suite described here. |
    | NFR-10 Cost Efficiency | Not complete | Cost monitoring and token-usage controls are not implemented yet. |
    | NFR-11 Accessibility | Complete | The interface is already usable on desktop and mobile. |
    | NFR-12 Extensibility | Complete | The architecture is intended to support future AI capabilities. |
@@ -198,7 +198,7 @@ This project will be delivered in four development iterations:
 | Iteration | Status | Notes |
 |---|---|---|
 | Iteration 1 | Complete | Conversation workflow, typed visit summary, in-memory session handling, and basic safety messaging are already implemented. |
-| Iteration 2 | Complete | Intent routing, moderation, prompt chaining, structured extraction, summary review, confirmation, persistence, and evaluation are implemented. Behaviour is measured against a 210-scenario benchmark whose findings have been fed back into the conversation design. |
+| Iteration 2 | Complete | Intent routing, moderation, prompt chaining, structured extraction, summary review, confirmation, persistence, and evaluation are implemented. Behaviour is measured against a 215-scenario benchmark whose findings have been fed back into the conversation design. |
 | Iteration 3 | Not complete | The codebase has foundations, but RAG ingestion, citations, persistent auth, exports, and admin knowledge management are still planned. |
 | Iteration 4 | Not complete | Production deployment, security hardening, observability, autoscaling, and real-world validation are still planned. |
 
@@ -211,7 +211,7 @@ This project will be delivered in four development iterations:
 - Implemented: intent routing, moderation, prompt chaining, structured extraction, summary review, confirmation, persistence, and evaluation.
 - Implemented alongside intake: educational answers to general preparation questions, acknowledgement of expressed worry, greetings and farewells, declining out-of-scope requests, and answering questions about what has already been recorded from state rather than from the model.
 - Emergency handling returns guidance specific to the emergency — an EpiPen for anaphylaxis, Poison Control for an overdose, the 988 crisis line for self-harm, FAST for stroke — and treats a frightening symptom the patient describes as past and already treated as history rather than escalating it.
-- Behaviour is measured end to end by a 210-scenario Excel-driven benchmark against the running API, described under Testing Strategy.
+- Behaviour is measured end to end by two Excel-driven benchmarks against the running API — 215 single-turn scenarios and 34 multi-turn conversations — described under Testing Strategy.
 
 ## Iteration 3
 
@@ -280,10 +280,14 @@ This project will be delivered in four development iterations:
 
 ### Testing Strategy
 
-- The current repository supports offline unit tests, deterministic evaluation scripts, and a 210-scenario behavioural benchmark driven from an Excel workbook.
+- The current repository supports offline unit tests plus three evaluation levels, each answering a different question and reported separately rather than averaged into one score.
+- **Regression suite** (`src/evaluators/regression_suite.py`) — one entry point for the prompt-chain, prompt-injection, and intent-classifier evaluations, which were previously four separate scripts duplicating the same import shim, report writer, and CLI. The prompt-chain half is fully deterministic and needs no API key, so it is the part suitable for CI; without credentials the suite runs that half and reports the model-backed evaluations as skipped rather than failing. Individual evaluations can be selected with `--only`.
+- **Scenario benchmark** — 215 single-turn cases from the `Scenarios` sheet, asking whether each individual reply was right.
+- **Conversation benchmark** — 34 multi-turn sessions from the `Conversation Flows` sheet, asking whether a whole session holds together. It scores state persistence, recovery correctness, and tone/safety consistency, and fails a conversation on exactly three things: a turn error, corrupted state, or an emergency or injection turn that fails to override the normal flow. Per-turn expectations and the session judge are graded diagnostics rather than veto conditions, so the metric isolates session integrity from the per-turn correctness the scenario suite already measures.
 - The unit suite fakes every model client, so it is deterministic and makes no paid API calls. It covers workflow schemas and completeness, routing, extraction and merging, question selection, summary and confirmation, safety guardrails, and the benchmark runner's own rate-limit and checkpoint behaviour.
-- The benchmark scores each scenario in three layers: deterministic response-contract checks, concrete conversation-state checks, and an LLM-as-judge assessment of intent handling, behaviour, criteria, safety, and tone. A scenario passes only when every applicable layer passes.
-- The benchmark is rate-limit aware by construction: parallelism is discovered at runtime by an AIMD governor rather than fixed, every call retries throttling with exponential backoff and full jitter, results are checkpointed per batch so an interrupted run resumes, and a case that exhausts its retry budget is recorded as an error and skipped rather than failing the run.
+- The scenario benchmark scores each case in three layers: deterministic response-contract checks, concrete conversation-state checks, and an LLM-as-judge assessment of intent handling, behaviour, criteria, safety, and tone. A scenario passes only when every applicable layer passes, and the layer that failed identifies whether the defect is in the data flow or in the wording.
+- A single-turn pass rate and a full-session pass rate measure different failure modes, so they are always reported side by side and never combined.
+- Both benchmarks share the same rate-limit handling, which is rate-limit aware by construction: parallelism is discovered at runtime by an AIMD governor rather than fixed, every call retries throttling with exponential backoff and full jitter, results are checkpointed per batch so an interrupted run resumes, and a case that exhausts its retry budget is recorded as an error and skipped rather than failing the run.
 - Iteration 3 adds RAG-specific evaluation such as recall, groundedness, faithfulness, and citation checks.
 - Iteration 4 adds load, security, and end-to-end validation against production-like infrastructure.
 

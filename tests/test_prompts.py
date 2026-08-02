@@ -44,7 +44,7 @@ class PromptBuilderTests(unittest.TestCase):
         self.assertIn("symptom_duration", prompt)
         self.assertIn("headache", prompt)
         self.assertIn("requested_field", prompt)
-        self.assertIn('"updates"', prompt)
+        self.assertIn('"fields"', prompt)
 
     def test_confirmation_prompt_defines_one_structured_task(self):
         confirmation = build_confirmation_prompt("Yes, correct", "Chief complaint: headache")

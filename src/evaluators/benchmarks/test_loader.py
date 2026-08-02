@@ -6,6 +6,11 @@ import re
 
 from openpyxl import load_workbook
 
+try:
+    from .preconditions import resolve_scenario_messages
+except ImportError:  # pragma: no cover - allows running as a script
+    from preconditions import resolve_scenario_messages
+
 
 @dataclass(frozen=True)
 class BenchmarkScenario:
@@ -22,6 +27,9 @@ class BenchmarkScenario:
     tests_concept: str
     is_multi_turn: bool
     messages: tuple[str, ...] = ()
+    # Turns that establish the state the row says already exists. They are sent
+    # to the same session before `messages` and are never scored.
+    setup_messages: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, object]:
         return asdict(self)
@@ -135,7 +143,14 @@ def load_scenarios(path: Path) -> list[BenchmarkScenario]:
             )
         else:
             grouped.append(scenario)
-    return grouped
+
+    # Finally, resolve any stated precondition into the setup turns it
+    # describes, so a row that says "(Summary shown)" is actually shown one.
+    resolved: list[BenchmarkScenario] = []
+    for scenario in grouped:
+        setup, scored = resolve_scenario_messages(scenario.messages)
+        resolved.append(replace(scenario, setup_messages=setup, messages=scored))
+    return resolved
 
 
 def split_scenarios(
