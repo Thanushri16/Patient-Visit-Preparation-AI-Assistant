@@ -22,7 +22,18 @@ class StateAwareRoutingTests(unittest.TestCase):
         self.assertEqual(state.phase, ConversationPhase.COLLECTING)
         self.assertEqual(
             state.missing_fields,
-            ["chief_complaint", "symptom_duration", "symptom_severity"],
+            [
+                "chief_complaint",
+                "symptom_location",
+                "symptom_severity",
+                "symptom_duration",
+                "symptom_onset",
+                "symptom_pattern",
+                "patient_name",
+                "date_of_birth",
+                "email",
+                "phone",
+            ],
         )
 
     def test_active_workflow_continues_without_reclassifying_answer(self):
@@ -85,7 +96,7 @@ class StateAwareRoutingTests(unittest.TestCase):
 
         self.assertEqual(decision.action, RouteAction.FALLBACK)
         self.assertEqual(state.phase, ConversationPhase.MENU)
-        self.assertIn("choose an option", decision.response)
+        self.assertIn("rephrase", decision.response)
 
     def test_change_answer_returns_confirmation_state_to_collection(self):
         state = ConversationState(
@@ -112,7 +123,7 @@ class StateAwareRoutingTests(unittest.TestCase):
             state=state,
         )
 
-        self.assertIn("immediate emergency care", response.lower())
+        self.assertIn("call 911", response.lower())
         self.assertEqual(state.phase, ConversationPhase.ESCALATED)
         self.assertEqual(state.workflow, WorkflowType.EMERGENCY_SUPPORT)
 
@@ -128,7 +139,7 @@ class StateAwareRoutingTests(unittest.TestCase):
 
         self.assertEqual(decision.source, "emergency_state")
         self.assertEqual(state.phase, ConversationPhase.ESCALATED)
-        self.assertIn("immediate emergency care", decision.response.lower())
+        self.assertIn("call 911", decision.response.lower())
 
     def test_chatbot_persists_routed_menu_exchange_in_memory(self):
         state = ConversationState(session_id="session-123")

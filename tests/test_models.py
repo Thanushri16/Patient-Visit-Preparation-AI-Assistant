@@ -9,7 +9,8 @@ from pydantic import ValidationError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from models import (  # noqa: E402
+from models import (
+    VisitDataPatch,  # noqa: E402
     Allergy,
     ChatMessage,
     ChatSession,
@@ -41,7 +42,7 @@ class VisitDataModelTests(unittest.TestCase):
     def test_accepts_typed_nested_visit_data(self):
         visit_data = VisitData(
             patient_name="  Dana  ",
-            date_of_birth="1984-06-05",
+            date_of_birth="06/05/1984",
             height=Measurement(value=6, unit="ft"),
             weight={"value": 140, "unit": "lb"},
             symptom_severity=6,
@@ -53,6 +54,11 @@ class VisitDataModelTests(unittest.TestCase):
         self.assertEqual(visit_data.date_of_birth, date(1984, 6, 5))
         self.assertEqual(visit_data.weight.value, 140)
         self.assertEqual(visit_data.current_medications[0].name, "Medicine A")
+
+    def test_accepts_mm_dd_yyyy_date_patch_values(self):
+        visit_data = VisitData(date_of_birth="06/05/1984")
+
+        self.assertEqual(visit_data.date_of_birth, date(1984, 6, 5))
 
     def test_rejects_out_of_range_severity_and_unknown_fields(self):
         with self.assertRaises(ValidationError):
@@ -94,3 +100,29 @@ class ConversationStateModelTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DateOfBirthTests(unittest.TestCase):
+    """A birth date is parsed by the application, never reformatted by a model."""
+
+    def test_common_written_forms_are_accepted(self):
+        for written in ("06/05/1984", "06-05-1984", "1984-06-05", "June 5, 1984"):
+            with self.subTest(written=written):
+                self.assertEqual(
+                    VisitData(date_of_birth=written).date_of_birth, date(1984, 6, 5)
+                )
+
+    def test_a_mangled_date_is_rejected_rather_than_stored(self):
+        # The extractor once returned "0605-04-06" for "born 06/05/1984". A wrong
+        # birth date looks valid, so it has to be refused and asked for again.
+        with self.assertRaises(ValidationError):
+            VisitData(date_of_birth="0605-04-06")
+
+    def test_the_extraction_patch_keeps_the_date_exactly_as_written(self):
+        patch = VisitDataPatch(date_of_birth="06/05/1984")
+
+        self.assertEqual(patch.date_of_birth, "06/05/1984")
+        self.assertEqual(
+            VisitData.model_validate({"date_of_birth": patch.date_of_birth}).date_of_birth,
+            date(1984, 6, 5),
+        )

@@ -35,7 +35,7 @@ class ModerationPipelineTests(unittest.TestCase):
             client=None,
             state=state,
         )
-        self.assertIn("immediate emergency care", response.lower())
+        self.assertIn("call 911", response.lower())
         self.assertEqual(messages[-1].role, "assistant")
 
 

@@ -10,13 +10,22 @@ This project is for educational and appointment-preparation purposes. It does no
 
 The implemented prompt chain supports:
 
-- Appointment preparation and patient intake
+- Appointment preparation and patient intake, including visit reason, provider,
+  date and time, insurance, documents, accessibility needs, and pre-visit
+  instructions
 - Symptom, allergy, and medication-information workflows
-- Healthcare menu and intent-based routing
-- Required identity and contact details for appointment preparation
-- Conditional questions for address, insurance, and allergy reactions
-- Emergency symptom detection and escalation
-- Structured summary review, correction, and confirmation
+- Healthcare menu and intent-based routing, where a message that selects a
+  workflow is also extracted rather than discarded
+- Clinical detail collected before administrative detail, so a reported symptom
+  is followed up on before contact information is requested
+- Conditional questions for medication doses, allergy reactions, insurance
+  details, and address
+- Emergency detection with guidance specific to the emergency, and past,
+  resolved events treated as history rather than escalated
+- Educational answers to general preparation questions, acknowledgement of
+  expressed worry, and answers to questions about what has already been recorded
+- Structured summary review, correction, and confirmation, in prose for reading
+  and as a schema-complete JSON document when one is requested
 - Local storage of confirmed summaries under UUID visit IDs
 
 See [the SRS](documentation/ai-chatbot-for-healthcare-srs.md) for full product requirements and future platform scope. See [the prompt-chaining architecture](documentation/prompt_chaining_architecture.md) for the runtime diagram and implementation tracker.
@@ -39,14 +48,30 @@ The current codebase covers the MVP and AI workflow expansion. The SRS now reser
 │   ├── routing.py                             # State-aware workflow routing
 │   ├── workflow_catalog.py                    # Menu and intent metadata source of truth
 │   ├── workflow_schemas.py                    # Required fields and completeness rules
-│   ├── extraction.py                          # Structured extraction and validation
-│   ├── questions.py                           # Deterministic next-question selection
+│   ├── extraction.py                          # Structured extraction, validation, and merging
+│   ├── questions.py                           # Next-question selection and adaptive follow-ups
+│   ├── guidance.py                            # Educational answers, empathy, and state recall
 │   ├── summary_workflow.py                    # Summary and confirmation workflow
 │   ├── moderation.py                          # Input/output safety checks
 │   ├── persistence.py                         # Confirmed-visit JSON persistence
 │   ├── observability.py                       # Privacy-safe prompt-chain events
-│   ├── prompts/                               # Model-backed extractor and confirmation prompts
-│   └── evaluators/                            # Intent, injection, and chain evaluations
+│   ├── prompts/                               # Model-backed extractor, follow-up, and confirmation prompts
+│   └── evaluators/
+│       ├── regression_suite.py             # Prompt-chain, injection, and intent evaluations
+│       ├── healthcare_assistant_benchmark.xlsx
+│       └── benchmarks/
+│           ├── test_loader.py              # Excel scenario loader
+│           ├── preconditions.py            # Resolves a scenario's stated setup into turns
+│           ├── test_runner.py              # Governed API execution
+│           ├── evaluator.py                # Contract, state, and LLM-judge scoring
+│           ├── conversation_loader.py      # Multi-turn flow loader
+│           ├── conversation_runner.py      # Sequential session execution
+│           ├── conversation_evaluator.py   # Session-integrity scoring
+│           ├── rate_limiter.py             # Adaptive concurrency and jittered backoff
+│           ├── checkpoint.py               # Batch checkpointing and resume
+│           ├── report_generator.py         # Console and JSON reports
+│           ├── run_benchmarks.py           # Scenario CLI
+│           └── run_conversation_flows.py   # Conversation CLI
 ├── tests/                                     # Unit and workflow tests
 ├── reports/                                   # Generated evaluation reports
 ├── db/visits/                                 # Runtime-only confirmed visit records
@@ -111,20 +136,154 @@ Run one test module, for example:
 uv run python -m unittest tests.test_routing -v
 ```
 
-Run the deterministic prompt-chain regression evaluation:
+The suite is offline and deterministic: model clients are faked, so no test
+makes a paid API call. It covers the workflow schemas and completeness rules,
+routing and global commands, extraction and merging, question selection, the
+summary and confirmation workflow, the safety guardrails, and the benchmark
+runner's rate-limit and checkpoint behaviour.
+
+## Evaluations
+
+Behaviour is checked at three levels, each answering a different question. They
+are reported separately and never averaged, because a high score at one level
+says nothing about the others.
+
+| Level | Question it answers | Cost |
+|---|---|---|
+| Regression suite | Do the chain's nodes still behave? | Free for the deterministic half |
+| Scenario benchmark | Was each individual reply right? | One API call per scenario, plus a judge |
+| Conversation benchmark | Does a whole session hold together? | One session per flow, plus a judge |
+
+### Regression suite
+
+The prompt-chain, prompt-injection, and intent-classifier evaluations live in a
+single suite, `src/evaluators/regression_suite.py`. Run all three:
 
 ```bash
-uv run python src/evaluators/prompt_chain_evaluator.py
+uv run python -m src.evaluators.regression_suite
 ```
 
-The prompt-injection and intent-classifier evaluations use the configured OpenAI API and may incur API usage:
+The prompt-chain half is deterministic and makes no API calls, so it runs
+without a key and is the one to use in CI:
 
 ```bash
-uv run python src/evaluators/prompt_injection_evaluator.py
-uv run python src/evaluators/intent_classifier_evaluator.py
+uv run python -m src.evaluators.regression_suite --only prompt-chain
 ```
 
-Evaluation reports are written to `reports/` by default.
+The other two use the configured OpenAI API and may incur usage:
+
+```bash
+uv run python -m src.evaluators.regression_suite --only injection
+uv run python -m src.evaluators.regression_suite --only intent
+uv run python -m src.evaluators.regression_suite --only intent --dataset my_labels.json
+```
+
+Without an API key the suite still runs its deterministic half and reports the
+model-backed evaluations as skipped, rather than failing outright.
+
+Reports are written to `reports/` by default. That directory is generated output
+and is ignored by Git.
+
+### Scenario benchmark — 215 single-turn cases
+
+Start the chatbot API in one terminal, then run the benchmark in another:
+
+```bash
+uv run python -m src.evaluators.benchmarks.run_benchmarks \
+  --file src/evaluators/healthcare_assistant_benchmark.xlsx
+```
+
+Each scenario is scored in three layers — a response-contract check, a
+conversation-state check, and an LLM-as-judge assessment — and passes only when
+every applicable layer passes. Splitting them matters diagnostically: the layer
+that failed says immediately whether the defect is in the data flow or the
+wording. Full, summary, and failure-only JSON reports are written under
+`reports/benchmarks/`.
+
+#### Rate-limit handling
+
+The suite drives an API that itself makes several model calls per turn, so the
+practical ceiling on throughput is the provider's rate limit. Rather than
+hard-coding a concurrency figure, the runner discovers a safe one:
+
+- Scenarios run in small batches, starting at a deliberately low parallelism.
+  An AIMD governor raises the limit by one after a sustained run of clean
+  responses and halves it the moment a rate limit appears, so the suite settles
+  at a level the provider tolerates.
+- Every call — both benchmark turns and judge calls — retries throttling and
+  transient server errors with exponential backoff and full jitter, honouring a
+  server-supplied `Retry-After` when one is present.
+- Each finished batch is appended to a checkpoint file. Re-running the same
+  command resumes from it and evaluates only what is left; pass `--fresh` to
+  start over.
+- A case that exhausts its retry budget is recorded as `ERROR` and skipped. A
+  rate limit never fails the run, and the full report is always produced.
+
+The end of the run prints the counters that describe this — attempts, rate-limit
+hits, retries, permanent failures, concurrency changes, and total time spent
+backing off.
+
+Useful options include:
+
+```bash
+# Run one category
+uv run python -m src.evaluators.benchmarks.run_benchmarks \
+  --category "Emergency detection and escalation"
+
+# Run selected scenarios without paid judge calls
+uv run python -m src.evaluators.benchmarks.run_benchmarks \
+  --test-id TC-001 --test-id TC-012 --no-judge
+
+# Target another deployment
+uv run python -m src.evaluators.benchmarks.run_benchmarks \
+  --base-url http://staging:8000 --output-dir reports/staging-benchmark
+
+# Stay deliberately gentle on a constrained API key
+uv run python -m src.evaluators.benchmarks.run_benchmarks \
+  --start-concurrency 1 --max-concurrency 2 --batch-size 5 --batch-pause 2
+```
+
+### Conversation benchmark — 34 multi-turn sessions
+
+The `Conversation Flows` sheet holds whole sessions rather than isolated turns.
+Each is replayed in order on one session ID, and scored on three things a
+single-turn suite cannot see:
+
+- **State persistence** — everything captured earlier is still present at the
+  end, except where a later turn legitimately changed it.
+- **Recovery correctness** — after a correction or restart the old value is gone
+  *and* the new one is there. Half of that is not a recovery.
+- **Tone and safety consistency** — an escalation or a refused injection holds
+  for the rest of the session rather than lapsing on the next turn.
+
+A conversation fails on exactly three things: a turn error, corrupted state, or
+an emergency or injection turn that fails to override the normal flow.
+
+Per-turn expectations and the session judge are reported as **graded
+diagnostics**, not veto conditions — a turn-expectation percentage per
+conversation and across the run. They measure per-turn correctness, which the
+scenario suite already measures directly; letting one of them sink an otherwise
+sound eight-turn session would make this metric a worse copy of that one instead
+of measuring what only it can, which is whether a session holds together.
+
+```bash
+uv run python -m src.evaluators.benchmarks.run_conversation_flows
+
+# One flow, or the first few
+uv run python -m src.evaluators.benchmarks.run_conversation_flows --conv-id CONV-14
+uv run python -m src.evaluators.benchmarks.run_conversation_flows --limit 10
+
+# Print the single-turn score alongside it, for contrast
+uv run python -m src.evaluators.benchmarks.run_conversation_flows \
+  --scenario-summary reports/benchmarks/run15/benchmark_summary_*.json
+```
+
+Results land in `reports/conversations/`: `conversation_flow_report.json` at the
+end, and `checkpoint.jsonl` written per conversation as the run proceeds, so a
+long run can be inspected or resumed while it is still going.
+
+Both benchmarks share the same rate-limit handling, checkpointing and resume
+behaviour described above.
 
 ## Data and deployment notes
 

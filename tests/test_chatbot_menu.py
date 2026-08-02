@@ -57,7 +57,11 @@ class MenuRequestTests(unittest.TestCase):
         self.assertEqual(len(client.calls), 1)
         self.assertEqual(state.workflow, WorkflowType.REPORT_NEW_SYMPTOMS)
         self.assertEqual(state.phase, ConversationPhase.COLLECTING)
-        self.assertIn("describe your symptoms", response)
+        # The classified message continues into collection rather than being
+        # answered with a canned greeting, so the reply asks the workflow's
+        # first question. This fake client has no structured-output support, so
+        # extraction fails over to that question directly.
+        self.assertIn("What symptoms are you experiencing?", response)
 
 
 if __name__ == "__main__":

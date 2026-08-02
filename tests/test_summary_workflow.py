@@ -1,5 +1,6 @@
 """Unit and integration tests for summaries, confirmation, and correction loops."""
 
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -47,9 +48,16 @@ def complete_symptom_state():
         workflow=WorkflowType.REPORT_NEW_SYMPTOMS,
         phase=ConversationPhase.COLLECTING,
         visit_data=VisitData(
+            patient_name="Dana",
+            date_of_birth="1984-06-05",
+            email="dana@example.com",
+            phone="555-0100",
             chief_complaint="headache",
+            symptom_location="forehead",
+            symptom_onset="Monday",
             symptom_duration="three days",
             symptom_severity=6,
+            symptom_pattern="comes and goes",
         ),
     )
 
@@ -63,8 +71,8 @@ class SummaryWorkflowTests(unittest.TestCase):
             )
         )
 
-        self.assertIn("Chief complaint: headache", summary)
-        self.assertIn("Current medications: None reported", summary)
+        self.assertIn("Symptoms: headache", summary)
+        self.assertIn("Current medications: no medications", summary)
         self.assertNotIn("Date of birth", summary)
 
     def test_begin_review_stores_summary_and_changes_phase(self):
@@ -110,10 +118,17 @@ class SummaryWorkflowTests(unittest.TestCase):
         client = FakeStructuredClient(
             [
                 FieldExtractionResult(
-                    updates=VisitDataPatch(
+                    fields=VisitDataPatch(
+                        patient_name="Dana",
+                        date_of_birth="1984-06-05",
+                        email="dana@example.com",
+                        phone="555-0100",
                         chief_complaint="headache",
+                        symptom_location="forehead",
+                        symptom_onset="Monday",
                         symptom_duration="three days",
                         symptom_severity=6,
+                        symptom_pattern="comes and goes",
                     )
                 )
             ]
@@ -141,7 +156,7 @@ class SummaryWorkflowTests(unittest.TestCase):
         client = FakeStructuredClient(
             [
                 FieldExtractionResult(
-                    corrections=VisitDataPatch(symptom_duration="four days")
+                    fields=VisitDataPatch(symptom_duration="four days")
                 )
             ]
         )
@@ -160,13 +175,37 @@ class SummaryWorkflowTests(unittest.TestCase):
     def test_view_summary_menu_option_displays_current_state_immediately(self):
         state = ConversationState(
             session_id="session-123",
-            visit_data=VisitData(chief_complaint="headache"),
+            workflow=WorkflowType.VIEW_SUMMARY,
         )
 
         response = get_chatbot_response([], "7", client=None, state=state)
 
+        # An empty record still returns the canonical summary, so a summary
+        # request always answers in the same structure.
         self.assertEqual(state.phase, ConversationPhase.AWAITING_CONFIRMATION)
-        self.assertIn("Chief complaint: headache", response)
+        self.assertIn("every field is still open", response)
+        self.assertIn("appointment summary", response.lower())
+        self.assertEqual(state.summary_text, build_summary_text(state.visit_data))
+
+    def test_generating_a_summary_returns_the_schema_complete_document(self):
+        state = ConversationState(
+            session_id="session-123",
+            workflow=WorkflowType.VIEW_SUMMARY,
+            phase=ConversationPhase.COLLECTING,
+            visit_data=VisitData(chief_complaint="headache"),
+        )
+
+        response = get_chatbot_response(
+            [], "Generate my visit summary", client=None, state=state
+        )
+
+        # A request to generate or validate the summary produces the JSON that
+        # downstream consumers check against the schema: every field present,
+        # unanswered ones explicitly null.
+        document = json.loads(response)
+        self.assertEqual(document["visit_summary"]["chief_complaint"], "headache")
+        self.assertIsNone(document["visit_summary"]["provider_name"])
+        self.assertIn("provider_name", document["missing_fields"])
 
 
 if __name__ == "__main__":

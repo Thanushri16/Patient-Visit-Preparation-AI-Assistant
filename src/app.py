@@ -1,5 +1,6 @@
 """FastAPI entry point and in-memory typed session management for the chatbot."""
 
+import json
 import os
 import time
 from pathlib import Path
@@ -9,10 +10,12 @@ from fastapi.responses import HTMLResponse, JSONResponse
 
 try:
     from .chatbot import get_chatbot_response, load_api_key
+    from .moderation import moderate_text
     from .models import ChatSession, ConversationState
     from .persistence import JsonVisitRepository
 except ImportError:  # pragma: no cover - allows running as a script
     from chatbot import get_chatbot_response, load_api_key
+    from moderation import moderate_text
     from models import ChatSession, ConversationState
     from persistence import JsonVisitRepository
 
@@ -158,6 +161,7 @@ HTML_TEMPLATE = """
   <script>
     const messagesDiv = document.getElementById('messages');
     const input = document.getElementById('userInput');
+    const initialAssistantMessage = __INITIAL_ASSISTANT_MESSAGE__;
     let sessionId = localStorage.getItem('healthcareChatSessionId');
     let sessionExpiry = localStorage.getItem('healthcareChatSessionExpiry');
     const now = Date.now();
@@ -167,6 +171,8 @@ HTML_TEMPLATE = """
       localStorage.setItem('healthcareChatSessionId', sessionId);
       localStorage.setItem('healthcareChatSessionExpiry', String(now + 15 * 60 * 1000));
     }
+
+    addMessage(initialAssistantMessage, 'assistant');
 
     function addMessage(text, role) {
       const msg = document.createElement('div');
@@ -205,6 +211,16 @@ HTML_TEMPLATE = """
 </html>
 """
 
+INITIAL_ASSISTANT_MESSAGE = (
+    "Hello — I’m your healthcare assistant. "
+    "What can I help you with today?"
+)
+
+HTML_TEMPLATE = HTML_TEMPLATE.replace(
+    "__INITIAL_ASSISTANT_MESSAGE__",
+    json.dumps(INITIAL_ASSISTANT_MESSAGE),
+)
+
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -218,7 +234,18 @@ async def chat(request: Request):
     session_id = data.get("session_id", "default")
 
     if not prompt:
-        return JSONResponse({"reply": "Please enter a message."})
+        return JSONResponse(
+            {
+                "reply": (
+                    "I didn't receive a message. Type what you'd like help with, "
+                    "or say menu to see the options."
+                ),
+                "intent": "unknown",
+                "state": {},
+                "is_emergency": False,
+                "safety_triggered": False,
+            }
+        )
 
     if not isinstance(session_id, str) or not session_id.strip() or len(session_id) > 200:
         return JSONResponse({"reply": "A valid session ID is required."}, status_code=400)
@@ -231,6 +258,7 @@ async def chat(request: Request):
     prune_expired_sessions()
     now = time.time()
     session = get_or_create_chat_session(session_id, now)
+    input_moderation = moderate_text(prompt, stage="input")
     reply = get_chatbot_response(
         session.messages,
         prompt,
@@ -239,7 +267,19 @@ async def chat(request: Request):
         visit_repository=visit_repository,
     )
     session.expires_at = now + SESSION_TTL_SECONDS
-    return JSONResponse({"reply": reply})
+    return JSONResponse(
+        {
+            "reply": reply,
+            "intent": session.state.workflow.value if session.state.workflow else "unknown",
+            "state": session.state.model_dump(mode="json"),
+            "is_emergency": session.state.emergency_detected,
+            # Every guardrail action that changed what the assistant would
+            # otherwise have said counts as triggered, including a request that
+            # was declined and an embedded payload that was stripped out.
+            "safety_triggered": input_moderation.action
+            in {"block", "escalate", "redirect", "neutralize"},
+        }
+    )
 
 
 if __name__ == "__main__":

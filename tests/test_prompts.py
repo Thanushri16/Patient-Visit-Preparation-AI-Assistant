@@ -1,5 +1,6 @@
 """Unit tests for versioned prompts used by model-backed chain nodes."""
 
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -24,19 +25,26 @@ class PromptBuilderTests(unittest.TestCase):
         }
 
         self.assertEqual(len(versions), 2)
-        self.assertTrue(all(version.endswith("_v1") for version in versions))
+        # Each prompt is versioned on its own so one can be revised without
+        # invalidating the observability history of the others.
+        self.assertTrue(
+            all(re.search(r"_v\d+$", version) for version in versions),
+            versions,
+        )
 
     def test_extractor_receives_schema_state_and_latest_message(self):
         prompt = build_extractor_prompt(
             latest_message="It began three days ago",
             schema=get_workflow_schema(WorkflowType.REPORT_NEW_SYMPTOMS),
             current_data=VisitData(chief_complaint="headache"),
+            requested_field="symptom_duration",
         )
 
         self.assertIn("It began three days ago", prompt)
         self.assertIn("symptom_duration", prompt)
         self.assertIn("headache", prompt)
-        self.assertIn('"updates"', prompt)
+        self.assertIn("requested_field", prompt)
+        self.assertIn('"fields"', prompt)
 
     def test_confirmation_prompt_defines_one_structured_task(self):
         confirmation = build_confirmation_prompt("Yes, correct", "Chief complaint: headache")

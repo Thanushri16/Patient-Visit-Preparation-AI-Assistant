@@ -78,7 +78,7 @@ This project will be delivered in four development iterations:
    - The system shall include quality checks for response relevance, completeness, safety, and clarity.
    - The system shall flag responses that fail quality expectations so they can be reviewed or improved before being delivered to the user.
    - **Basic skills learning:** Response review criteria, rubric-based evaluation, and simple pass/fail checks. *[Status: Implementation Complete]*
-   - **Advanced skills learning:** Automated evaluation pipelines, scoring heuristics, human-in-the-loop review, and regression testing for prompt quality. *[Status: In use / Partially complete]*
+   - **Advanced skills learning:** Automated evaluation pipelines, scoring heuristics, human-in-the-loop review, and regression testing for prompt quality. *[Status: Implementation Complete]*
 
 3. **Iteration 3 — Production RAG Platform**
    - Transform the chatbot into a production-ready pre-visit preparation assistant powered by Retrieval-Augmented Generation (RAG).
@@ -103,11 +103,11 @@ This project will be delivered in four development iterations:
    | FR-1 Authentication | Not complete | There is no account creation, login, or authenticated user session model yet. |
    | FR-2 Session Management | Partially complete | The app supports typed in-memory sessions, but not persistent authenticated session resumption. |
    | FR-3 Patient Intake | Complete | Structured pre-visit information is already collected through the current intake workflows. |
-   | FR-4 Guided Follow-up | Complete | The chatbot already asks only the follow-up questions needed to fill missing information. |
+   | FR-4 Guided Follow-up | Complete | The chatbot asks only the follow-up questions needed to fill missing information, ordered clinical detail first, with a vaguely answered field clarified ahead of an unaddressed one. |
    | FR-5 Conversation Context | Partially complete | Workflow state and message memory are preserved in memory, but not across durable resumed sessions. |
-   | FR-6 Emergency Detection | Complete | Emergency symptoms are already detected and routed away from normal intake. |
+   | FR-6 Emergency Detection | Complete | Emergency symptoms are detected and routed away from normal intake, with escalation guidance specific to the emergency and past, already-treated events not escalated. |
    | FR-7 Safety | Complete | The chatbot already avoids diagnosis and prescription behavior. |
-   | FR-8 Educational Assistance | Partially complete | The chatbot provides some general guidance, but not yet citation-backed clinic-document answers. |
+   | FR-8 Educational Assistance | Partially complete | The chatbot answers common preparation questions — documents to bring, fasting, pre-visit forms, telehealth, transportation, accessibility — from curated non-prescriptive content, and declines out-of-scope requests. These answers are not yet citation-backed clinic-document answers. |
    | FR-9 RAG | Not complete | Retrieval, vector search, citations, and grounded response generation are not implemented yet. |
    | FR-10 Knowledge Management | Not complete | There is no knowledge upload, versioning, or admin document portal yet. |
    | FR-11 Visit Summary | Partially complete | Structured summaries already exist, but editable summary workflows are not implemented. |
@@ -128,7 +128,7 @@ This project will be delivered in four development iterations:
    | NFR-6 Privacy | Partially complete | Telemetry avoids raw patient values, but production privacy controls are not complete. |
    | NFR-7 Maintainability | Complete | The current codebase is already modular and separated by concern. |
    | NFR-8 Observability | Partially complete | Privacy-safe events and evaluation outputs exist, but not a full production observability stack. |
-   | NFR-9 Testability | Partially complete | The repo has unit tests and evaluators, but not a full automated pipeline. |
+   | NFR-9 Testability | Partially complete | The repo has an offline deterministic unit suite, a consolidated regression suite whose deterministic half runs without credentials, a 215-scenario behavioural benchmark, and a 34-conversation session-integrity benchmark, but not a full CI-backed automated pipeline. |
    | NFR-10 Cost Efficiency | Not complete | AI token usage monitoring is not implemented yet. |
    | NFR-11 Accessibility | Complete | The UI is already responsive across desktop and mobile viewports. |
    | NFR-12 Extensibility | Complete | The architecture already supports future AI capability expansion. |
@@ -173,7 +173,7 @@ This project will be delivered in four development iterations:
    | NFR-6 Privacy | Partially complete | Logging is privacy-conscious, but production privacy hardening is not complete. |
    | NFR-7 Maintainability | Complete | The codebase is already modular enough to support future expansion. |
    | NFR-8 Observability | Partially complete | There are chain events and reports, but not full metrics/tracing/dashboards. |
-   | NFR-9 Testability | Partially complete | Tests exist, but not the full CI-backed suite described here. |
+   | NFR-9 Testability | Partially complete | Unit tests, evaluators, and a 215-scenario API benchmark exist, but not the full CI-backed suite described here. |
    | NFR-10 Cost Efficiency | Not complete | Cost monitoring and token-usage controls are not implemented yet. |
    | NFR-11 Accessibility | Complete | The interface is already usable on desktop and mobile. |
    | NFR-12 Extensibility | Complete | The architecture is intended to support future AI capabilities. |
@@ -198,7 +198,7 @@ This project will be delivered in four development iterations:
 | Iteration | Status | Notes |
 |---|---|---|
 | Iteration 1 | Complete | Conversation workflow, typed visit summary, in-memory session handling, and basic safety messaging are already implemented. |
-| Iteration 2 | Complete | Intent routing, moderation, prompt chaining, structured extraction, summary review, confirmation, persistence, and evaluation scaffolding are already implemented. |
+| Iteration 2 | Complete | Intent routing, moderation, prompt chaining, structured extraction, summary review, confirmation, persistence, and evaluation are implemented. Behaviour is measured against a 215-scenario benchmark whose findings have been fed back into the conversation design. |
 | Iteration 3 | Not complete | The codebase has foundations, but RAG ingestion, citations, persistent auth, exports, and admin knowledge management are still planned. |
 | Iteration 4 | Not complete | Production deployment, security hardening, observability, autoscaling, and real-world validation are still planned. |
 
@@ -208,7 +208,11 @@ This project will be delivered in four development iterations:
 
 ## Iteration 2
 
-- Implemented: intent routing, moderation, prompt chaining, structured extraction, summary review, confirmation, persistence, and evaluation scaffolding.
+- Implemented: intent routing, moderation, prompt chaining, structured extraction, summary review, confirmation, persistence, and evaluation.
+- Implemented alongside intake: educational answers to general preparation questions, acknowledgement of expressed worry, greetings and farewells, declining out-of-scope requests, and answering questions about what has already been recorded from state rather than from the model.
+- Emergency handling returns guidance specific to the emergency — an EpiPen for anaphylaxis, Poison Control for an overdose, the 988 crisis line for self-harm, FAST for stroke — and treats a frightening symptom the patient describes as past and already treated as history rather than escalating it.
+- Behaviour is measured end to end by two Excel-driven benchmarks against the running API — 215 single-turn scenarios and 34 multi-turn conversations — described under Testing Strategy.
+- Latest evaluation (2 Aug 2026): scenarios 166/215 (77.2%); conversations 28/34 (82.4%) with state persistence 28/34, recovery correctness 7/7 (100%), tone/safety consistency 33/34 (97.1%), and 202/240 turn expectations met (84.2%); 0 rate-limit hits, retries, or permanent failures across 574 attempts.
 
 ## Iteration 3
 
@@ -250,6 +254,9 @@ This project will be delivered in four development iterations:
 ### AI Design
 
 - The current AI design is a prompt chain with routing, extraction, summary review, confirmation, and guardrails.
+- Model-backed nodes are deliberately narrow. The classifier chooses a workflow, the extractor pulls stated fields into a typed schema, the follow-up generator phrases one question, and the confirmation classifier reads a yes or a correction. Field ordering, validation, completeness, summary rendering, and every safety decision are deterministic application logic, so behaviour is reproducible and auditable rather than dependent on a model's judgement.
+- A message that selects a workflow is also treated as content for that workflow, so information the patient volunteers in their opening sentence is recorded instead of being re-requested.
+- Clinical detail is collected before administrative detail, and a field the patient answered vaguely is clarified before fields they have not addressed at all.
 - Iteration 3 adds RAG: document ingestion, chunking, embeddings, vector retrieval, citation-backed answers, and grounded fallback behavior.
 - Iteration 4 focuses on the reliability, evaluation, and governance controls for production AI behavior.
 
@@ -268,12 +275,20 @@ This project will be delivered in four development iterations:
 ### Monitoring
 
 - The current implementation emits privacy-safe chain events and evaluator output.
+- Benchmark runs additionally report how hard the suite pushed against the model provider — attempts, rate-limit hits, retries, permanently failed cases, concurrency adjustments, and total time spent backing off — which is the operational signal for whether throughput is limited locally or upstream.
 - Iteration 3 is expected to add retrieval metrics, citation quality checks, and knowledge-base reporting.
 - Iteration 4 is expected to add dashboards, tracing, metrics, and alerting.
 
 ### Testing Strategy
 
-- The current repository already supports unit tests and deterministic evaluation scripts.
+- The current repository supports offline unit tests plus three evaluation levels, each answering a different question and reported separately rather than averaged into one score.
+- **Regression suite** (`src/evaluators/regression_suite.py`) — one entry point for the prompt-chain, prompt-injection, and intent-classifier evaluations, which were previously four separate scripts duplicating the same import shim, report writer, and CLI. The prompt-chain half is fully deterministic and needs no API key, so it is the part suitable for CI; without credentials the suite runs that half and reports the model-backed evaluations as skipped rather than failing. Individual evaluations can be selected with `--only`.
+- **Scenario benchmark** — 215 single-turn cases from the `Scenarios` sheet, asking whether each individual reply was right.
+- **Conversation benchmark** — 34 multi-turn sessions from the `Conversation Flows` sheet, asking whether a whole session holds together. It scores state persistence, recovery correctness, and tone/safety consistency, and fails a conversation on exactly three things: a turn error, corrupted state, or an emergency or injection turn that fails to override the normal flow. Per-turn expectations and the session judge are graded diagnostics rather than veto conditions, so the metric isolates session integrity from the per-turn correctness the scenario suite already measures.
+- The unit suite fakes every model client, so it is deterministic and makes no paid API calls. It covers workflow schemas and completeness, routing, extraction and merging, question selection, summary and confirmation, safety guardrails, and the benchmark runner's own rate-limit and checkpoint behaviour.
+- The scenario benchmark scores each case in three layers: deterministic response-contract checks, concrete conversation-state checks, and an LLM-as-judge assessment of intent handling, behaviour, criteria, safety, and tone. A scenario passes only when every applicable layer passes, and the layer that failed identifies whether the defect is in the data flow or in the wording.
+- A single-turn pass rate and a full-session pass rate measure different failure modes, so they are always reported side by side and never combined.
+- Both benchmarks share the same rate-limit handling, which is rate-limit aware by construction: parallelism is discovered at runtime by an AIMD governor rather than fixed, every call retries throttling with exponential backoff and full jitter, results are checkpointed per batch so an interrupted run resumes, and a case that exhausts its retry budget is recorded as an error and skipped rather than failing the run.
 - Iteration 3 adds RAG-specific evaluation such as recall, groundedness, faithfulness, and citation checks.
 - Iteration 4 adds load, security, and end-to-end validation against production-like infrastructure.
 

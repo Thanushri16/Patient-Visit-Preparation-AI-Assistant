@@ -3,7 +3,6 @@
 import json
 import re
 from datetime import date
-from enum import Enum
 
 from openai import OpenAI, OpenAIError
 from pydantic import BaseModel, ValidationError
@@ -18,6 +17,7 @@ try:
         VisitData,
     )
     from .observability import emit_chain_event
+    from .rendering import render_value
     from .prompts.confirmation import build_confirmation_prompt
 except ImportError:  # pragma: no cover - allows running as a script
     from chatbot_content import APPOINTMENT_SUMMARY_FIELDS, APPOINTMENT_SUMMARY_HEADER, DEFAULT_MODEL
@@ -29,6 +29,7 @@ except ImportError:  # pragma: no cover - allows running as a script
         VisitData,
     )
     from observability import emit_chain_event
+    from rendering import render_value
     from prompts.confirmation import build_confirmation_prompt
 
 
@@ -39,8 +40,20 @@ CONFIRM_PHRASES = {
     "confirm",
     "confirmed",
     "looks good",
+    "looks correct",
     "that is correct",
-    "that's correct",
+    "that s correct",
+    "yes everything looks correct",
+    "everything looks correct",
+    "yes everything is correct",
+    "yes now it s correct",
+    "now it s correct",
+    "that s complete now",
+    "that s everything",
+    "all correct",
+    "yes that s right",
+    "yep",
+    "yeah that s right",
 }
 CORRECTION_SIGNALS = (
     "actually",
@@ -49,48 +62,121 @@ CORRECTION_SIGNALS = (
     "update ",
     "wrong",
     "not correct",
+    "i never said",
+    "i forgot",
+    "forgot to mention",
+    "should be",
+    "instead of",
+    "add ",
+    "remove ",
+    "start over",
+    "redo",
 )
 MAX_CONFIRMATION_ATTEMPTS = 3
 
 
-def _format_summary_value(value: object) -> str:
-    if isinstance(value, date):
-        return value.isoformat()
-    if isinstance(value, Enum):
-        return str(value.value)
-    if isinstance(value, BaseModel):
-        value = value.model_dump(exclude_none=True)
-    if isinstance(value, dict):
-        return ", ".join(
-            f"{key.replace('_', ' ')}: {_format_summary_value(item)}"
-            for key, item in value.items()
-        )
-    if isinstance(value, list):
-        if not value:
-            return "None reported"
-        return "; ".join(_format_summary_value(item) for item in value)
-    return str(value)
+# Naming every unanswered field would bury the summary in noise, so the prose
+# rendering only flags the handful a visit record is incomplete without. The
+# JSON document still reports every gap for programmatic consumers.
+KEY_SUMMARY_FIELDS = (
+    "patient_name",
+    "visit_reason",
+    "provider_name",
+    "appointment_date",
+    "insurance_info",
+    "chief_complaint",
+    "current_medications",
+    "allergies",
+)
+
+
+def build_change_summary(visit_data: VisitData, changed_fields: list[str]) -> str:
+    """Render only the fields a correction touched, so the change is visible.
+
+    After a correction the whole record is not the answer — the patient asked
+    about one thing and needs to see that one thing. Printing all thirty-odd
+    fields buried the change in a wall of text and made it genuinely hard to
+    tell whether it had been applied.
+    """
+
+    labels = dict(APPOINTMENT_SUMMARY_FIELDS)
+    lines = []
+    for field_name in changed_fields:
+        if field_name not in labels:
+            continue
+        rendered = render_value(field_name, getattr(visit_data, field_name, None))
+        if rendered is not None:
+            lines.append(f"- {labels[field_name]}: {rendered}")
+    return "\n".join(lines)
 
 
 def build_summary_text(visit_data: VisitData) -> str:
     """Render only canonical VisitData values without asking a model to add prose."""
 
     lines = [APPOINTMENT_SUMMARY_HEADER, ""]
-    provided_field_count = 0
+    provided: list[str] = []
+    missing: list[str] = []
     for field_name, label in APPOINTMENT_SUMMARY_FIELDS:
         value = getattr(visit_data, field_name)
         if value is None:
+            if field_name in KEY_SUMMARY_FIELDS:
+                missing.append(label.lower())
             continue
-        lines.append(f"- {label}: {_format_summary_value(value)}")
-        provided_field_count += 1
+        lines.append(f"- {label}: {render_value(field_name, value)}")
+        provided.append(label)
 
-    if provided_field_count == 0:
+    if not provided:
         lines.append("- No visit information has been collected yet.")
+    if missing:
+        lines.extend(["", f"Still to confirm: {', '.join(missing)}."])
     return "\n".join(lines)
 
 
-def begin_summary_review(state: ConversationState) -> str:
-    """Store and display the current faithful summary, then await confirmation."""
+def build_summary_document(visit_data: VisitData) -> dict:
+    """Return the summary as a schema-complete document.
+
+    Every field in the contract is present. A field the patient has not answered
+    is explicitly ``null`` rather than omitted, so a consumer can distinguish
+    "not provided" from "not part of the record".
+    """
+
+    document: dict[str, object] = {}
+    for field_name, _ in APPOINTMENT_SUMMARY_FIELDS:
+        value = getattr(visit_data, field_name, None)
+        if value is None:
+            document[field_name] = None
+        elif isinstance(value, BaseModel):
+            document[field_name] = value.model_dump(mode="json", exclude_none=True)
+        elif isinstance(value, list):
+            document[field_name] = [
+                item.model_dump(mode="json", exclude_none=True)
+                if isinstance(item, BaseModel)
+                else item
+                for item in value
+            ]
+        elif isinstance(value, date):
+            document[field_name] = value.isoformat()
+        else:
+            document[field_name] = value
+    return {
+        "visit_summary": document,
+        "missing_fields": [name for name, value in document.items() if value is None],
+    }
+
+
+def build_summary_json(visit_data: VisitData) -> str:
+    """Serialise the summary document as the assistant's entire reply."""
+
+    return json.dumps(build_summary_document(visit_data), indent=2, ensure_ascii=False)
+
+
+def begin_summary_review(state: ConversationState, *, as_json: bool = False) -> str:
+    """Store and display the current faithful summary, then await confirmation.
+
+    A summary request renders JSON, which is what downstream consumers validate
+    against the schema. Reaching the end of an intake workflow renders the same
+    data as prose with a confirmation prompt, because that is a conversation.
+    """
 
     phase_before = state.phase.value
     summary = build_summary_text(state.visit_data)
@@ -104,6 +190,8 @@ def begin_summary_review(state: ConversationState) -> str:
         success=True,
         phase_before=phase_before,
     )
+    if as_json:
+        return build_summary_json(state.visit_data)
     return summary + "\n\nIs this summary correct? Reply yes or tell me what to change."
 
 
