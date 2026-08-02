@@ -212,6 +212,7 @@ This project will be delivered in four development iterations:
 - Implemented alongside intake: educational answers to general preparation questions, acknowledgement of expressed worry, greetings and farewells, declining out-of-scope requests, and answering questions about what has already been recorded from state rather than from the model.
 - Emergency handling returns guidance specific to the emergency — an EpiPen for anaphylaxis, Poison Control for an overdose, the 988 crisis line for self-harm, FAST for stroke — and treats a frightening symptom the patient describes as past and already treated as history rather than escalating it.
 - Behaviour is measured end to end by two Excel-driven benchmarks against the running API — 215 single-turn scenarios and 34 multi-turn conversations — described under Testing Strategy.
+- Latest evaluation (2 Aug 2026): scenarios 166/215 (77.2%); conversations 28/34 (82.4%) with state persistence 28/34, recovery correctness 7/7 (100%), tone/safety consistency 33/34 (97.1%), and 202/240 turn expectations met (84.2%); 0 rate-limit hits, retries, or permanent failures across 574 attempts.
 
 ## Iteration 3
 
