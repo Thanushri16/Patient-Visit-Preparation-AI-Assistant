@@ -66,6 +66,15 @@ if api_key:
 else:
     client = None
 
+
+# Built once, at startup. None when no knowledge store is configured, which
+# leaves the chain exactly as it was: intake never depends on a database.
+try:
+    from rag.integration import build_knowledge_branch
+except ImportError:  # pragma: no cover
+    from src.rag.integration import build_knowledge_branch
+knowledge_branch = build_knowledge_branch(client) if client is not None else None
+
 HTML_TEMPLATE = """
 <!doctype html>
 <html lang="en">
@@ -259,12 +268,14 @@ async def chat(request: Request):
     now = time.time()
     session = get_or_create_chat_session(session_id, now)
     input_moderation = moderate_text(prompt, stage="input")
+    session.state.rag = None
     reply = get_chatbot_response(
         session.messages,
         prompt,
         client,
         state=session.state,
         visit_repository=visit_repository,
+        knowledge_branch=knowledge_branch,
     )
     session.expires_at = now + SESSION_TTL_SECONDS
     return JSONResponse(
@@ -278,6 +289,13 @@ async def chat(request: Request):
             # was declined and an embedded payload that was stripped out.
             "safety_triggered": input_moderation.action
             in {"block", "escalate", "redirect", "neutralize"},
+            # Only present when the turn used the knowledge branch, so every
+            # existing consumer of this payload sees exactly what it saw before.
+            **(
+                {"citations": [c.model_dump(mode="json") for c in session.state.rag.citations]}
+                if session.state.rag and session.state.rag.citations
+                else {}
+            ),
         }
     )
 

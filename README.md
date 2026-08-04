@@ -26,11 +26,21 @@ The implemented prompt chain supports:
   expressed worry, and answers to questions about what has already been recorded
 - Structured summary review, correction, and confirmation, in prose for reading
   and as a schema-complete JSON document when one is requested
+- Citation-backed answers about diagnostic tests and procedures — what a test
+  is, how to prepare, how it will feel, what the risks are — retrieved from a
+  corpus of clinical documents, with an explicit "I don't have documentation on
+  that" when the evidence is missing
+- Refusal to answer from documents where the answer is a clinical judgement:
+  whether to stop a medication, what a symptom means, whether a reaction was an
+  allergy. These never reach the retriever.
 - Local storage of confirmed summaries under UUID visit IDs
 
 See [the SRS](documentation/ai-chatbot-for-healthcare-srs.md) for full product requirements and future platform scope. See [the prompt-chaining architecture](documentation/prompt_chaining_architecture.md) for the runtime diagram and implementation tracker.
 
-The current codebase covers the MVP and AI workflow expansion. The SRS now reserves Iteration 3 for the production RAG platform and Iteration 4 for the enterprise production platform.
+The current codebase covers the MVP, the AI workflow expansion, and Part A of
+the Iteration 3 RAG platform. See [the RAG architecture](documentation/rag_architecture.md)
+for the design, the measured results, and what is deliberately left undone.
+Iteration 4 remains the enterprise production platform.
 
 ## Project structure
 
@@ -56,9 +66,30 @@ The current codebase covers the MVP and AI workflow expansion. The SRS now reser
 │   ├── persistence.py                         # Confirmed-visit JSON persistence
 │   ├── observability.py                       # Privacy-safe prompt-chain events
 │   ├── prompts/                               # Model-backed extractor, follow-up, and confirmation prompts
+│   ├── rag/                                   # Iteration 3 knowledge branch
+│   │   ├── config.py                          # Embedding profile, chunking, retrieval, guard settings
+│   │   ├── documents.py                       # PDF extraction, cleaning, manifest-matched sectioning
+│   │   ├── chunking.py                        # LlamaIndex TokenTextSplitter, 400/50
+│   │   ├── embeddings.py                      # OpenAI embeddings, with a query cache
+│   │   ├── store.py                           # LlamaIndex PGVectorStore wrapper
+│   │   ├── retrievers.py                      # Retriever protocol and BasicChunkRetriever
+│   │   ├── query.py                           # Category inference, compound-question splitting
+│   │   ├── policy.py                          # What may never be answered from documents
+│   │   ├── evidence.py                        # Deterministic sufficiency check and near-miss guards
+│   │   ├── generation.py                      # Grounded answer generation
+│   │   ├── citations.py                       # Citation binding and validation
+│   │   ├── pipeline.py                        # The branch, end to end
+│   │   ├── integration.py                     # Seam into the chat flow; degrades to curated content
+│   │   └── ingest.py                          # Corpus ingestion CLI
 │   └── evaluators/
 │       ├── regression_suite.py             # Prompt-chain, injection, and intent evaluations
 │       ├── healthcare_assistant_benchmark.xlsx
+│       ├── rag_benchmark_questions.xlsx     # 68 RAG questions and their expectations
+│       ├── rag/
+│       │   ├── dataset.py                   # Benchmark loader and the tune/holdout split
+│       │   ├── deterministic.py             # Fact, citation and near-miss metrics
+│       │   ├── shadow.py                    # Curated-vs-retrieved divergence classes
+│       │   └── run_benchmark.py             # RAG benchmark CLI
 │       └── benchmarks/
 │           ├── test_loader.py              # Excel scenario loader
 │           ├── preconditions.py            # Resolves a scenario's stated setup into turns
@@ -72,6 +103,8 @@ The current codebase covers the MVP and AI workflow expansion. The SRS now reser
 │           ├── report_generator.py         # Console and JSON reports
 │           ├── run_benchmarks.py           # Scenario CLI
 │           └── run_conversation_flows.py   # Conversation CLI
+├── clinical_docs/                             # RAG corpus: MedlinePlus PDFs (gitignored) + manifest.yaml
+├── docker-compose.yml                         # PostgreSQL + pgvector on port 5433
 ├── tests/                                     # Unit and workflow tests
 ├── reports/                                   # Generated evaluation reports
 ├── db/visits/                                 # Runtime-only confirmed visit records
@@ -86,7 +119,11 @@ The `db/visits/` directory is created when a confirmed summary is saved and is i
 
 - Python 3.12 or newer
 - [uv](https://docs.astral.sh/uv/)
-- An OpenAI API key for intent classification, structured extraction, and ambiguous confirmation classification
+- An OpenAI API key for intent classification, structured extraction, ambiguous
+  confirmation classification, embeddings and grounded answers
+- Docker, for the knowledge store. **Optional**: without it the assistant runs
+  exactly as before, answering preparation questions from curated content
+  instead of from documents. Intake never depends on the database.
 
 ## Setup
 
@@ -109,6 +146,40 @@ OPENAI_API_KEY=your_openai_api_key_here
 ```
 
 Do not commit `.env` or real API keys.
+
+## Set up the knowledge store
+
+Optional. Skip it and the assistant still runs; the knowledge branch stands down
+and preparation questions are answered from curated content.
+
+Start PostgreSQL with pgvector:
+
+```bash
+docker compose up -d
+```
+
+It listens on port 5433, deliberately, so it cannot be confused with a system
+Postgres on 5432. `DATABASE_URL` in `.env.example` already matches.
+
+Then ingest the corpus — 11 documents, 88 nodes, a few seconds and well under a
+cent of embeddings:
+
+```bash
+uv run python -m src.rag.ingest plan     # what would change; no API calls
+uv run python -m src.rag.ingest ingest   # extract, chunk, embed, store
+uv run python -m src.rag.ingest status   # what is currently stored
+```
+
+There is no migration step: the table, its HNSW index and the `vector` extension
+are created on first use, sized to the configured embedding model.
+
+Ingestion is idempotent by content fingerprint — the PDF's hash plus a pipeline
+version. Re-running it embeds nothing unchanged. Editing the cleaning or chunking
+code means bumping `PIPELINE_VERSION` in `src/rag/config.py`, because a code
+change alters the stored text while leaving the source file untouched.
+
+The corpus itself is 12 MedlinePlus PDFs in `clinical_docs/`, described by
+`clinical_docs/manifest.yaml`. The PDFs are gitignored; the manifest is tracked.
 
 ## Run the chatbot
 
@@ -151,6 +222,7 @@ says nothing about the others.
 | Level | Question it answers | Cost |
 |---|---|---|
 | Regression suite | Do the chain's nodes still behave? | Free for the deterministic half |
+| RAG benchmark | Does the knowledge branch answer, refuse, and cite correctly? | One retrieval and one answer per question |
 | Scenario benchmark | Was each individual reply right? | One API call per scenario, plus a judge |
 | Conversation benchmark | Does a whole session hold together? | One session per flow, plus a judge |
 
@@ -285,9 +357,44 @@ long run can be inspected or resumed while it is still going.
 Both benchmarks share the same rate-limit handling, checkpointing and resume
 behaviour described above.
 
+### RAG benchmark — 68 questions
+
+Needs the knowledge store running and an API key.
+
+```bash
+uv run python -m src.evaluators.rag.run_benchmark --split holdout
+uv run python -m src.evaluators.rag.run_benchmark --split tune
+uv run python -m src.evaluators.rag.run_benchmark --group near_miss
+```
+
+The set is split in half by a hash of the question id. **Tune on `tune`, quote
+`holdout`** — every threshold and prompt in the branch was tuned by looking at
+results, and a number measured on the questions it was tuned against is
+optimistic by an unknown amount.
+
+Questions fall into six groups, and the ones that matter most are the negative
+ones: `near_miss` questions have no answer in the corpus but sit close to one
+that does, and `never_route` questions must be refused before retrieval runs at
+all. A wrong answer to either is invisible to a faithfulness metric, because an
+answer grounded in the wrong passage is still faithful to that passage.
+
+Current results, on the held-out half: outcome accuracy 91.4%, near-miss
+resistance 100%, never-route compliance 100%, citation validation 100%, zero
+forbidden claims. Full numbers, the evidence behind each tuned setting, and an
+honest account of what the split can and cannot tell you are in
+[the RAG architecture](documentation/rag_architecture.md#a12-part-a-results).
+
+Reports are written to `reports/rag/`.
+
 ## Data and deployment notes
 
 - Session state is held in memory and expires after 15 minutes.
 - Only completed, explicitly confirmed summaries are persisted.
 - Local JSON records use UUID filenames and restricted file permissions.
 - Local records are not encrypted; authentication, production encryption, export formats, durable multi-user sessions, RAG knowledge management, and administrative monitoring belong to later iterations in the SRS.
+- The knowledge corpus is general patient education from MedlinePlus, not a
+  particular clinic's own instructions, and answers say so. It never overrides
+  what the ordering clinic told the patient.
+- The knowledge store holds no patient data — only the public documents and
+  their embeddings. Retrieval telemetry records node ids, scores and token
+  counts, never the question text.

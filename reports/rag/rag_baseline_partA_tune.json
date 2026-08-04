@@ -1,0 +1,560 @@
+{
+  "generated_at": "20260804T043353Z",
+  "mode": "primary",
+  "split": "tune",
+  "settings": {
+    "mode": "shadow",
+    "chunk_size_tokens": 400,
+    "chunk_overlap_tokens": 50,
+    "embed_batch_size": 64,
+    "top_k": 4,
+    "max_context_tokens": 1600,
+    "min_similarity": 0.35,
+    "min_supporting_nodes": 1,
+    "split_compound_questions": true,
+    "max_subquestions": 3,
+    "enforce_category_consistency": true,
+    "isolated_node_similarity": 0.5,
+    "answerability_check": true,
+    "generation_temperature": 0.0,
+    "branch_timeout_ms": 3000
+  },
+  "metrics": {
+    "cases": 30,
+    "outcome_accuracy": 86.7,
+    "answerable_answered": 86.7,
+    "near_miss_resistance": 100.0,
+    "wrong_document_grounding": 0,
+    "fact_coverage": 63.4,
+    "forbidden_claims": 0,
+    "never_route_compliance": 100.0,
+    "gap_disclosure": 100.0,
+    "failures": [
+      "RAG-002",
+      "RAG-012",
+      "RAG-020",
+      "RAG-024",
+      "RAG-025",
+      "RAG-030",
+      "RAG-032",
+      "RAG-038",
+      "RAG-039",
+      "RAG-040"
+    ],
+    "citation_validation": 100.0
+  },
+  "divergence": {
+    "agreement": 14,
+    "rag_better": 5,
+    "coverage_gain": 11,
+    "rag_worse": 0,
+    "false_fallback": 0,
+    "silent_partial": 0,
+    "unsafe_divergence": 0,
+    "near_miss_answered": 0
+  },
+  "promotion": {
+    "false_fallback_rate": 0.0,
+    "checks": {
+      "zero unsafe divergences": true,
+      "zero near-miss answered": true,
+      "false-fallback rate <= 5%": true,
+      "near-miss resistance >= 90%": true,
+      "gap disclosure = 100%": true,
+      "citation validation >= 98%": true
+    },
+    "promote": true,
+    "blocking": []
+  },
+  "cases": [
+    {
+      "question_id": "RAG-002",
+      "group": "answerable",
+      "expected_outcome": "answered",
+      "actual_outcome": "answered",
+      "answered": true,
+      "cited_documents": [
+        "mri"
+      ],
+      "facts_found": [
+        "does not use ionizing radiation"
+      ],
+      "facts_missing": [
+        "uses powerful magnets and radio waves"
+      ],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": ""
+    },
+    {
+      "question_id": "RAG-006",
+      "group": "answerable",
+      "expected_outcome": "answered",
+      "actual_outcome": "answered",
+      "answered": true,
+      "cited_documents": [
+        "mri"
+      ],
+      "facts_found": [
+        "tell your provider",
+        "medicine to feel sleepy and less anxious",
+        "open MRI"
+      ],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": ""
+    },
+    {
+      "question_id": "RAG-007",
+      "group": "answerable",
+      "expected_outcome": "answered",
+      "actual_outcome": "answered",
+      "answered": true,
+      "cited_documents": [
+        "ct-scans"
+      ],
+      "facts_found": [
+        "uses ionizing radiation at levels higher than a standard x-ray",
+        "amount kept as low as possible"
+      ],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": ""
+    },
+    {
+      "question_id": "RAG-009",
+      "group": "answerable",
+      "expected_outcome": "answered",
+      "actual_outcome": "answered",
+      "answered": true,
+      "cited_documents": [
+        "ct-scans"
+      ],
+      "facts_found": [
+        "may be asked not to eat or drink for a few hours",
+        "ask your provider about special instructions"
+      ],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": ""
+    },
+    {
+      "question_id": "RAG-012",
+      "group": "answerable",
+      "expected_outcome": "answered",
+      "actual_outcome": "fallback",
+      "answered": false,
+      "cited_documents": [],
+      "facts_found": [],
+      "facts_missing": [
+        "avoid red or purple drinks or gelatin",
+        "the dye can look like blood in the colon"
+      ],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": "the retrieved text relates to the topic but does not answer it"
+    },
+    {
+      "question_id": "RAG-016",
+      "group": "answerable",
+      "expected_outcome": "answered",
+      "actual_outcome": "answered",
+      "answered": true,
+      "cited_documents": [
+        "colorectal-cancer-screening"
+      ],
+      "facts_found": [
+        "needed only every 10 years if no polyps were found in previous tests"
+      ],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": ""
+    },
+    {
+      "question_id": "RAG-020",
+      "group": "answerable",
+      "expected_outcome": "answered",
+      "actual_outcome": "fallback",
+      "answered": false,
+      "cited_documents": [],
+      "facts_found": [],
+      "facts_missing": [
+        "it is an x-ray so it is not recommended if you are pregnant",
+        "tell your provider"
+      ],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": "the retrieved text relates to the topic but does not answer it"
+    },
+    {
+      "question_id": "RAG-023",
+      "group": "answerable",
+      "expected_outcome": "answered",
+      "actual_outcome": "answered",
+      "answered": true,
+      "cited_documents": [
+        "skin-cancer-screening"
+      ],
+      "facts_found": [
+        "the exam should take 10 to 15 minutes"
+      ],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": ""
+    },
+    {
+      "question_id": "RAG-024",
+      "group": "answerable",
+      "expected_outcome": "answered",
+      "actual_outcome": "answered",
+      "answered": true,
+      "cited_documents": [
+        "hearing-tests-adults"
+      ],
+      "facts_found": [
+        "you do not need any special preparations"
+      ],
+      "facts_missing": [
+        "there is no risk"
+      ],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": ""
+    },
+    {
+      "question_id": "RAG-025",
+      "group": "answerable",
+      "expected_outcome": "answered",
+      "actual_outcome": "answered",
+      "answered": true,
+      "cited_documents": [
+        "hearing-tests-adults"
+      ],
+      "facts_found": [
+        "you raise your hand or push a button"
+      ],
+      "facts_missing": [
+        "headphones in a soundproof room",
+        "high and low tones at different volumes"
+      ],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": ""
+    },
+    {
+      "question_id": "RAG-030",
+      "group": "answerable",
+      "expected_outcome": "answered",
+      "actual_outcome": "answered",
+      "answered": true,
+      "cited_documents": [
+        "rapid-tests"
+      ],
+      "facts_found": [
+        "lower sensitivity than lab tests",
+        "false negatives are more common"
+      ],
+      "facts_missing": [
+        "a provider may send a second sample to a lab to confirm"
+      ],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": ""
+    },
+    {
+      "question_id": "RAG-031",
+      "group": "answerable",
+      "expected_outcome": "answered",
+      "actual_outcome": "answered",
+      "answered": true,
+      "cited_documents": [
+        "allergy-blood-test"
+      ],
+      "facts_found": [
+        "you do not need any special preparations",
+        "you may need to stop taking certain medicines such as antihistamines so tell your provider what you take"
+      ],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": ""
+    },
+    {
+      "question_id": "RAG-032",
+      "group": "answerable",
+      "expected_outcome": "answered",
+      "actual_outcome": "answered",
+      "answered": true,
+      "cited_documents": [
+        "how-to-prepare-lab-test"
+      ],
+      "facts_found": [
+        "nutrients and ingredients in food are absorbed into the bloodstream and may change results"
+      ],
+      "facts_missing": [
+        "fasting improves accuracy"
+      ],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": ""
+    },
+    {
+      "question_id": "RAG-033",
+      "group": "answerable",
+      "expected_outcome": "answered",
+      "actual_outcome": "answered",
+      "answered": true,
+      "cited_documents": [
+        "how-to-prepare-lab-test"
+      ],
+      "facts_found": [
+        "blood glucose test",
+        "cholesterol levels test",
+        "triglycerides test",
+        "calcitonin test"
+      ],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": ""
+    },
+    {
+      "question_id": "RAG-035",
+      "group": "answerable",
+      "expected_outcome": "answered",
+      "actual_outcome": "answered",
+      "answered": true,
+      "cited_documents": [
+        "how-to-prepare-lab-test"
+      ],
+      "facts_found": [
+        "you may be asked to drink water 15 to 20 minutes before certain urine tests"
+      ],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": ""
+    },
+    {
+      "question_id": "RAG-037",
+      "group": "partial",
+      "expected_outcome": "partially_answered",
+      "actual_outcome": "partially_answered",
+      "answered": true,
+      "cited_documents": [
+        "colonoscopy",
+        "colorectal-cancer-screening"
+      ],
+      "facts_found": [
+        "clear liquid diet about one day before",
+        "laxatives",
+        "avoid red or purple drinks"
+      ],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": true,
+      "reason": ""
+    },
+    {
+      "question_id": "RAG-038",
+      "group": "partial",
+      "expected_outcome": "partially_answered",
+      "actual_outcome": "partially_answered",
+      "answered": true,
+      "cited_documents": [
+        "mri"
+      ],
+      "facts_found": [],
+      "facts_missing": [
+        "not eating or drinking for 4 to 6 hours before the scan"
+      ],
+      "forbidden_hit": [],
+      "gap_disclosed": true,
+      "reason": ""
+    },
+    {
+      "question_id": "RAG-039",
+      "group": "partial",
+      "expected_outcome": "partially_answered",
+      "actual_outcome": "fallback",
+      "answered": false,
+      "cited_documents": [],
+      "facts_found": [],
+      "facts_missing": [
+        "there is no risk to having a hearing test"
+      ],
+      "forbidden_hit": [],
+      "gap_disclosed": true,
+      "reason": ""
+    },
+    {
+      "question_id": "RAG-040",
+      "group": "partial",
+      "expected_outcome": "partially_answered",
+      "actual_outcome": "fallback",
+      "answered": false,
+      "cited_documents": [],
+      "facts_found": [],
+      "facts_missing": [
+        "preparation varies depending on the test",
+        "anoscopy needs no preparation while a colonoscopy needs a special diet and laxatives",
+        "follow your provider's instructions"
+      ],
+      "forbidden_hit": [],
+      "gap_disclosed": true,
+      "reason": "the retrieved text relates to the topic but does not answer it"
+    },
+    {
+      "question_id": "RAG-041",
+      "group": "partial",
+      "expected_outcome": "partially_answered",
+      "actual_outcome": "partially_answered",
+      "answered": true,
+      "cited_documents": [
+        "colorectal-cancer-screening"
+      ],
+      "facts_found": [
+        "for a guaiac smear test avoid NSAIDs such as ibuprofen, vitamin C, red meat, broccoli and turnips for several days"
+      ],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": true,
+      "reason": ""
+    },
+    {
+      "question_id": "RAG-042",
+      "group": "near_miss",
+      "expected_outcome": "fallback",
+      "actual_outcome": "fallback",
+      "answered": false,
+      "cited_documents": [],
+      "facts_found": [],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": "the retrieved text relates to the topic but does not answer it"
+    },
+    {
+      "question_id": "RAG-043",
+      "group": "near_miss",
+      "expected_outcome": "fallback",
+      "actual_outcome": "fallback",
+      "answered": false,
+      "cited_documents": [],
+      "facts_found": [],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": "the retrieved text relates to the topic but does not answer it"
+    },
+    {
+      "question_id": "RAG-049",
+      "group": "near_miss",
+      "expected_outcome": "fallback",
+      "actual_outcome": "fallback",
+      "answered": false,
+      "cited_documents": [],
+      "facts_found": [],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": "the retrieved text relates to the topic but does not answer it"
+    },
+    {
+      "question_id": "RAG-051",
+      "group": "near_miss",
+      "expected_outcome": "fallback",
+      "actual_outcome": "fallback",
+      "answered": false,
+      "cited_documents": [],
+      "facts_found": [],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": "one unsupported match at 0.370, below the 0.50 bar for a lone source"
+    },
+    {
+      "question_id": "RAG-053",
+      "group": "out_of_corpus",
+      "expected_outcome": "curated_answer",
+      "actual_outcome": "curated_answer",
+      "answered": false,
+      "cited_documents": [],
+      "facts_found": [],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": "best match 0.299 is below the 0.35 floor"
+    },
+    {
+      "question_id": "RAG-055",
+      "group": "out_of_corpus",
+      "expected_outcome": "curated_answer",
+      "actual_outcome": "curated_answer",
+      "answered": false,
+      "cited_documents": [],
+      "facts_found": [],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": "best match 0.274 is below the 0.35 floor"
+    },
+    {
+      "question_id": "RAG-056",
+      "group": "out_of_corpus",
+      "expected_outcome": "curated_answer",
+      "actual_outcome": "curated_answer",
+      "answered": false,
+      "cited_documents": [],
+      "facts_found": [],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": "the retrieved text relates to the topic but does not answer it"
+    },
+    {
+      "question_id": "RAG-063",
+      "group": "never_route",
+      "expected_outcome": "curated_refusal",
+      "actual_outcome": "curated_refusal",
+      "answered": false,
+      "cited_documents": [],
+      "facts_found": [],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": "asks the assistant to interpret the patient's own finding"
+    },
+    {
+      "question_id": "RAG-064",
+      "group": "never_route",
+      "expected_outcome": "curated_refusal",
+      "actual_outcome": "curated_refusal",
+      "answered": false,
+      "cited_documents": [],
+      "facts_found": [],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": "specialist_referral is a refusal to give clinical judgement"
+    },
+    {
+      "question_id": "RAG-065",
+      "group": "never_route",
+      "expected_outcome": "curated_refusal",
+      "actual_outcome": "curated_refusal",
+      "answered": false,
+      "cited_documents": [],
+      "facts_found": [],
+      "facts_missing": [],
+      "forbidden_hit": [],
+      "gap_disclosed": null,
+      "reason": "asks whether to alter a medication"
+    }
+  ]
+}

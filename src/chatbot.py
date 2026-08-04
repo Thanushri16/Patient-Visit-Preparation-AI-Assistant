@@ -24,7 +24,13 @@ try:
         looks_non_english,
     )
     from .moderation import moderate_text
-    from .models import ChatMessage, ConversationPhase, ConversationState, WorkflowType
+    from .models import (
+        ChatMessage,
+        ConversationPhase,
+        ConversationState,
+        RagTurn,
+        WorkflowType,
+    )
     from .observability import emit_chain_event
     from .persistence import JsonVisitRepository
     from .routing import (
@@ -71,7 +77,13 @@ except ImportError:  # pragma: no cover - allows running as a script
         looks_non_english,
     )
     from moderation import moderate_text
-    from models import ChatMessage, ConversationPhase, ConversationState, WorkflowType
+    from models import (
+        ChatMessage,
+        ConversationPhase,
+        ConversationState,
+        RagTurn,
+        WorkflowType,
+    )
     from observability import emit_chain_event
     from persistence import JsonVisitRepository
     from routing import (
@@ -220,6 +232,27 @@ def _finalize(
     return response_text
 
 
+def _knowledge_answer(state: ConversationState, prompt: str, knowledge_branch) -> str | None:
+    """Ask the knowledge branch for an answer, recording what it produced.
+
+    The branch owns the decision about whether this message is a knowledge
+    question at all — its route policy is the thing that knows which questions
+    must never be answered from documents. Asking it about every message and
+    letting it decline keeps that judgement in one place.
+    """
+
+    if knowledge_branch is None:
+        return None
+    outcome = knowledge_branch.answer(prompt)
+    if outcome is None:
+        return None
+    text, record = outcome
+    # Typed here rather than in the branch: see the note in rag/integration.py
+    # about `models` and `src.models` resolving to different classes.
+    state.rag = RagTurn.model_validate(record)
+    return text
+
+
 def _compose(*segments: str) -> str:
     """Join the non-empty parts of a reply into one paragraph."""
 
@@ -270,6 +303,7 @@ def get_chatbot_response(
     client: OpenAI | None,
     state: ConversationState,
     visit_repository: JsonVisitRepository | None = None,
+    knowledge_branch=None,
 ) -> str:
     """Run one chat turn through moderation, routing, extraction, confirmation, and persistence.
 
@@ -283,6 +317,11 @@ def get_chatbot_response(
     5. If the chatbot is awaiting confirmation, classify the reply as confirm, correct, or unclear.
     6. Otherwise continue the active workflow with structured extraction, validation, and the next question.
     7. When the summary is confirmed, save the visit locally if a repository is available.
+
+    `knowledge_branch`, when provided, answers preparation questions from the
+    clinic document corpus with citations. It is injected rather than
+    constructed here so this module never imports a vector store, and it is
+    optional so the chain runs unchanged when no knowledge store is configured.
     """
     input_moderation = moderate_text(prompt, stage="input")
     emit_chain_event(
@@ -501,7 +540,10 @@ def get_chatbot_response(
         # Everything in the message that is not a field — a greeting, an expressed
         # worry, a general question about preparing — is answered alongside the
         # structured intake rather than instead of it.
-        supplementary = build_supplementary_response(state, prompt)
+        knowledge_text = _knowledge_answer(state, prompt, knowledge_branch)
+        supplementary = build_supplementary_response(
+            state, prompt, knowledge_text=knowledge_text
+        )
         summary_requested = state.workflow in SUMMARY_WORKFLOWS
 
         # Collection input path: extract structured fields from the user's latest message.
@@ -549,6 +591,13 @@ def get_chatbot_response(
     # Collection else path: no collection workflow is active, so fall back to the menu response.
 
     # Flow 7: fallback to the menu prompt when no workflow branch applies.
-    fallback = _compose(build_supplementary_response(state, prompt), MENU_PROMPT_RESPONSE)
+    knowledge_text = _knowledge_answer(state, prompt, knowledge_branch)
+    fallback = _compose(
+        build_supplementary_response(state, prompt, knowledge_text=knowledge_text),
+        # A knowledge question that was answered does not also need the option
+        # list: the patient asked something and got an answer, and appending the
+        # menu to it reads as not having listened.
+        "" if knowledge_text else MENU_PROMPT_RESPONSE,
+    )
     _record_turn(messages, prompt, fallback)
     return fallback
