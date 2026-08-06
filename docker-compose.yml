@@ -1,0 +1,38 @@
+# Local Postgres with pgvector for the Iteration 3 RAG knowledge store.
+#
+#   docker compose up -d          start
+#   docker compose logs -f db     watch startup
+#   docker compose down           stop, keeping data
+#   docker compose down -v        stop and delete the volume (forces re-ingest)
+#
+# Port 5433 is deliberate: it leaves a system Postgres on 5432 alone, so this
+# database cannot be confused with one that already exists on the machine.
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: healthcare-rag-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: healthcare
+      POSTGRES_PASSWORD: healthcare_local_dev
+      POSTGRES_DB: healthcare_rag
+      # Deterministic collation, so ORDER BY is identical everywhere the suite runs.
+      POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+    ports:
+      - "5433:5432"
+    volumes:
+      - rag_pgdata:/var/lib/postgresql/data
+      # No init scripts. LlamaIndex's PGVectorStore creates the vector
+      # extension, the data_knowledge_chunk table and its HNSW index on first
+      # use, sized to the configured embedding model — so schema setup happens
+      # on `uv run python -m src.rag.ingest ingest`, not at container start.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U healthcare -d healthcare_rag"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+volumes:
+  rag_pgdata:

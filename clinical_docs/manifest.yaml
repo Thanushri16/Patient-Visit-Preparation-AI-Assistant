@@ -1,0 +1,449 @@
+# Knowledge corpus manifest — Iteration 3, Part A (step A2)
+#
+# The PDFs in this directory are the corpus. They are NOT converted to another
+# format: ingestion extracts text from the PDF at index time, and this file
+# supplies the metadata that extraction cannot recover — stable IDs, categories,
+# canonical source URLs, and the boilerplate rules each page shape needs.
+#
+# This file is read at INGESTION TIME ONLY, by src/rag/documents.py. Nothing
+# opens it at query time: its contents are copied into node metadata during
+# ingestion, and retrieval reads that metadata from the database.
+#
+# Fields fall into three groups, and the grouping matters:
+#
+#   consumed  - the code reads it and behaves differently as a result
+#   editorial - human judgement recorded here, not read by code
+#   derived   - written into node metadata for citations
+#
+# Each document's fields are labelled below where it is not obvious. Fields
+# marked editorial are notes, not configuration: changing them changes nothing.
+#
+# Provenance: all 12 documents are MedlinePlus (U.S. National Library of
+# Medicine), a public-domain U.S. government patient-education source. They are
+# general patient education, not this clinic's own instructions — see
+# `corpus_disclaimer` below, which the assistant must carry into any answer.
+
+corpus:
+  name: medlineplus-diagnostic-tests
+  version: 1
+  retrieved_on: 2026-08-01        # date the PDFs were saved from medlineplus.gov
+  publisher: U.S. National Library of Medicine (MedlinePlus)
+  licence: public domain (U.S. federal government work)
+  corpus_disclaimer: >-
+    General patient education about tests and procedures. It is not this
+    clinic's own preparation instructions, and it never overrides instructions
+    the ordering clinic gave the patient.
+
+# Page shapes present in this corpus. Assigning a shape to a document IS
+# consumed: it selects which cleaning rules ingestion applies.
+#
+# The rules themselves are NOT here. They are regexes in
+# src/rag/documents.py -- BOILERPLATE_PATTERNS and CONTENT_END_MARKERS -- because
+# regexes are code: they need unit tests, and a typo in a YAML pattern would be a
+# silent no-op at ingest time rather than a test failure.
+#
+# An earlier version of this file duplicated those patterns here, which read as
+# configuration but was inert. Editing them changed nothing, and the file was
+# quietly lying about what the pipeline did. Every shape named below must have a
+# matching entry in CONTENT_END_MARKERS or load_manifest() raises.
+page_shapes:
+  medical_test:
+    description: >-
+      MedlinePlus "Medical Test" page. Headings are literal patient questions.
+      Content ends at the References section.
+  encyclopedia:
+    description: >-
+      MedlinePlus "Medical Encyclopedia" article. Fixed section names, and dated
+      with "Review Date" rather than "Last updated".
+  health_topic:
+    description: >-
+      MedlinePlus "Health Topic" hub. Prose first, then a long link farm
+      (Start Here, Specifics, Journal Articles, Patient Handouts, ...). The link
+      farm MUST be cut or it dominates the node count with contentless entries;
+      on the CT page it is roughly 60% of the extracted text.
+  index:
+    description: A-Z navigation list with no prose. Excluded from indexing.
+
+documents:
+
+  - document_id: how-to-prepare-lab-test
+    file: How to Prepare for a Lab Test_ MedlinePlus Medical Test.pdf
+    title: How to Prepare for a Lab Test
+    source_url: https://medlineplus.gov/lab-tests/how-to-prepare-for-a-lab-test/
+    page_shape: medical_test
+    category: lab_test
+    last_updated: 2024-08-20
+    pages: 4
+    indexed: true
+    sections:
+      - How do I prepare for a lab test?
+      - Will I need to take other steps to prepare for my lab test?
+      - What types of lab tests require special preparation?
+      - Is there anything else I should know about preparing for a lab test?
+    covers:
+      - general lab test preparation
+      - fasting (why, and that duration varies)
+      - foods, drinks, smoking, exercise to avoid
+      - which common tests require fasting
+    # This is the one document that overlaps an existing curated answer.
+    supersedes_curated_topic: fasting
+    safety_notes:
+      - >-
+        Contains "don't stop taking any medicines unless your provider tells you
+        to". Any answer touching medication MUST carry that deferral. It is a
+        deferral, never an instruction to change a medication.
+
+  - document_id: fasting-and-lab-prep-duration
+    file: How to Prepare for a Lab Test_ MedlinePlus Medical Test.pdf
+    title: How to Prepare for a Lab Test
+    alias_of: how-to-prepare-lab-test
+    indexed: false
+    note: >-
+      Placeholder only. The corpus has no dedicated fasting-duration document,
+      so questions about a specific fasting window are expected to fall back —
+      the source says the length "can vary" and to ask the provider. Recorded
+      here so the gap is deliberate rather than discovered during evaluation.
+
+  - document_id: mri
+    file: MRI_ MedlinePlus Medical Encyclopedia.pdf
+    title: MRI
+    source_url: https://medlineplus.gov/ency/article/003335.htm
+    page_shape: encyclopedia
+    category: imaging
+    last_updated: 2024-07-15      # Review Date
+    pages: 5
+    indexed: true
+    sections:
+      - How the Test is Performed
+      - How to Prepare for the Test
+      - How the Test will Feel
+      - Why the Test is Performed
+      - Normal Results
+      - What Abnormal Results Mean
+      - Risks
+    covers:
+      - no ionizing radiation; uses magnets and radio waves
+      - fasting 4 to 6 hours may be requested
+      - claustrophobia, sedation, open MRI
+      - implant and metal screening (pacemaker, aneurysm clips, cochlear implants, stents)
+      - gadolinium contrast and kidney disease
+      - duration 30 to 60 minutes; loud thumping noise; earplugs
+    near_miss_partner: ct-scans      # heavily confusable; see benchmark
+
+  - document_id: ct-scans
+    file: CT Scans_ MedlinePlus.pdf
+    title: CT Scans
+    source_url: https://medlineplus.gov/ctscans.html
+    page_shape: health_topic
+    category: imaging
+    last_updated: 2026-01-26
+    pages: 7
+    indexed: true
+    sections:
+      - What is a CT scan?
+      - Who needs a CT scan?
+      - How do you prepare for a CT scan?
+      - How is a CT scan done?
+      - What should you expect after a CT scan?
+    covers:
+      - uses ionizing radiation, higher than a standard x-ray
+      - may be asked not to eat or drink for a few hours
+      - contrast by mouth, injection, or enema
+      - tell provider about pregnancy
+      - painless; a few minutes up to 30
+    near_miss_partner: mri
+    ingest_warning: >-
+      Link farm from "Start Here" onward is roughly 60% of the extracted text.
+      Must be cut at content_ends_at.
+
+  - document_id: colonoscopy
+    file: Colonoscopy _ MedlinePlus.pdf
+    title: Colonoscopy
+    source_url: https://medlineplus.gov/colonoscopy.html
+    page_shape: health_topic
+    category: endoscopy
+    last_updated: 2024-02-29
+    pages: 6
+    indexed: true
+    sections:
+      - What are colonoscopy and flexible sigmoidoscopy?
+      - What is a virtual colonoscopy?
+      - Who needs a colonoscopy, virtual colonoscopy, or flexible sigmoidoscopy?
+      - How do you prepare for a colonoscopy, virtual colonoscopy, or flexible sigmoidoscopy?
+      - How are colonoscopy, virtual colonoscopy, and flexible sigmoidoscopy done?
+      - What should I expect after a colonoscopy, virtual colonoscopy, or flexible sigmoidoscopy?
+    covers:
+      - bowel prep, clear liquid diet about one day before
+      - avoid red or purple drinks or gelatin
+      - laxatives; pills, powder, or enema
+      - sedation, and needing someone to drive you home
+      - screening usually starts at age 45 at average risk
+      - procedure 30 to 60 minutes; 1 to 2 hours recovery
+    near_miss_partner: colorectal-cancer-screening
+    ingest_warning: Link farm from "Start Here" onward must be cut.
+    safety_notes:
+      - >-
+        "You may need to stop taking some of your medicines" — relay only with
+        the provider deferral attached. Never as an instruction.
+
+  - document_id: colorectal-cancer-screening
+    file: Colorectal Cancer Screening Tests_ MedlinePlus Medical Test.pdf
+    title: Colorectal Cancer Screening Tests
+    source_url: https://medlineplus.gov/lab-tests/colorectal-cancer-screening-tests/
+    page_shape: medical_test
+    category: screening
+    last_updated: 2024-09-04
+    pages: 11
+    indexed: true
+    sections:
+      - What are colorectal cancer screening tests?
+      - What are they used for?
+      - Why do I need a colorectal cancer screening test?
+      - What happens during a colorectal cancer screening?
+      - Will I need to do anything to prepare for the test?
+      - Are there any risks to the test?
+      - What do the results mean?
+      - Is there anything else I need to know about colorectal cancer screening?
+    covers:
+      - visual exams versus stool tests
+      - bowel prep detail; liquid diet one to three days
+      - FIT, gFOBT, and stool DNA collection steps
+      - gFOBT dietary restrictions (NSAIDs, vitamin C, red meat, broccoli, turnips)
+      - screening intervals by test type
+      - advantages and disadvantages table per test
+    near_miss_partner: colonoscopy
+    ingest_warning: >-
+      The advantages/disadvantages comparison is a two-column table. PDF text
+      extraction interleaves the columns — see A3 notes. Chunking must not split
+      an advantage from its test name.
+
+  - document_id: endoscopy
+    file: Endoscopy_ MedlinePlus Medical Encyclopedia.pdf
+    title: Endoscopy
+    source_url: https://medlineplus.gov/ency/article/003338.htm
+    page_shape: encyclopedia
+    category: endoscopy
+    last_updated: 2025-04-21      # Review Date
+    pages: 4
+    indexed: true
+    sections:
+      - How the Test is Performed
+      - How to Prepare for the Test
+      - How the Test will Feel
+      - Why the Test is Performed
+      - Risks
+    covers:
+      - what an endoscope is and what it is used for
+      - preparation varies by procedure type
+      - the named endoscopy types (anoscopy, colonoscopy, ERCP, EGD, bronchoscopy, cystoscopy, laparoscopy, arthroscopy)
+    near_miss_partner: colonoscopy
+    note: >-
+      Deliberately thin on preparation — it says preparation "varies depending
+      on the test". Good source for a partial-coverage benchmark case.
+
+  - document_id: allergy-blood-test
+    file: Allergy Blood Test_ MedlinePlus Medical Test.pdf
+    title: Allergy Blood Test
+    source_url: https://medlineplus.gov/lab-tests/allergy-blood-test/
+    page_shape: medical_test
+    category: lab_test
+    last_updated: 2024-11-19
+    pages: 5
+    indexed: true
+    sections:
+      - What is an Allergy Blood Test?
+      - What is it used for?
+      - Why do I need an allergy blood test?
+      - What happens during an allergy blood test?
+      - Will I need to do anything to prepare for the test?
+      - Are there any risks to the test?
+      - What do the results mean?
+      - Is there anything else I need to know about an allergy blood test?
+    covers:
+      - IgE antibodies; total versus specific IgE
+      - no special preparation needed
+      - antihistamines may need stopping — provider's call
+      - blood draw takes under five minutes
+      - false positives and false negatives
+    safety_notes:
+      - >-
+        HIGH RISK. Mentions anaphylaxis, epinephrine auto-injectors, and allergy
+        treatment plans. The existing ANAPHYLAXIS_NOTE and the
+        allergy_vs_side_effect refusal in src/guidance.py take precedence over
+        anything retrieved here. This document is the strongest argument for
+        enforcing the never-route set BEFORE retrieval rather than after.
+      - >-
+        "don't stop taking any medicines unless your provider tells you to" —
+        must travel with any antihistamine answer.
+
+  - document_id: skin-cancer-screening
+    file: Skin Cancer Screening_ MedlinePlus Medical Test.pdf
+    title: Skin Cancer Screening
+    source_url: https://medlineplus.gov/lab-tests/skin-cancer-screening/
+    page_shape: medical_test
+    category: screening
+    last_updated: 2026-01-14
+    pages: 6
+    indexed: true
+    sections:
+      - What is a skin cancer screening?
+      - What is it used for?
+      - Why do I need a skin cancer screening?
+      - What happens during a skin cancer screening?
+      - Will I need to do anything to prepare for the test?
+      - Are there any risks to the test?
+      - What do the results mean?
+      - Is there anything else I need to know about a skin cancer screening?
+    covers:
+      - preparation — no makeup, no nail polish, hair loose
+      - the ABCDE rule for moles
+      - head-to-toe self-exam steps
+      - provider exam takes 10 to 15 minutes
+      - risk factors for each skin cancer type
+    safety_notes:
+      - >-
+        Contains diagnostic criteria (ABCDE). The assistant may explain what the
+        rule is; it must never apply it to a mole the patient describes. That is
+        diagnosis, and the existing output guardrail covers it.
+
+  - document_id: hearing-tests-adults
+    file: Hearing Tests for Adults_ MedlinePlus Medical Test.pdf
+    title: Hearing Tests for Adults
+    source_url: https://medlineplus.gov/lab-tests/hearing-tests-for-adults/
+    page_shape: medical_test
+    category: exam
+    last_updated: 2023-10-25
+    pages: 7
+    indexed: true
+    sections:
+      - What are hearing tests?
+      - What are they used for?
+      - Why do I need a hearing test?
+      - What happens during a hearing test?
+      - Will I need to do anything to prepare for a hearing test?
+      - Are there any risks to hearing tests?
+      - What do the results mean?
+      - Is there anything else I need to know about hearing tests?
+    covers:
+      - no special preparation needed; no risk
+      - pure-tone, speech, tuning fork, tympanometry, otoacoustic emissions
+      - conductive versus sensorineural versus mixed hearing loss
+      - audiologist versus ENT versus hearing aid specialist
+      - prescription versus over-the-counter hearing aids
+
+  - document_id: neurological-exam
+    file: Neurological Exam_ MedlinePlus Medical Test.pdf
+    title: Neurological Exam
+    source_url: https://medlineplus.gov/lab-tests/neurological-exam/
+    page_shape: medical_test
+    category: exam
+    last_updated: 2023-07-05
+    pages: 6
+    indexed: true
+    sections:
+      - What is a neurological exam?
+      - What is it used for?
+      - Why do I need a neurological exam?
+      - What happens during a neurological exam?
+      - Will I need to do anything to prepare for a neurological exam?
+      - Are there any risks to the exam?
+      - What do the results mean?
+      - Is there anything else I need to know about a neurological exam?
+    covers:
+      - no special preparation needed; no risk
+      - what is tested (mental status, cranial nerves, coordination, reflexes, sensory, autonomic)
+      - who performs it and where
+      - follow-on tests when results are abnormal
+
+  - document_id: rapid-tests
+    file: Rapid Tests_ MedlinePlus Medical Test.pdf
+    title: Rapid Tests
+    source_url: https://medlineplus.gov/lab-tests/rapid-tests/
+    page_shape: medical_test
+    category: lab_test
+    last_updated: 2024-09-04
+    pages: 5
+    indexed: true
+    sections:
+      - What are rapid tests?
+      - How are they used?
+      - What are the advantages and disadvantages of rapid tests?
+    covers:
+      - results usually in 20 minutes or less
+      - dipstick versus cassette
+      - lower sensitivity; false negatives more common
+      - what affects accuracy
+    note: >-
+      No "how do I prepare" section at all. Every preparation question about
+      rapid tests must fall back — a deliberate, documented gap.
+
+  - document_id: diagnostic-tests-index
+    file: Diagnostic Tests_ MedlinePlus.pdf
+    title: Diagnostic Tests (A-Z index)
+    source_url: https://medlineplus.gov/diagnostictests.html
+    page_shape: index
+    category: index
+    last_updated: null
+    pages: 2
+    indexed: false
+    exclusion_reason: >-
+      An A-Z list of links with no prose. Chunking it produces nodes that are
+      lists of test names — high lexical overlap with almost any test question
+      and no answer in them. Indexing it would manufacture exactly the
+      confidently-wrong retrieval the near-miss guards exist to prevent. Kept in
+      the corpus directory for provenance; excluded from the vector store.
+    reinstate_if: >-
+      A future strategy uses it as a routing or disambiguation aid rather than
+      as evidence.
+
+# ---------------------------------------------------------------------------
+# Corpus-level findings that change the Part A design
+# ---------------------------------------------------------------------------
+
+coverage:
+  indexed_documents: 11        # 12 files, minus the A-Z index
+  subject: >-
+    Diagnostic tests and procedures — what they are, why they are done, how to
+    prepare, how they feel, and what results mean.
+
+  # What the corpus does NOT cover. Every one of these is a curated topic in
+  # src/guidance.py that must therefore be retained, not replaced.
+  not_covered:
+    - documents to bring to an appointment
+    - pre-visit forms and patient portals
+    - insurance, member IDs, referrals, billing
+    - telehealth and video visits
+    - transportation and parking
+    - clinic hours, cancellations, check-in
+    - accessibility services and interpreters
+    - latex-free supplies
+    - new-patient logistics
+
+  curated_topics_replaced:
+    - fasting          # partially — general fasting rationale only, not durations
+  curated_topics_retained:
+    - documents
+    - forms
+    - telehealth
+    - transportation
+    - latex
+    - new_patient
+    - specialist_referral
+  curated_topics_never_routed:
+    - interaction
+    - allergy_vs_side_effect
+    # plus ANAPHYLAXIS_NOTE, which is not in the topics table
+
+  new_capability: >-
+    Test and procedure preparation — an area the assistant currently cannot
+    answer at all. This is a coverage gain, not a replacement, and it is the
+    honest framing of what RAG buys here.
+
+# Documents whose vocabulary overlaps enough to generate confidently-wrong
+# retrieval. These pairs drive the near-miss benchmark set.
+near_miss_pairs:
+  - [mri, ct-scans]                              # both imaging, both "contrast", opposite radiation answers
+  - [colonoscopy, colorectal-cancer-screening]   # overlapping prep text, different intervals
+  - [colonoscopy, endoscopy]                     # endoscopy is the generic parent
+  - [allergy-blood-test, how-to-prepare-lab-test] # both blood draws, different prep answers
+  - [skin-cancer-screening, neurological-exam]   # both "exams" with "no preparation"

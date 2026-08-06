@@ -230,5 +230,10 @@ __marimo__/
 .streamlit/secrets.toml
 reports/benchmarks/*/checkpoint.jsonl
 
-# Iteration 3 RAG source material, not used by the current code
-clinical_docs/
+# Iteration 3 RAG source material.
+# The PDFs stay untracked for now — see the note in the RAG plan. The manifest
+# is authored metadata that ingestion depends on, so it is always tracked.
+# Ignore the contents, not the directory: git cannot un-ignore a file inside an
+# ignored directory, so the negation below only works with this form.
+clinical_docs/*
+!clinical_docs/manifest.yaml

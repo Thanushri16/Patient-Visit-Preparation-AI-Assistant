@@ -246,6 +246,38 @@ class ConfirmationResult(DomainModel):
     correction_text: str | None = None
 
 
+class RagCitation(DomainModel):
+    """One source reference returned alongside a knowledge answer."""
+
+    marker: str
+    document_id: str
+    title: str
+    section: str | None = None
+    page_number: int | None = None
+    source_url: str | None = None
+    last_updated: str | None = None
+
+
+class RagTurn(DomainModel):
+    """What the knowledge branch produced on the last turn.
+
+    Serializable only. The store, the retriever and the model clients are
+    application dependencies injected into the branch, never state.
+    """
+
+    question: str
+    status: str = "not_requested"
+    source: str = ""
+    citations: list[RagCitation] = Field(default_factory=list)
+    retrieved: int = 0
+    uncovered: list[str] = Field(default_factory=list)
+    context_tokens: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
+    retrieval_latency_ms: float = 0.0
+    total_latency_ms: float = 0.0
+
+
 class ConversationState(DomainModel):
     """Source of truth for workflow phase, type, progress, and collected data."""
 
@@ -265,6 +297,7 @@ class ConversationState(DomainModel):
     visit_id: str | None = None
     persisted_at: datetime | None = None
     persistence_error: str | None = None
+    rag: RagTurn | None = None
 
 
 class ChatMessage(DomainModel):

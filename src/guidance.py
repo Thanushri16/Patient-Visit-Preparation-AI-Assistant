@@ -41,14 +41,28 @@ EDUCATIONAL_TOPICS = (
     (
         "fasting",
         (r"\bfast(ing)?\b", r"\b(eat|drink|food)\b.{0,25}\bbefore\b.{0,25}(test|blood|lab|appointment)"),
-        "Fasting requirements depend on the specific test — some blood panels ask "
-        "for 8 to 12 hours with water only, while many tests need no fasting at "
-        "all. Because it changes your results, please follow the instructions the "
-        "ordering clinic gave you, and call them if you did not get any.",
+        # No specific duration. The authoritative source says the length "can
+        # vary" and directs the patient to ask, so stating a number here would
+        # contradict the document the assistant cites elsewhere — and it is the
+        # number a patient would act on.
+        "Fasting requirements depend on the specific test — some ask for several "
+        "hours or overnight with water only, while many need no fasting at all, "
+        "and the length varies by test. Because it changes your results, please "
+        "follow the instructions the ordering clinic gave you, and call them if "
+        "you did not get any.",
     ),
     (
         "telehealth",
-        (r"\b(telehealth|virtual|video)\b", r"in person or virtual"),
+        # "virtual" alone matched "virtual colonoscopy", answering a question
+        # about a CT procedure with advice about video appointments. The word
+        # only means a remote visit when it qualifies one.
+        (
+            r"\btelehealth\b",
+            r"\b(virtual|video|online|remote)\s+(visit|appointment|consult\w*|call)\b",
+            r"\bin[- ]person\b.{0,20}\b(video|virtual|online|remote)\b",
+            r"\b(video|virtual|online|remote)\b.{0,20}\bin[- ]person\b",
+            r"\b(appointment|visit)\b.{0,25}\bby (video|phone)\b",
+        ),
         "Appointments can be in person or by video, and the clinic's confirmation "
         "message normally says which. For a video visit it helps to test your "
         "camera and microphone beforehand and to have a quiet, well-lit spot.",
@@ -422,8 +436,21 @@ def answer_state_query(message: str, visit_data: VisitData) -> str | None:
     return None
 
 
-def build_supplementary_response(state: ConversationState, message: str) -> str:
-    """Build the non-intake part of a reply: greeting, empathy, and guidance."""
+def build_supplementary_response(
+    state: ConversationState, message: str, knowledge_text: str | None = None
+) -> str:
+    """Build the non-intake part of a reply: greeting, empathy, and guidance.
+
+    `knowledge_text`, when supplied, is a citation-backed answer from the RAG
+    branch and takes the place of the curated educational answer. It is passed
+    in rather than produced here because retrieval needs a database and a model
+    client, and this module must stay importable and testable without either.
+
+    The composition rules are unchanged. A knowledge answer is one segment of a
+    reply that still acknowledges what was captured and asks exactly one next
+    question -- an answer that displaced the intake question would turn one turn
+    of progress into none.
+    """
 
     segments: list[str] = []
     if detect_greeting(message):
@@ -432,6 +459,11 @@ def build_supplementary_response(state: ConversationState, message: str) -> str:
         segments.append(EMOTIONAL_ACKNOWLEDGEMENT)
     if detect_anaphylaxis_risk(message):
         segments.append(ANAPHYLAXIS_NOTE)
+
+    if knowledge_text:
+        segments.append(knowledge_text)
+        return " ".join(segments)
+
     topic = detect_educational_topic(message)
     if topic is not None:
         segments.append(topic[1])
