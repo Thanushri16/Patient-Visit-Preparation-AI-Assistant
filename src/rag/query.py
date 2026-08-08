@@ -197,3 +197,37 @@ def is_information_request(message: str) -> bool:
     if not text:
         return False
     return bool(_ASKS.search(text))
+
+
+# ---------------------------------------------------------------------------
+# Acronym expansion
+# ---------------------------------------------------------------------------
+#
+# An acronym query embeds poorly against prose that spells the term out. The
+# corpus explains the melanoma rule as "Asymmetry, Border, Color, Diameter,
+# Evolving" and uses the letters "ABCDE" barely at all, so "what does the ABCDE
+# rule mean" tops out at 0.344 against text that answers it completely.
+#
+# Expansion happens on the QUERY only. The stored text is left exactly as the
+# source wrote it, so citations still quote the document rather than our gloss.
+QUERY_EXPANSIONS: dict[str, str] = {
+    r"\babcde\b": "ABCDE asymmetry border color diameter evolving",
+    r"\begd\b": "EGD upper endoscopy esophagogastroduodenoscopy",
+    r"\bfobt\b": "FOBT fecal occult blood test",
+    r"\bfit\b(?!\s*(in|into))": "FIT fecal immunochemical test",
+    r"\bige\b": "IgE immunoglobulin E antibody",
+    r"\boae\b": "OAE otoacoustic emissions",
+    r"\bct\b": "CT computed tomography",
+    r"\bmri\b": "MRI magnetic resonance imaging",
+}
+
+_EXPANSIONS = tuple((re.compile(k, re.IGNORECASE), v) for k, v in QUERY_EXPANSIONS.items())
+
+
+def expand_query(question: str) -> str:
+    """Expand known acronyms in a query so it matches prose that spells them out."""
+
+    expanded = question
+    for pattern, replacement in _EXPANSIONS:
+        expanded = pattern.sub(replacement, expanded)
+    return expanded

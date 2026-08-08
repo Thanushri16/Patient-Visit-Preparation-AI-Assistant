@@ -22,7 +22,12 @@ from rag.generation import (  # noqa: E402
 from rag.store import RetrievedChunk  # noqa: E402
 
 
-def source(similarity, text="Blood panels need 8 hours.", document_id="mri", section="Prep"):
+def source(
+    similarity,
+    text="MRI does not use x-rays or other radiation.",
+    document_id="mri",
+    section="Who needs an MRI scan?",
+):
     return RetrievedChunk(
         node_id=f"{document_id}-{similarity}",
         document_id=document_id,
@@ -31,7 +36,7 @@ def source(similarity, text="Blood panels need 8 hours.", document_id="mri", sec
         section=section,
         page_number=2,
         source_url=f"https://example.invalid/{document_id}",
-        last_updated="2024-07-15",
+        last_updated="2026-06-01",
         text=text,
         similarity=similarity,
     )
@@ -132,13 +137,13 @@ class CitationTests(unittest.TestCase):
     def test_a_resolvable_marker_binds_to_its_source(self):
         sources = [source(0.7, document_id="mri"), source(0.6, document_id="ct-scans")]
 
-        result = validate_citations("Fast for 4 to 6 hours [1].", sources)
+        result = validate_citations("MRI does not use x-rays or other radiation [1].", sources)
 
         self.assertTrue(result.valid)
         self.assertEqual(len(result.citations), 1)
         self.assertEqual(result.citations[0].marker, "[1]")
         self.assertEqual(result.citations[0].document_id, "mri")
-        self.assertEqual(result.citations[0].last_updated, "2024-07-15")
+        self.assertEqual(result.citations[0].last_updated, "2026-06-01")
 
     def test_marker_numbering_follows_the_order_sources_were_supplied(self):
         sources = [source(0.7, document_id="mri"), source(0.6, document_id="ct-scans")]
@@ -159,7 +164,7 @@ class CitationTests(unittest.TestCase):
         self.assertFalse(result.valid)
 
     def test_an_uncited_claim_is_rejected(self):
-        result = validate_citations("You should fast for twelve hours.", [source(0.7)])
+        result = validate_citations("MRI uses no radiation.", [source(0.7)])
 
         self.assertFalse(result.valid)
         self.assertIn("no citation", result.problem)
@@ -191,9 +196,9 @@ class PromptTests(unittest.TestCase):
 
 class GenerationTests(unittest.TestCase):
     def test_a_cited_answer_is_returned_as_grounded(self):
-        client = FakeClient("Fast for 4 to 6 hours before the scan [1].")
+        client = FakeClient("MRI does not use x-rays or other radiation [1].")
 
-        answer = generate_answer(client, "Do I need to fast?", [source(0.7)])
+        answer = generate_answer(client, "Does an MRI use radiation?", [source(0.7)])
 
         self.assertTrue(answer.grounded)
         self.assertEqual(len(answer.citations), 1)

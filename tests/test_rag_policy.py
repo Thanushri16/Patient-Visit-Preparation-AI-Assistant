@@ -372,19 +372,33 @@ class GuardTests(unittest.TestCase):
 
         self.assertTrue(decision.sufficient)
 
-    def test_a_lone_weak_match_is_rejected(self):
+    def test_a_lone_weak_match_is_rejected_when_guard_three_is_off(self):
+        """Guard 2 is the cheap stand-in for guard 3, and only runs without it."""
+
         decision = check_evidence(
-            [source(0.57)], question="", isolated_similarity=0.65
+            [source(0.57)],
+            question="",
+            isolated_similarity=0.65,
+            enforce_category=True,   # signals the guard-3-disabled configuration
         )
 
         self.assertIs(decision.verdict, EvidenceVerdict.ISOLATED_MATCH)
         self.assertEqual(decision.guard, "score_dispersion")
 
-    def test_the_same_score_is_accepted_when_corroborated(self):
-        """A cluster is evidence; one node on its own is a near-miss shape."""
+    def test_a_lone_match_is_allowed_through_when_guard_three_runs(self):
+        """Measured: it caught one true near miss and wrongly refused two real
+        questions, and guard 3 rejects that near miss on its own."""
 
+        decision = check_evidence([source(0.57)], question="")
+
+        self.assertTrue(decision.sufficient)
+
+    def test_the_same_score_is_accepted_when_corroborated(self):
         decision = check_evidence(
-            [source(0.57), source(0.56)], question="", isolated_similarity=0.65
+            [source(0.57), source(0.56)],
+            question="",
+            isolated_similarity=0.65,
+            enforce_category=True,
         )
 
         self.assertTrue(decision.sufficient)

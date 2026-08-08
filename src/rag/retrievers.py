@@ -21,11 +21,13 @@ try:
     from .chunking import count_tokens
     from .config import SETTINGS
     from .embeddings import embed_query
+    from .query import expand_query
     from .store import KnowledgeStore, RetrievedChunk
 except ImportError:  # pragma: no cover - allows running as a script
     from chunking import count_tokens
     from config import SETTINGS
     from embeddings import embed_query
+    from query import expand_query
     from store import KnowledgeStore, RetrievedChunk
 
 
@@ -122,7 +124,7 @@ class BasicChunkRetriever:
         # embedding API, and a number that excluded it would flatter the branch
         # against its 3-second timeout.
         started = time.perf_counter()
-        embedding = embed_query(self._embed_model, query)
+        embedding = embed_query(self._embed_model, expand_query(query))
         chunks = self._store.search(
             embedding,
             top_k=resolved_top_k,

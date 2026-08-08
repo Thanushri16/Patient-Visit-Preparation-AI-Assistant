@@ -21,8 +21,8 @@ def _normalise(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", (text or "").lower()).strip()
 
 
-# Words that carry no claim. Dropping them is what lets "not to eat or drink
-# anything for 4 to 6 hours" match an expected fact phrased without "anything".
+# Words that carry no claim. Dropping them is what lets "the exam should take
+# 10 to 15 minutes" match a paraphrase such as "the exam takes 10 to 15 minutes".
 STOPWORDS = frozenset(
     """a an and are as at be been before by can could do does for from had has have
     if in into is it its may might must not of on or should so some such than that
@@ -43,15 +43,14 @@ def contains(haystack: str, needle: str) -> bool:
     """Report whether an answer states a fact, allowing for paraphrase.
 
     Exact substring matching measured the checker rather than the system: an
-    answer saying "not to eat or drink anything for 4 to 6 hours before the
-    scan" was scored as missing "not to eat or drink for 4 to 6 hours before
-    the scan", because one inserted word breaks the match. The answers were
-    right and the metric was wrong.
+    answer saying "the exam should take about 10 to 15 minutes" was scored as
+    missing "the exam should take 10 to 15 minutes", because one inserted word
+    breaks a literal match. The answer was right and the metric was wrong.
 
     So content words are compared instead of literal text, with one exception
     that is not negotiable: **every number in the expected fact must appear.**
-    Quantities are the substance of this corpus -- "4 to 6 hours" versus "8 to
-    12 hours", "age 45" versus "age 50", "every 10 years" versus "every year".
+    Quantities are the substance of this corpus -- "10 to 15 minutes" versus
+    "20 to 25 minutes", "age 45" versus "age 50", "every 10 years" versus "every year".
     A paraphrase that changes a number is not a paraphrase, and loosening the
     wording match must not loosen that.
     """
@@ -82,6 +81,7 @@ class CaseResult:
     actual_outcome: str
     answered: bool
     cited_documents: tuple[str, ...] = ()
+    source: str = ""                  # what produced the answer: rag/curated/policy/fallback
     facts_found: tuple[str, ...] = ()
     facts_missing: tuple[str, ...] = ()
     forbidden_hit: tuple[str, ...] = ()
@@ -98,7 +98,9 @@ class CaseResult:
         return self.outcome_correct and not self.forbidden_hit and not self.facts_missing
 
 
-def score_case(case, answer_text: str, outcome: str, cited: tuple[str, ...]) -> CaseResult:
+def score_case(
+    case, answer_text: str, outcome: str, cited: tuple[str, ...], source: str = ""
+) -> CaseResult:
     """Score one answered case against its expectations."""
 
     facts = case.expected_facts or case.expected_covered_facts
@@ -137,6 +139,7 @@ def score_case(case, answer_text: str, outcome: str, cited: tuple[str, ...]) -> 
         actual_outcome=outcome,
         answered=outcome in {"answered", "partially_answered"},
         cited_documents=cited,
+        source=source,
         facts_found=found,
         facts_missing=missing,
         forbidden_hit=forbidden,
@@ -182,8 +185,17 @@ class Report:
                 sum(1 for r in answerable if r.answered), len(answerable)
             ),
             # The metric faithfulness cannot substitute for.
+            #
+            # Counts RETRIEVAL answering, not any answer at all. A near-miss
+            # question that gets a curated answer has not been leaked: the
+            # patient receives reviewed, non-prescriptive content with no
+            # citation implying a document supports it, which is the designed
+            # fallback. Counting that as a failure put this metric at odds with
+            # the shadow classifier, which had already been corrected for the
+            # same source-versus-shape confusion.
             "near_miss_resistance": self._rate(
-                sum(1 for r in near if not r.answered), len(near)
+                sum(1 for r in near if not (r.answered and r.source == "rag")),
+                len(near),
             ),
             "wrong_document_grounding": len(wrong_doc),
             "fact_coverage": self._rate(facts_hit, facts_total),

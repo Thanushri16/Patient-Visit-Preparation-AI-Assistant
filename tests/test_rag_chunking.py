@@ -90,15 +90,15 @@ class DocumentConversionTests(unittest.TestCase):
         """A citation to health guidance is worth little without a date."""
 
         manifest = next(
-            m for m in load_manifest()[0] if m.document_id == "mri"
+            m for m in load_manifest()[0] if m.document_id == "colonoscopy"
         )
         document = to_llamaindex_documents(
             loaded([section("Risks", "MRI does not use ionizing radiation.")], manifest)
         )[0]
 
-        self.assertEqual(document.metadata["last_updated"], "2024-07-15")
+        self.assertEqual(document.metadata["last_updated"], "2024-02-29")
         self.assertNotIn(
-            "2024-07-15", document.get_content(metadata_mode=MetadataMode.EMBED)
+            "2024-02-29", document.get_content(metadata_mode=MetadataMode.EMBED)
         )
 
     def test_the_heading_is_embedded_but_bookkeeping_is_not(self):
