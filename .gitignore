@@ -237,3 +237,7 @@ reports/benchmarks/*/checkpoint.jsonl
 # ignored directory, so the negation below only works with this form.
 clinical_docs/*
 !clinical_docs/manifest.yaml
+
+# DeepEval local telemetry and cache
+.deepeval/
+.deepeval-cache.json
