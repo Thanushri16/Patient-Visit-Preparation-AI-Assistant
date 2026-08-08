@@ -70,6 +70,7 @@ def classify(
     rag_answered: bool,
     rag_cited: bool,
     gap_disclosed: bool | None,
+    answer_source: str = "",
 ) -> ShadowObservation:
     """Place one shadow observation in exactly one class."""
 
@@ -96,11 +97,32 @@ def classify(
         # ladder look like a defect and buried the real ones.
         return made(Divergence.AGREEMENT, "correctly refused")
 
-    if group == "near_miss" and rag_answered:
-        return made(Divergence.NEAR_MISS_ANSWERED, "answered from a document that does not cover it")
+    # Only RETRIEVAL answering a near miss counts. This gate exists to catch a
+    # cited answer grounded in a document that does not cover the question --
+    # the failure faithfulness cannot see. A curated fallback firing because
+    # retrieval correctly found nothing is the ladder working, and flagging it
+    # blocked promotion on a safety gate that had not actually been breached.
+    #
+    # Classified on the source of the answer, not on the shape of the outcome.
+    # The same mistake produced a false-fallback rate of 13% earlier, from
+    # counting correct refusals.
+    if group == "near_miss" and rag_answered and answer_source == "rag":
+        return made(
+            Divergence.NEAR_MISS_ANSWERED,
+            "retrieval answered from a document that does not cover it",
+        )
 
     if expected_outcome == "partially_answered" and rag_answered and gap_disclosed is False:
         return made(Divergence.SILENT_PARTIAL, "answered part of the question without naming the gap")
+
+    if group == "near_miss" and rag_answered:
+        # Answered, but from curated content rather than from retrieval. Not a
+        # near-miss leak; recorded so it is visible rather than silently sorted
+        # into agreement.
+        return made(
+            Divergence.AGREEMENT,
+            f"answered from {answer_source or 'non-retrieval'} content, not retrieval",
+        )
 
     if curated_answered and not rag_answered:
         # Only a defect where retrieval was supposed to answer. Where the

@@ -29,8 +29,42 @@ class ManifestTests(unittest.TestCase):
     def test_manifest_matches_the_files_on_disk(self):
         documents, raw = load_manifest()
 
+        # Eleven indexed: the original nine plus NLM-authored MRI and endoscopy
+        # replacements. The A-Z index and two A.D.A.M. pages remain excluded.
         self.assertEqual(len(documents), 11)
-        self.assertEqual(len(raw["documents"]), 13)
+        self.assertEqual(len(raw["documents"]), 15)
+
+    def test_the_restricted_documents_are_excluded_on_licence(self):
+        """Their notice forbids indexing for retrieval; excluding them is the point."""
+
+        documents, raw = load_manifest()
+        indexed = {d.document_id for d in documents}
+
+        for document_id in (
+            "mri-encyclopedia-excluded",
+            "endoscopy-encyclopedia-excluded",
+        ):
+            with self.subTest(document_id):
+                self.assertNotIn(document_id, indexed)
+                entry = next(
+                    e for e in raw["documents"] if e["document_id"] == document_id
+                )
+                self.assertFalse(entry["indexed"])
+                self.assertIn("A.D.A.M", entry["licence"])
+
+    def test_restricted_documents_have_indexed_nlm_replacements(self):
+        documents, raw = load_manifest()
+        indexed = {d.document_id for d in documents}
+
+        for document_id in ("mri", "endoscopy"):
+            with self.subTest(document_id):
+                self.assertIn(document_id, indexed)
+                entry = next(
+                    e for e in raw["documents"] if e["document_id"] == document_id
+                )
+                self.assertTrue(entry["indexed"])
+                self.assertIn("public domain", entry["licence"])
+                self.assertNotEqual(entry["page_shape"], "encyclopedia")
 
     def test_the_az_index_is_excluded_from_indexing(self):
         documents, raw = load_manifest()
@@ -207,9 +241,10 @@ class CorpusTests(unittest.TestCase):
         """Spot-check the facts the benchmark asserts, at the source."""
 
         expected = {
-            "mri": "4 to 6 hours",
+            "mri": "does not use x-rays",
             "ct-scans": "higher than a",
             "colonoscopy": "red or purple",
+            "endoscopy": "tiny camera attached to a long, thin tube",
             "colorectal-cancer-screening": "every 10 years",
             "skin-cancer-screening": "nail polish",
             "hearing-tests-adults": "any special preparations",
@@ -222,6 +257,15 @@ class CorpusTests(unittest.TestCase):
             with self.subTest(document_id):
                 loaded = load_document(documents[document_id])
                 self.assertIn(fragment, loaded.text)
+
+    def test_replacement_document_gaps_match_the_benchmark(self):
+        documents = {d.document_id: d for d in load_manifest()[0]}
+        mri = load_document(documents["mri"]).text
+        endoscopy = load_document(documents["endoscopy"]).text
+
+        self.assertNotIn("4 to 6 hours", mri)
+        self.assertNotIn("30 to 60 minutes", mri)
+        self.assertNotIn("prepare", endoscopy.lower())
 
     def test_no_fasting_duration_is_stated_for_a_cholesterol_test(self):
         """Benchmark RAG-044 depends on this gap being real."""

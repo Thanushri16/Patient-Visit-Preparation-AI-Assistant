@@ -81,6 +81,25 @@ def build_plan(store: KnowledgeStore | None, force: bool = False) -> list[Docume
     return plans
 
 
+def prune(store: KnowledgeStore) -> list[str]:
+    """Remove stored documents the manifest no longer indexes.
+
+    Un-indexing a document in the manifest does not, on its own, take it out of
+    the store: `build_plan` only walks documents the manifest still lists, so an
+    excluded one keeps its nodes and stays retrievable. That is the wrong
+    behaviour for a content decision and a dangerous one for a licence decision —
+    a document removed because indexing it is prohibited must actually stop being
+    indexed.
+    """
+
+    indexed = {manifest.document_id for manifest in load_manifest()[0]}
+    stored = {row["document_id"] for row in store.corpus_status()}
+    removed = sorted(stored - indexed)
+    for document_id in removed:
+        store.delete_document(document_id)
+    return removed
+
+
 def ingest(
     store: KnowledgeStore,
     embed_model,
@@ -88,6 +107,7 @@ def ingest(
 ) -> list[DocumentPlan]:
     """Embed and store every document whose content or pipeline has changed."""
 
+    prune(store)
     plans = build_plan(store, force=force)
     for plan in plans:
         if plan.action == "skip":
@@ -162,6 +182,10 @@ def main(argv: list[str] | None = None) -> int:
     if mismatch:
         print(mismatch, file=sys.stderr)
         return 1
+
+    dropped = prune(store)
+    if dropped:
+        print(f"Removed from the store, no longer indexed: {', '.join(dropped)}\n")
 
     print(
         f"Embedding with {EMBEDDING.model} ({EMBEDDING.dimensions}d), "

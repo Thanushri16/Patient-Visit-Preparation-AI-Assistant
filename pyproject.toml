@@ -20,3 +20,8 @@ dependencies = [
   "llama-index-embeddings-openai>=0.6.0",
   "llama-index-vector-stores-postgres>=0.8.1",
 ]
+
+[dependency-groups]
+dev = [
+    "deepeval>=4.1.5",
+]

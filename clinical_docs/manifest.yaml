@@ -18,17 +18,30 @@
 # Each document's fields are labelled below where it is not obvious. Fields
 # marked editorial are notes, not configuration: changing them changes nothing.
 #
-# Provenance: all 12 documents are MedlinePlus (U.S. National Library of
-# Medicine), a public-domain U.S. government patient-education source. They are
-# general patient education, not this clinic's own instructions — see
-# `corpus_disclaimer` below, which the assistant must carry into any answer.
+# Provenance: all 14 PDFs are from MedlinePlus (U.S. National Library of
+# Medicine), but they are NOT uniformly public domain. The Health Topic and
+# Medical Test pages are NLM-authored federal works; the Medical Encyclopedia
+# pages are licensed from A.D.A.M. / Ebix and carry a notice prohibiting the use
+# this project makes of them. Those two are excluded and replaced by NLM-authored
+# Health Topic pages — see their `licence` and `exclusion_reason` fields.
+#
+# All of it is general patient education, not this clinic's own instructions —
+# see `corpus_disclaimer`, which the assistant must carry into any answer.
 
 corpus:
   name: medlineplus-diagnostic-tests
-  version: 1
-  retrieved_on: 2026-08-01        # date the PDFs were saved from medlineplus.gov
+  version: 2
+  retrieved_on: 2026-08-08        # latest replacement PDFs saved from medlineplus.gov
   publisher: U.S. National Library of Medicine (MedlinePlus)
-  licence: public domain (U.S. federal government work)
+  # Per document, NOT uniform. MedlinePlus Health Topic and Medical Test pages
+  # are authored by the National Library of Medicine and are U.S. federal works.
+  # The Medical Encyclopedia is licensed from A.D.A.M. / Ebix and is NOT — its
+  # notice prohibits exactly this use. See `licence` on each document.
+  licence: mixed — see each document's `licence` field
+  federal_work_note: >-
+    The eleven indexed documents are MedlinePlus Health Topic and Medical Test
+    pages, authored by the National Library of Medicine and in the public domain
+    as U.S. federal government works.
   corpus_disclaimer: >-
     General patient education about tests and procedures. It is not this
     clinic's own preparation instructions, and it never overrides instructions
@@ -105,6 +118,32 @@ documents:
       here so the gap is deliberate rather than discovered during evaluation.
 
   - document_id: mri
+    file: MRI Scans_ MedlinePlus.pdf
+    title: MRI Scans
+    source_url: https://medlineplus.gov/mriscans.html
+    page_shape: health_topic
+    category: imaging
+    last_updated: 2026-06-01
+    pages: 7
+    indexed: true
+    licence: public domain (NLM-authored U.S. federal government work)
+    sections:
+      - What is an MRI scan?
+      - Who needs an MRI scan?
+      - How do you prepare for an MRI scan?
+      - How is an MRI scan done?
+      - What should I expect after an MRI scan?
+    covers:
+      - no x-rays or other radiation; uses magnets and radio waves
+      - implant and metal screening, including pacemakers
+      - claustrophobia disclosure and open MRI
+      - loud scanner noise; earplugs or headphones
+    known_gaps:
+      - no fasting instructions or fasting duration
+      - no numerical scan duration
+    near_miss_partner: ct-scans
+
+  - document_id: mri-encyclopedia-excluded
     file: MRI_ MedlinePlus Medical Encyclopedia.pdf
     title: MRI
     source_url: https://medlineplus.gov/ency/article/003335.htm
@@ -112,23 +151,23 @@ documents:
     category: imaging
     last_updated: 2024-07-15      # Review Date
     pages: 5
-    indexed: true
-    sections:
-      - How the Test is Performed
-      - How to Prepare for the Test
-      - How the Test will Feel
-      - Why the Test is Performed
-      - Normal Results
-      - What Abnormal Results Mean
-      - Risks
-    covers:
-      - no ionizing radiation; uses magnets and radio waves
-      - fasting 4 to 6 hours may be requested
-      - claustrophobia, sedation, open MRI
-      - implant and metal screening (pacemaker, aneurysm clips, cochlear implants, stents)
-      - gadolinium contrast and kidney disease
-      - duration 30 to 60 minutes; loud thumping noise; earplugs
-    near_miss_partner: ct-scans      # heavily confusable; see benchmark
+    indexed: false
+    licence: >-
+      A.D.A.M. / Ebix, Inc. NOT a public-domain federal work. The notice in the
+      PDF prohibits automated extraction "to create embeddings, vectors,
+      datasets, or indexes for retrieval systems" and prohibits use "for
+      training, fine-tuning, calibrating, testing, evaluating, or improving AI
+      systems", naming retrieval-augmented systems explicitly.
+    exclusion_reason: >-
+      Excluded on licence, not on content. This document is well written and
+      well covered by the benchmark; it is removed because indexing it is
+      exactly what its licence forbids. An earlier version of this manifest
+      recorded the whole corpus as public domain, which was wrong: only the
+      Health Topic and Medical Test pages are NLM-authored federal works.
+    reinstate_if: >-
+      Express written consent is obtained from Ebix, or the content is replaced
+      with an NLM-authored page covering the same procedure. The indexed `mri`
+      entry is that replacement, but this file remains excluded for provenance.
 
   - document_id: ct-scans
     file: CT Scans_ MedlinePlus.pdf
@@ -218,6 +257,27 @@ documents:
       an advantage from its test name.
 
   - document_id: endoscopy
+    file: Endoscopy_ MedlinePlus.pdf
+    title: Endoscopy
+    source_url: https://medlineplus.gov/endoscopy.html
+    page_shape: health_topic
+    category: endoscopy
+    last_updated: 2024-08-24
+    pages: 5
+    indexed: true
+    licence: public domain (NLM-authored U.S. federal government work)
+    sections: []
+    covers:
+      - what an endoscope is and what it is used for
+      - named endoscopy types and the body areas they examine
+    known_gaps:
+      - no general or procedure-specific preparation instructions
+    near_miss_partner: colonoscopy
+    note: >-
+      This replacement restores general endoscopy education, but it cannot
+      support the former generic preparation benchmark case.
+
+  - document_id: endoscopy-encyclopedia-excluded
     file: Endoscopy_ MedlinePlus Medical Encyclopedia.pdf
     title: Endoscopy
     source_url: https://medlineplus.gov/ency/article/003338.htm
@@ -225,21 +285,24 @@ documents:
     category: endoscopy
     last_updated: 2025-04-21      # Review Date
     pages: 4
-    indexed: true
-    sections:
-      - How the Test is Performed
-      - How to Prepare for the Test
-      - How the Test will Feel
-      - Why the Test is Performed
-      - Risks
-    covers:
-      - what an endoscope is and what it is used for
-      - preparation varies by procedure type
-      - the named endoscopy types (anoscopy, colonoscopy, ERCP, EGD, bronchoscopy, cystoscopy, laparoscopy, arthroscopy)
-    near_miss_partner: colonoscopy
-    note: >-
-      Deliberately thin on preparation — it says preparation "varies depending
-      on the test". Good source for a partial-coverage benchmark case.
+    indexed: false
+    licence: >-
+      A.D.A.M. / Ebix, Inc. NOT a public-domain federal work. The notice in the
+      PDF prohibits automated extraction "to create embeddings, vectors,
+      datasets, or indexes for retrieval systems" and prohibits use "for
+      training, fine-tuning, calibrating, testing, evaluating, or improving AI
+      systems", naming retrieval-augmented systems explicitly.
+    exclusion_reason: >-
+      Excluded on licence, not on content. This document is well written and
+      well covered by the benchmark; it is removed because indexing it is
+      exactly what its licence forbids. An earlier version of this manifest
+      recorded the whole corpus as public domain, which was wrong: only the
+      Health Topic and Medical Test pages are NLM-authored federal works.
+    reinstate_if: >-
+      Express written consent is obtained from Ebix, or the content is replaced
+      with an NLM-authored page covering the same procedure. The indexed
+      `endoscopy` entry is that replacement, but this file remains excluded for
+      provenance.
 
   - document_id: allergy-blood-test
     file: Allergy Blood Test_ MedlinePlus Medical Test.pdf
@@ -401,7 +464,7 @@ documents:
 # ---------------------------------------------------------------------------
 
 coverage:
-  indexed_documents: 11        # 12 files, minus the A-Z index
+  indexed_documents: 11        # 14 PDFs; A-Z index and two licensed pages excluded
   subject: >-
     Diagnostic tests and procedures — what they are, why they are done, how to
     prepare, how they feel, and what results mean.

@@ -378,13 +378,42 @@ that does, and `never_route` questions must be refused before retrieval runs at
 all. A wrong answer to either is invisible to a faithfulness metric, because an
 answer grounded in the wrong passage is still faithful to that passage.
 
-Current results, on the held-out half: outcome accuracy 91.4%, near-miss
-resistance 100%, never-route compliance 100%, citation validation 100%, zero
-forbidden claims. Full numbers, the evidence behind each tuned setting, and an
-honest account of what the split can and cannot tell you are in
-[the RAG architecture](documentation/rag_architecture.md#a12-part-a-results).
+The recorded held-out results belong to corpus version 1 and are superseded:
+two licensed Medical Encyclopedia sources have since been excluded and replaced
+with thinner NLM-authored Health Topic pages. Re-ingest corpus version 2 and run
+a fresh baseline before quoting current metrics. The historical numbers and the
+licence-remediation impact are documented in
+[the RAG architecture](documentation/rag_architecture.md#a13-licence-remediation-and-benchmark-impact).
 
 Reports are written to `reports/rag/`.
+
+#### Judged metrics (DeepEval)
+
+Optional second reporting section, off by default:
+
+```bash
+uv run python -m src.evaluators.rag.run_benchmark --split holdout --judge
+```
+
+It adds faithfulness, answer relevancy, and contextual precision/recall/relevancy
+— the things that need a model to read both the answer and the context, and
+which the deterministic metrics cannot express. Faithfulness in particular is
+what citation validation does *not* cover: that check confirms a marker
+resolves, not that the passage it points at supports the claim.
+
+Four things to keep in mind:
+
+- **Judged scores are not reproducible** and are comparable only against the
+  same judge, which is recorded in each report as `judge_model`.
+- **Nothing is gated on them.** The promotion gates stay deterministic — a
+  safety gate that moves with a judge's model version can loosen silently.
+- **Only answered cases are judged**; refusals and fallbacks are scored in the
+  deterministic section, where "did it refuse" is a fact rather than a judgement.
+- **It is slow and metered** — five metrics, several calls each, per case. Pair
+  it with `--split`, `--group` or `--limit`.
+
+See [the RAG architecture](documentation/rag_architecture.md#a121-judged-metrics-deepeval)
+for what stays deterministic and why.
 
 ## Data and deployment notes
 

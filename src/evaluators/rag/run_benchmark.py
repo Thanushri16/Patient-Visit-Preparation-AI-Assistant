@@ -28,6 +28,13 @@ from rag.store import KnowledgeStore  # noqa: E402
 
 from evaluators.rag.dataset import load_cases  # noqa: E402
 from evaluators.rag.deterministic import Report, score_case  # noqa: E402
+from evaluators.rag.judged import (  # noqa: E402
+    DEFAULT_JUDGE_MODEL,
+    JudgedCase,
+    build_metrics,
+    judge_case,
+    summarise,
+)
 from evaluators.rag.shadow import ShadowReport, classify  # noqa: E402
 from rag.policy import evaluate as route_of  # noqa: E402
 
@@ -48,6 +55,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run the RAG benchmark.")
     parser.add_argument("--group", action="append", help="only these groups")
     parser.add_argument("--limit", type=int)
+    parser.add_argument(
+        "--judge",
+        action="store_true",
+        help="also run the DeepEval metrics; costs several model calls per case",
+    )
+    parser.add_argument("--judge-model", default=DEFAULT_JUDGE_MODEL)
     parser.add_argument("--mode", default="primary")
     parser.add_argument(
         "--split",
@@ -74,12 +87,14 @@ def main(argv: list[str] | None = None) -> int:
     report = Report()
     shadow = ShadowReport()
     generated = cited_ok = 0
+    judged: list[JudgedCase] = []
+    metrics_suite = build_metrics(args.judge_model) if args.judge else None
 
     for index, case in enumerate(cases, start=1):
         result = answer_knowledge_question(case.question, retriever, client, mode=args.mode)
         outcome = STATUS_TO_OUTCOME.get(result.status, result.status)
         cited = tuple(dict.fromkeys(c.document_id for c in result.citations))
-        scored = score_case(case, result.text, outcome, cited)
+        scored = score_case(case, result.text, outcome, cited, source=result.source)
         scored.reason = "; ".join(result.notes)[:160]
         report.results.append(scored)
 
@@ -99,8 +114,31 @@ def main(argv: list[str] | None = None) -> int:
                 rag_answered=scored.answered,
                 rag_cited=bool(result.citations),
                 gap_disclosed=scored.gap_disclosed,
+                answer_source=result.source,
             )
         )
+
+        if metrics_suite is not None and scored.answered:
+            # Only answered cases are judged. Faithfulness of "I don't have
+            # documentation on that" is not a meaningful question, and scoring
+            # refusals would drag a generation metric toward whatever the judge
+            # makes of a refusal rather than of an answer.
+            context = [
+                source.text
+                for source in (result.evidence.supporting if result.evidence else ())
+            ]
+            judged.append(
+                judge_case(
+                    metrics_suite,
+                    question_id=case.question_id,
+                    group=case.group,
+                    question=case.question,
+                    answer=result.text,
+                    context=context,
+                    expected_facts=case.expected_facts or case.expected_covered_facts,
+                    expected_answer=case.expected_answer,
+                )
+            )
 
         flag = "ok  " if scored.passed else "FAIL"
         print(f"[{index:>2}/{len(cases)}] {flag} {case.question_id} "
@@ -116,7 +154,19 @@ def main(argv: list[str] | None = None) -> int:
         gap_disclosure=float(metrics["gap_disclosure"]),
         citation_validation=float(metrics["citation_validation"]),
     )
+    judged_summary = summarise(judged) if metrics_suite is not None else None
+
     print("\n" + json.dumps(metrics, indent=2))
+    print("\ndivergence: " + json.dumps({k: v for k, v in divergence.items() if v}))
+    print("promotion:  " + json.dumps(promotion["checks"]))
+    print(f"promote to preferred: {promotion['promote']}  (split={args.split})")
+
+    if judged_summary:
+        # Its own block, never folded into the deterministic figures above: the
+        # two measure different things and fail differently, and averaging them
+        # would hide which half of the pipeline is at fault.
+        print(f"\njudged (DeepEval, model={args.judge_model}):")
+        print(json.dumps(judged_summary, indent=2))
 
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -129,6 +179,9 @@ def main(argv: list[str] | None = None) -> int:
                 "split": args.split,
                 "settings": SETTINGS.model_dump(),
                 "metrics": metrics,
+                "judged": judged_summary,
+                "judge_model": args.judge_model if metrics_suite else None,
+                "judged_cases": [vars(j) for j in judged],
                 "divergence": divergence,
                 "promotion": promotion,
                 "cases": [vars(r) for r in report.results],

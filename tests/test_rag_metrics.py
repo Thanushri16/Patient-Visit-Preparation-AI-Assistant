@@ -16,9 +16,8 @@ class FactMatchingTests(unittest.TestCase):
 
         self.assertTrue(
             contains(
-                "You may be asked not to eat or drink anything for 4 to 6 hours "
-                "before the scan.",
-                "may be asked not to eat or drink for 4 to 6 hours before the scan",
+                "The exam should take about 10 to 15 minutes.",
+                "the exam should take 10 to 15 minutes",
             )
         )
 
@@ -27,14 +26,14 @@ class FactMatchingTests(unittest.TestCase):
 
         self.assertFalse(
             contains(
-                "You should fast for 8 to 12 hours before the scan.",
-                "not to eat or drink for 4 to 6 hours before the scan",
+                "The exam takes 20 to 25 minutes.",
+                "the exam should take 10 to 15 minutes",
             )
         )
 
     def test_a_missing_number_is_not_a_match(self):
         self.assertFalse(
-            contains("You may be asked to fast beforehand.", "fast for 4 to 6 hours")
+            contains("The exam takes a few minutes.", "the exam takes 10 to 15 minutes")
         )
 
     def test_an_omitted_qualifier_fails_the_fact(self):
@@ -52,11 +51,11 @@ class FactMatchingTests(unittest.TestCase):
 
 class ScoringTests(unittest.TestCase):
     def setUp(self):
-        self.case = next(c for c in load_cases() if c.question_id == "RAG-001")
+        self.case = next(c for c in load_cases() if c.question_id == "RAG-010")
 
     def test_a_forbidden_claim_fails_the_case_outright(self):
         result = score_case(
-            self.case, "No fasting is required at all.", "answered", ("mri",)
+            self.case, "A CT scan always takes more than an hour.", "answered", ("ct-scans",)
         )
 
         self.assertTrue(result.forbidden_hit)
@@ -65,10 +64,9 @@ class ScoringTests(unittest.TestCase):
     def test_a_correct_cited_answer_passes(self):
         result = score_case(
             self.case,
-            "You may be asked not to eat or drink anything for 4 to 6 hours "
-            "before the scan.",
+            "A CT scan usually takes a few minutes, but some last up to 30 minutes.",
             "answered",
-            ("mri",),
+            ("ct-scans",),
         )
 
         self.assertTrue(result.passed)
@@ -76,14 +74,20 @@ class ScoringTests(unittest.TestCase):
 
 
 class ReportTests(unittest.TestCase):
-    def test_near_miss_resistance_counts_refusals_not_answers(self):
+    def test_retrieval_answering_a_near_miss_counts_against_resistance(self):
         cases = {c.question_id: c for c in load_cases()}
         report = Report()
         report.results.append(
-            score_case(cases["RAG-042"], "I don't have documentation.", "fallback", ())
+            score_case(
+                cases["RAG-042"], "I don't have documentation.", "fallback", (),
+                source="fallback",
+            )
         )
         report.results.append(
-            score_case(cases["RAG-043"], "Clear liquid diet [1].", "answered", ("colonoscopy",))
+            score_case(
+                cases["RAG-043"], "Clear liquid diet [1].", "answered",
+                ("colonoscopy",), source="rag",
+            )
         )
 
         metrics = report.metrics()
@@ -91,6 +95,73 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(metrics["near_miss_resistance"], 50.0)
         self.assertEqual(metrics["wrong_document_grounding"], 1)
 
+    def test_a_curated_answer_to_a_near_miss_is_not_a_leak(self):
+        """Reviewed content with no citation is the designed fallback, not a leak.
+
+        This metric and the shadow classifier must agree; they disagreed while
+        this one counted any answer rather than a retrieved one.
+        """
+
+        cases = {c.question_id: c for c in load_cases()}
+        report = Report()
+        report.results.append(
+            score_case(
+                cases["RAG-042"], "Fasting requirements depend on the test.",
+                "curated_answer", (), source="curated",
+            )
+        )
+
+        self.assertEqual(report.metrics()["near_miss_resistance"], 100.0)
+
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ShadowClassificationTests(unittest.TestCase):
+    """The near-miss gate must fire on retrieval, not on any answer at all."""
+
+    def _classify(self, **overrides):
+        from evaluators.rag.shadow import classify
+
+        defaults = dict(
+            question_id="RAG-038",
+            group="near_miss",
+            expected_outcome="fallback",
+            curated_text="Fasting requirements depend on the specific test.",
+            rag_answered=True,
+            rag_cited=False,
+            gap_disclosed=None,
+            answer_source="curated",
+        )
+        return classify(**{**defaults, **overrides})
+
+    def test_a_curated_fallback_on_a_near_miss_is_not_a_leak(self):
+        """Retrieval found nothing and curated content answered: the ladder working."""
+
+        from evaluators.rag.shadow import Divergence
+
+        observation = self._classify()
+
+        self.assertIs(observation.classification, Divergence.AGREEMENT)
+        self.assertFalse(observation.blocks_promotion)
+
+    def test_retrieval_answering_a_near_miss_still_blocks(self):
+        from evaluators.rag.shadow import Divergence
+
+        observation = self._classify(answer_source="rag", rag_cited=True)
+
+        self.assertIs(observation.classification, Divergence.NEAR_MISS_ANSWERED)
+        self.assertTrue(observation.blocks_promotion)
+
+    def test_a_correct_refusal_is_still_agreement(self):
+        from evaluators.rag.shadow import Divergence
+
+        observation = self._classify(
+            group="never_route",
+            expected_outcome="curated_refusal",
+            rag_answered=False,
+            answer_source="policy",
+        )
+
+        self.assertIs(observation.classification, Divergence.AGREEMENT)

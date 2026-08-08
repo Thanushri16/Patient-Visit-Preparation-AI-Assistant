@@ -134,7 +134,12 @@ class RagSettings(BaseModel):
     embed_batch_size: int = Field(default=64, gt=0)
 
     # Retrieval
-    top_k: int = Field(default=4, gt=0)
+    # Raised from the plan's 4 after measuring where the answering chunk
+    # actually ranks: for "is a virtual colonoscopy safe if I might be pregnant"
+    # it sits 5th, so top_k=4 could not see it however good the guards were. The
+    # context budget still bounds what reaches the model, so a higher k costs
+    # recall of nothing and buys the tail.
+    top_k: int = Field(default=6, gt=0)
     max_context_tokens: int = Field(default=1600, gt=0)
 
     # Evidence sufficiency (A.4). Tuned against the 68-question benchmark after

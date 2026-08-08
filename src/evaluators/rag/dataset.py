@@ -30,6 +30,7 @@ class BenchmarkCase:
     expected_outcome: str
     expected_document_ids: tuple[str, ...] = ()
     expected_facts: tuple[str, ...] = ()
+    expected_answer: str = ""
     expected_covered_facts: tuple[str, ...] = ()
     expected_uncovered_topics: tuple[str, ...] = ()
     forbidden_claims: tuple[str, ...] = ()
@@ -75,6 +76,7 @@ def load_cases(path: Path | None = None) -> list[BenchmarkCase]:
                 expected_outcome=str(record.get("expected_outcome") or ""),
                 expected_document_ids=_split(record.get("expected_document_ids")),
                 expected_facts=_split(record.get("expected_facts")),
+                expected_answer=str(record.get("expected_answer") or "").strip(),
                 expected_covered_facts=_split(record.get("expected_covered_facts")),
                 expected_uncovered_topics=_split(record.get("expected_uncovered_topics")),
                 forbidden_claims=_split(record.get("forbidden_claims")),

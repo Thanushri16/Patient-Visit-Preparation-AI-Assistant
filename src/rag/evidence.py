@@ -153,17 +153,33 @@ def check_evidence(
 
     # ---- A.4.2 guard 2: score dispersion ------------------------------------
     #
-    # One node alone, with nothing corroborating it, is the signature of a near
-    # miss: a single passage that happens to sit close to the question while the
-    # rest of the corpus stays away. Correct retrieval on this corpus clusters,
-    # because a document's sections share vocabulary. So a lone supporter has to
-    # clear a higher bar than it would as part of a group.
+    # A cheap stand-in for guard 3, and it only runs when guard 3 is off.
+    #
+    # Its premise was that correct retrieval clusters, so a lone supporter is the
+    # signature of a near miss. Measured, that premise does not hold: it fired on
+    # three questions, catching one true near miss ("what does my A1C result
+    # mean") and wrongly refusing two real ones, including "what does the ABCDE
+    # rule mean for moles" -- a narrow question the corpus answers completely, in
+    # exactly one chunk. The scores do not separate them either: the true miss
+    # sat at 0.350 and the real answer at 0.382.
+    #
+    # Guard 3 rejects the A1C question on its own, so with guard 3 running this
+    # one catches nothing unique and costs real answers. It stays as the
+    # deterministic fallback for a configuration that disables guard 3, where
+    # some protection past guard 1 is better than none.
+    guard_three_running = (
+        SETTINGS.answerability_check if enforce_category is None else False
+    )
     isolated_floor = (
         isolated_similarity
         if isolated_similarity is not None
         else SETTINGS.isolated_node_similarity
     )
-    if len(supporting) == 1 and supporting[0].similarity < isolated_floor:
+    if (
+        not guard_three_running
+        and len(supporting) == 1
+        and supporting[0].similarity < isolated_floor
+    ):
         return EvidenceDecision(
             verdict=EvidenceVerdict.ISOLATED_MATCH,
             supporting=(),
@@ -197,58 +213,107 @@ def check_evidence(
 # failure this guard exists to catch is narrower than that: text about a
 # DIFFERENT test or procedure than the one asked about. So that is what it is
 # asked, and it is told to say YES on a partial answer.
-ANSWERABILITY_PROMPT = """You are checking retrieved reference text, not answering.
+ANSWERABILITY_PROMPT = """You are checking whether retrieved reference text is
+about the right subject. You are NOT deciding whether it answers the question.
 
-Is the text about the SAME test, procedure or topic the question asks about?
+Does the text below cover the test, procedure or topic that the question is
+about?
 
-Answer YES if it is, even when it answers only part of the question, or uses
-different words than the question does.
+YES - the text covers that subject, whatever it says about it. This INCLUDES a
+      general guide to a class of tests covering a specific test in that class:
+      a page about preparing for lab tests covers a blood test or a urine test;
+      a page about colorectal screening covers a stool test.
+NO  - the text is about a DIFFERENT, SIBLING test than the one asked about. A
+      question about a PET scan with text about a CT scan. A question about an
+      upper endoscopy with text about a colonoscopy. A question about one blood
+      result with text about an unrelated test.
 
-Answer NO only when the text is about a DIFFERENT test or procedure — for
-example, a question about a PET scan and text about a CT scan, or a question
-about an upper endoscopy and text about a colonoscopy.
+The distinction is whether the text's subject INCLUDES what was asked about
+(answer YES) or SUBSTITUTES a different one for it (answer NO).
+
+Judge subject only. Do not consider whether the text is complete, whether it
+states a direct yes or no, or whether it uses the same words as the question.
 
 Reply with exactly one word: YES or NO."""
 
 
+# Guard 3 verdicts, keyed on the question and the node judged.
+#
+# The guard is an LLM call, so it is not reproducible: the same question at
+# temperature 0 was measured flipping between "generated" and
+# "insufficient_evidence" across three consecutive runs, and per-chunk early
+# exit amplifies it, since one borderline verdict changes the whole outcome.
+#
+# That is not survivable. A benchmark whose numbers move between identical runs
+# cannot detect a regression, and Part B's success criterion is precisely that
+# the numbers do not move. The corpus and the question are both fixed, so a
+# verdict is stable data — caching it makes repeat runs reproducible and removes
+# most of the guard's cost at the same time.
+_ANSWERABILITY_CACHE: dict[tuple[str, str], bool] = {}
+
+
+def clear_answerability_cache() -> None:
+    """Drop cached verdicts. Needed after a re-ingest changes node contents."""
+
+    _ANSWERABILITY_CACHE.clear()
+
+
 def check_answerability(client, question: str, sources: Sequence[RetrievedChunk]) -> bool | None:
-    """Ask whether the context contains the answer, not merely the topic.
+    """Ask whether any retrieved chunk covers the question's subject.
 
     Returns None when the check could not be made, which callers must treat as
     "no information" rather than as a refusal — an outage must not silently turn
     every answer into a fallback.
 
-    This is the only guard that costs a model call, and it is the only one that
-    can catch a near miss inside the right category: "how do I prepare for a PET
-    scan" retrieves the CT preparation section, which is genuinely imaging,
-    genuinely about preparation, and genuinely not about PET. Guards 1 and 2
-    cannot see that. The model can, when asked this narrow question instead of
-    being asked to answer.
+    Asked **per chunk, not over the concatenated set**, and that is the whole
+    trick. Judging six chunks at once dilutes the one that matters: a question
+    about whether a hearing test hurts retrieves the risks section alongside
+    several about tones and headphones, and asked about the pile the model says
+    no. Asked about the risks chunk alone it says yes. Four rewordings of the
+    prompt could not fix that, because the problem was the question being put,
+    not the words putting it.
+
+    Early exit on the first YES, so the common case — a question the corpus
+    answers — costs one call. Only a genuine near miss pays for the whole set,
+    which is the right way round.
     """
 
-    context = "\n\n".join(
-        f"[{n}] {s.title} — {s.section or ''}\n{s.text}"
-        for n, s in enumerate(sources, start=1)
-    )
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": ANSWERABILITY_PROMPT},
-                {"role": "user", "content": f"{context}\n\nQuestion: {question}"},
-            ],
-            temperature=0.0,
-            max_tokens=3,
-        )
-        verdict = (response.choices[0].message.content or "").strip().upper()
-    except Exception:  # noqa: BLE001 - an outage must not become a refusal
-        return None
+    verdicts: list[bool] = []
+    for source in sources:
+        key = (question.strip(), source.node_id)
+        cached = _ANSWERABILITY_CACHE.get(key)
+        if cached is not None:
+            if cached:
+                return True
+            verdicts.append(False)
+            continue
 
-    if verdict.startswith("YES"):
-        return True
-    if verdict.startswith("NO"):
-        return False
-    return None
+        block = f"{source.title} — {source.section or ''}\n{source.text}"
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": ANSWERABILITY_PROMPT},
+                    {"role": "user", "content": f"{block}\n\nQuestion: {question}"},
+                ],
+                temperature=0.0,
+                max_tokens=5,
+            )
+            verdict = (response.choices[0].message.content or "").strip().upper()
+        except Exception:  # noqa: BLE001 - an outage must not become a refusal
+            continue
+
+        if verdict.startswith("YES"):
+            _ANSWERABILITY_CACHE[key] = True
+            return True
+        if verdict.startswith("NO"):
+            _ANSWERABILITY_CACHE[key] = False
+            verdicts.append(False)
+
+    if not verdicts:
+        # Nothing could be judged at all: no information, not a refusal.
+        return None
+    return False
 
 
 def apply_answerability(

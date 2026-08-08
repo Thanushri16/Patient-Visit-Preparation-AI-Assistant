@@ -25,6 +25,9 @@ class FakeStore:
         self.saved: dict[str, list] = {}
         self.deleted: list[str] = []
 
+    def corpus_status(self):
+        return [{"document_id": d} for d in self.saved]
+
     def stored_fingerprint(self, document_id):
         return self.fingerprints.get(document_id)
 
@@ -79,45 +82,45 @@ class PlanTests(unittest.TestCase):
         # Sensitive to metadata length by design: the splitter budgets against
         # the longer of the embed and LLM metadata views, so adding a metadata
         # key legitimately moves this number. It is pinned as a regression
-        # signal, not because 88 is significant.
-        self.assertEqual(sum(plan.nodes for plan in plans), 88)
+        # signal, not because 81 is significant.
+        self.assertEqual(sum(plan.nodes for plan in plans), 81)
 
     def test_an_unchanged_document_is_skipped(self):
-        store = FakeStore({"mri": fingerprint_of("mri")})
+        store = FakeStore({"colonoscopy": fingerprint_of("colonoscopy")})
 
         plans = {plan.manifest.document_id: plan for plan in build_plan(store)}
 
-        self.assertEqual(plans["mri"].action, "skip")
-        self.assertEqual(plans["mri"].reason, "unchanged")
+        self.assertEqual(plans["colonoscopy"].action, "skip")
+        self.assertEqual(plans["colonoscopy"].reason, "unchanged")
 
     def test_a_pipeline_version_bump_forces_a_reingest(self):
         """Cleaning and chunking are code. Changing them must re-ingest."""
 
-        stale = fingerprint_of("mri").replace(f":v{PIPELINE_VERSION}", ":v0")
-        store = FakeStore({"mri": stale})
+        stale = fingerprint_of("colonoscopy").replace(f":v{PIPELINE_VERSION}", ":v0")
+        store = FakeStore({"colonoscopy": stale})
 
         plans = {plan.manifest.document_id: plan for plan in build_plan(store)}
 
-        self.assertEqual(plans["mri"].action, "reingest")
-        self.assertEqual(plans["mri"].reason, "pipeline version changed")
+        self.assertEqual(plans["colonoscopy"].action, "reingest")
+        self.assertEqual(plans["colonoscopy"].reason, "pipeline version changed")
 
     def test_a_changed_pdf_forces_a_reingest(self):
-        store = FakeStore({"mri": f"deadbeef:v{PIPELINE_VERSION}"})
+        store = FakeStore({"colonoscopy": f"deadbeef:v{PIPELINE_VERSION}"})
 
         plans = {plan.manifest.document_id: plan for plan in build_plan(store)}
 
-        self.assertEqual(plans["mri"].action, "reingest")
-        self.assertEqual(plans["mri"].reason, "source PDF changed")
+        self.assertEqual(plans["colonoscopy"].action, "reingest")
+        self.assertEqual(plans["colonoscopy"].reason, "source PDF changed")
 
     def test_force_reingests_an_unchanged_document(self):
-        store = FakeStore({"mri": fingerprint_of("mri")})
+        store = FakeStore({"colonoscopy": fingerprint_of("colonoscopy")})
 
         plans = {
             plan.manifest.document_id: plan for plan in build_plan(store, force=True)
         }
 
-        self.assertEqual(plans["mri"].action, "reingest")
-        self.assertEqual(plans["mri"].reason, "forced")
+        self.assertEqual(plans["colonoscopy"].action, "reingest")
+        self.assertEqual(plans["colonoscopy"].reason, "forced")
 
 
 class IngestTests(unittest.TestCase):
@@ -127,7 +130,7 @@ class IngestTests(unittest.TestCase):
         ingest(store, build_mock_embed_model())
 
         self.assertEqual(len(store.saved), 11)
-        self.assertEqual(sum(len(nodes) for nodes in store.saved.values()), 88)
+        self.assertEqual(sum(len(nodes) for nodes in store.saved.values()), 81)
         for document_id, nodes in store.saved.items():
             with self.subTest(document_id):
                 for node in nodes:
@@ -176,11 +179,11 @@ class IngestTests(unittest.TestCase):
         """Chunk boundaries move when the pipeline changes, so leftovers would
         be retrievable evidence that no longer exists in the source."""
 
-        store = FakeStore({"mri": f"deadbeef:v{PIPELINE_VERSION}"})
+        store = FakeStore({"colonoscopy": f"deadbeef:v{PIPELINE_VERSION}"})
 
         ingest(store, build_mock_embed_model())
 
-        self.assertIn("mri", store.deleted)
+        self.assertIn("colonoscopy", store.deleted)
 
 
 if __name__ == "__main__":
