@@ -1419,6 +1419,10 @@ unchanged under the new strategy.
 
 ## A.12 Part A results
 
+Report files follow `rag_<part>_<metrics>_<corpus>_<split>.json`, so the
+deterministic and judged results for a given corpus sort together and Part B's
+equivalence run has an obvious place to land.
+
 **Corpus v2**, measured 2026-08-08 against 11 documents / 81 nodes with
 `text-embedding-3-small` and `gpt-4o-mini`. Reproduce with:
 
@@ -1426,13 +1430,12 @@ unchanged under the new strategy.
 uv run python -m src.evaluators.rag.run_benchmark --split holdout
 ```
 
-> **The pre-corpus-v2 baseline is superseded.** These numbers are the three
-> `reports/rag/rag_baseline_corpus_v2_*.json` files;
-> `rag_baseline_partA_*.json` are the superseded ones, kept for comparison. Any figure recorded before this
-> section was measured against a different corpus — either the original 11
-> documents including the A.D.A.M.-licensed pages, or the 9-document corpus
-> after those were removed and before NLM replacements were added. Reports in
-> `reports/rag/` predating 2026-08-08 describe systems that no longer exist.
+> **Corpus v1 is superseded.** These numbers are the
+> `rag_partA_baseline_corpus_v2_*.json` reports. The
+> `rag_partA_baseline_corpus_v1_*.json` ones are kept only for comparison: they
+> measure the corpus before the licence remediation in §A.13, which is a
+> different set of documents rather than an earlier version of this one. Any
+> figure recorded before 2026-08-08 describes a system that no longer exists.
 
 | Metric | Tune (30) | **Holdout (35)** | All (65) |
 |---|---|---|---|
@@ -1555,6 +1558,12 @@ the answer**, and each made the system look worse than it was. `answer_source`
 is now an explicit parameter on both the classifier and the scorer so a new
 metric has to consider it.
 
+A fourth was different in kind: judged metrics silently lost scores to rate
+limits, leaving each metric averaged over a different subset of cases
+(§A.12.1). The pattern across all four is that a measurement failing quietly is
+worse than one failing loudly, and this harness has been better at the second
+than the first.
+
 ### Known gaps
 
 - **The entity-consistency guard is not built.** Deferred deliberately. It would
@@ -1575,67 +1584,110 @@ metric has to consider it.
 ### A.12.1 Judged metrics (DeepEval)
 
 A **second reporting section**, printed and stored beside the deterministic
-figures above and never averaged with them. Run with:
+figures and never averaged with them. Measured 2026-08-08 on the holdout half,
+corpus v2, judged by `gpt-4o-mini`:
 
 ```bash
 uv run python -m src.evaluators.rag.run_benchmark --split holdout --judge
 ```
 
-| Metric | What it adds |
-|---|---|
-| Faithfulness | Is every claim entailed by the retrieved context? Nothing deterministic measures this — citation validation only confirms that markers *resolve*, not that the cited passage *supports* the claim. |
-| Answer relevancy | Did it answer the question asked, or a nearby one? |
-| Contextual precision | How much of the retrieved context was relevant. |
-| Contextual recall | Did retrieval find what a correct answer needs? |
-| Contextual relevancy | Retrieval quality independent of the answer written from it. |
+| Metric | Mean | At/above 0.7 | n |
+|---|---|---|---|
+| Contextual recall | 0.986 | 100.0% | 18 |
+| Faithfulness | 0.962 | 94.4% | 18 |
+| Answer relevancy | 0.958 | 94.4% | 18 |
+| Contextual precision | 0.958 | 94.4% | 18 |
+| **Contextual relevancy** | **0.264** | **5.6%** | 18 |
 
-The last three are the retrieval-quality metrics the Part C window comparison is
-specified around, so building them here means Part C inherits them ready-made.
+Report: `reports/rag/rag_partA_deepeval_corpus_v2_holdout.json`. About 3.5 minutes for
+35 cases, 18 of them judged.
+
+**Faithfulness at 0.962 is the number the deterministic metrics could not
+produce.** Citation validation confirms a marker resolves; it says nothing about
+whether the cited passage supports the claim. This does, and it is high.
+
+**Contextual relevancy at 0.264 is the finding.** Four metrics sit near ceiling
+and this one is an order of magnitude below, with 1 case in 18 above threshold.
+It has measured 0.069, 0.115, 0.227, 0.258 and 0.264 across five independent
+runs, so it is a property of the pipeline rather than noise.
+
+The cause is chunk size. A 400-token chunk that answers the question is still
+mostly padding around the sentence that answers it. Precision is high because
+the right *chunks* come back; relevancy is low because chunks are the wrong
+unit.
+
+**This is the strongest available motivation for Part C.** Sentence-window
+retrieval targets exactly this: embed a sentence, return its neighbourhood. The
+window-size comparison now has a measured baseline to beat rather than an
+argument from first principles, and contextual relevancy is the metric that
+should move most.
+
+#### Only 18 of 35 cases are judged
+
+Judged metrics score answered cases only. Faithfulness of "I don't have
+documentation on that" is not a meaningful question, and scoring refusals would
+drag a generation metric toward whatever the judge makes of a refusal. The
+excluded cases are every near miss, every never-route refusal and every
+out-of-corpus fallback.
+
+That is the right rule, and it has a consequence worth stating plainly: **judged
+metrics see only the population where the system decided it had an answer.**
+They are structurally blind to every decision about *whether* to answer. A
+system that refused all 65 questions would score perfectly here, by having
+nothing judged. The deterministic metrics cover that half, which is why the
+promotion gates read those and not these.
 
 #### What stays deterministic, and why
 
-The split is not stylistic. Three metrics are safety gates, and they are facts
-rather than judgements:
+Three metrics are safety gates and are facts rather than judgements:
 
 - **Never-route compliance** is *"was the retriever called?"*. The test asserts
   it with a double that fails if invoked. A judge reading the output cannot see
   whether retrieval ran at all.
-- **Near-miss resistance** is *"did it answer or refuse?"*. Binary.
+- **Near-miss resistance** is *"did retrieval answer, or did it refuse?"*.
 - **Forbidden claims** is exact string matching, deliberately — a false positive
   on a hard-failure metric is worse than a missed one.
 
-A gate that moves with a judge's model version, temperature or prompt can loosen
-silently when a vendor ships an update. These stay where they are.
+A gate that moves with a judge's model version can loosen silently when a vendor
+ships an update. These stay where they are.
 
 **Fact coverage stays deterministic too**, for a narrower reason: the matcher
 requires every number in an expected fact to appear exactly. On this corpus the
-numbers are the substance — fasting windows, screening intervals, the age
-screening starts — and a judge scoring semantic similarity will accept a
-  paraphrase that changes a quantity. "20 to 25 minutes" is not "10 to 15 minutes".
+numbers are the substance, and a judge scoring semantic similarity will accept a
+paraphrase that changes a quantity. "About 8 hours" is not "4 to 6 hours".
 
 #### What to keep in mind when reading judged scores
 
-- **They are not reproducible.** Two runs of the same configuration give
-  different numbers. Do not read a small movement as a change in the system.
-- **They are comparable only against the same judge.** The judge model is pinned
-  and recorded in every report as `judge_model`.
-- **Nothing is gated on them.** The promotion gates in §3.7 remain entirely
+- **They are not reproducible.** The deterministic metrics are, since the
+  guard-3 verdict cache; these are not. Do not read a small movement as a change
+  in the system.
+- **They are comparable only against the same judge**, recorded per run as
+  `judge_model`.
+- **Nothing is gated on them.** The promotion gates in §3.7 are entirely
   deterministic. Judged metrics inform; they do not decide.
-- **Only answered cases are judged.** Faithfulness of "I don't have
-  documentation on that" is not a meaningful question, and scoring refusals
-  would drag a generation metric toward whatever the judge makes of a refusal.
-  Refusals and fallbacks are counted in the deterministic section instead.
-- **Contextual precision and recall need an expected answer.** The benchmark
-  stores a prose `expected_answer` only for `answered` and
-  `partially_answered` cases; negative cases skip those metrics rather than
-  being fed a fabricated target.
 - **A high faithfulness score is not a safety result.** An answer can be
   perfectly faithful to a passage that should never have been retrieved. That
-  failure is what near-miss resistance measures, and it is deterministic for
-  exactly this reason.
-- **Judged runs are slow and metered.** Five metrics, several model calls each,
-  per case — minutes for a handful of cases. `--judge` is off by default and is
-  best paired with `--split`, `--group` or `--limit`.
+  failure is what near-miss resistance measures, deterministically.
+- **Contextual precision and recall** are scored against the written reference
+  answers in the benchmark workbook. Before those existed they were fed
+  expected-fact fragments joined together, which was a poor target: statement
+  decomposition over concatenated fragments produces units nobody would write.
+
+#### Concurrency, and a fourth measurement bug
+
+`--judge-concurrency` defaults to **3**, well below DeepEval's default of 20,
+because these calls share a rate limit with the benchmark's own generation
+calls.
+
+The first holdout run used 8 and lost seven scores to `RateLimitError`. That is
+worse than slow: each metric's mean was then computed over a different subset —
+faithfulness over 15 cases, contextual recall over 18 — so the metrics were not
+comparable with each other, and a Part C comparison against that baseline would
+have inherited the mismatch. It is silent by construction, since
+`ignore_errors=True` correctly stops one failed metric abandoning a whole run.
+
+Lowering concurrency to 3 also made the run **faster** — 3:38 against 5:10 —
+because the rate-limit retries cost more than the parallelism gained.
 
 ## A.13 Licence remediation and benchmark impact
 

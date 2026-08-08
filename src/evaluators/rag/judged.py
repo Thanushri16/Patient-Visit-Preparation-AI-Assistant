@@ -46,10 +46,13 @@ class JudgedCase:
     skipped: str | None = None
 
 
-def _test_case(question: str, answer: str, context: Sequence[str], expected: str | None):
+def _test_case(question_id: str, question: str, answer: str, context, expected):
     from deepeval.test_case import LLMTestCase
 
+    # `name` is how a result is matched back to its benchmark case. Matching on
+    # the question text would break the moment two cases shared wording.
     return LLMTestCase(
+        name=question_id,
         input=question,
         actual_output=answer,
         expected_output=expected,
@@ -73,80 +76,129 @@ def build_metrics(model: str = DEFAULT_JUDGE_MODEL, threshold: float = DEFAULT_T
         FaithfulnessMetric,
     )
 
-    common = dict(model=model, threshold=threshold, async_mode=False, include_reason=True)
-    return {
-        "faithfulness": FaithfulnessMetric(**common),
-        "answer_relevancy": AnswerRelevancyMetric(**common),
-        "contextual_precision": ContextualPrecisionMetric(**common),
-        "contextual_recall": ContextualRecallMetric(**common),
-        "contextual_relevancy": ContextualRelevancyMetric(**common),
-    }
+    common = dict(model=model, threshold=threshold, include_reason=True)
+    return [
+        FaithfulnessMetric(**common),
+        AnswerRelevancyMetric(**common),
+        ContextualPrecisionMetric(**common),
+        ContextualRecallMetric(**common),
+        ContextualRelevancyMetric(**common),
+    ]
 
 
 # Contextual precision and recall compare the retrieved context against what a
 # correct answer would contain, so they need an expected output.
 #
-# The benchmark now carries a written reference answer per answerable case, and
-# that is what these two are scored against. Before it existed they were fed the
+# The benchmark carries a written reference answer per answerable case, and that
+# is what these two are scored against. Before it existed they were fed the
 # expected-fact fragments joined together, which was a poor target twice over:
 # statement decomposition over concatenated fragments produces units nobody
 # would write, and the facts are a selected subset rather than a whole answer,
 # so contextual recall was really re-asking the deterministic fact check in a
 # fuzzier, unrepeatable form.
 #
-# Fragments remain the fallback for a case with no reference answer, and a case
-# with neither skips these two metrics rather than being given a made-up target.
-NEEDS_EXPECTED = ("contextual_precision", "contextual_recall")
+# Fragments remain the fallback where no reference answer exists. A case with
+# neither is skipped by DeepEval's own missing-parameter handling rather than
+# being handed a fabricated target.
 
 
-def judge_case(
-    metrics: dict,
-    *,
-    question_id: str,
-    group: str,
-    question: str,
-    answer: str,
-    context: Sequence[str],
-    expected_facts: Sequence[str],
-    expected_answer: str = "",
-) -> JudgedCase:
-    """Score one answered case. Returns the reason when a case is not judged."""
+@dataclass
+class JudgeRequest:
+    """One answered case queued for judging."""
 
-    result = JudgedCase(question_id=question_id, group=group)
+    question_id: str
+    group: str
+    question: str
+    answer: str
+    context: tuple[str, ...]
+    expected: str | None = None
 
-    if not context:
-        result.skipped = "no retrieved context"
-        return result
-    if not answer.strip():
-        result.skipped = "no answer"
-        return result
 
-    expected = expected_answer.strip() or (
-        " ".join(expected_facts) if expected_facts else None
+def judge_all(
+    requests: Sequence[JudgeRequest],
+    model: str = DEFAULT_JUDGE_MODEL,
+    threshold: float = DEFAULT_THRESHOLD,
+    max_concurrent: int = 3,
+    throttle: float = 0.5,
+) -> list[JudgedCase]:
+    """Judge every request in one concurrent batch.
+
+    Batched rather than case-by-case because the sequential version was
+    unusable: five metrics measured one at a time cost roughly four minutes per
+    case, so a 35-case run took over two hours and nobody would put that in a
+    feedback loop. The judge calls are independent, so they parallelise cleanly.
+
+    Concurrency does not cost reproducibility here, because there was none to
+    lose -- judged scores vary run to run whatever the ordering. That is why
+    nothing is gated on them, and why the deterministic metrics are the ones the
+    promotion gates read.
+
+    `max_concurrent` is 3, well below DeepEval's default of 20, because these
+    calls share a rate limit with the benchmark's own generation calls. At 8 a
+    holdout run lost seven metric scores to RateLimitError -- which is worse
+    than slow, because each metric's mean is then computed over a different
+    subset of cases and the metrics stop being comparable with each other. A
+    dropped score is silent by design here (`ignore_errors=True` keeps one bad
+    metric from abandoning the run), so the only protection is not provoking it.
+    """
+
+    from deepeval import evaluate
+    from deepeval.evaluate.configs import AsyncConfig, DisplayConfig, ErrorConfig
+
+    judged = {
+        r.question_id: JudgedCase(question_id=r.question_id, group=r.group)
+        for r in requests
+    }
+
+    runnable = []
+    for request in requests:
+        if not request.context:
+            judged[request.question_id].skipped = "no retrieved context"
+        elif not request.answer.strip():
+            judged[request.question_id].skipped = "no answer"
+        else:
+            runnable.append(request)
+    if not runnable:
+        return list(judged.values())
+
+    result = evaluate(
+        test_cases=[
+            _test_case(r.question_id, r.question, r.answer, r.context, r.expected)
+            for r in runnable
+        ],
+        metrics=build_metrics(model, threshold),
+        async_config=AsyncConfig(
+            run_async=True, max_concurrent=max_concurrent, throttle_value=throttle
+        ),
+        display_config=DisplayConfig(show_indicator=False, print_results=False),
+        # A judge failure on one metric records that metric as unscored rather
+        # than abandoning the run; a case missing an expected output skips the
+        # two metrics that need one.
+        error_config=ErrorConfig(ignore_errors=True, skip_on_missing_params=True),
     )
-    case = _test_case(question, answer, context, expected)
 
-    for name, metric in metrics.items():
-        if name in NEEDS_EXPECTED and not expected:
+    for test_result in result.test_results:
+        case = judged.get(test_result.name)
+        if case is None:
             continue
-        try:
-            metric.measure(case)
-            if metric.score is not None:
-                result.scores[name] = round(float(metric.score), 3)
-                if getattr(metric, "reason", None):
-                    result.reasons[name] = str(metric.reason)[:240]
-        except Exception as error:  # noqa: BLE001 - a judge outage is not a failure
-            result.reasons[name] = f"not scored: {type(error).__name__}"
-    return result
+        for metric in test_result.metrics_data or []:
+            key = metric.name.lower().replace(" ", "_").replace("(", "").replace(")", "")
+            if metric.error:
+                case.reasons[key] = f"not scored: {metric.error}"[:240]
+            elif metric.score is not None:
+                case.scores[key] = round(float(metric.score), 3)
+                if metric.reason:
+                    case.reasons[key] = str(metric.reason)[:240]
+
+    return list(judged.values())
 
 
 def summarise(cases: Sequence[JudgedCase], threshold: float = DEFAULT_THRESHOLD) -> dict:
     """Aggregate judged scores.
 
-    Reports the mean and the share at or above the threshold for each metric
-    separately. No combined figure: averaging faithfulness with contextual
-    recall would hide which half of the pipeline is at fault, which is the one
-    thing these metrics are for.
+    Mean and share at or above threshold, per metric, never combined. Averaging
+    faithfulness with contextual recall would hide which half of the pipeline is
+    at fault, which is the one thing these metrics are for.
     """
 
     judged = [c for c in cases if c.scores]
@@ -159,8 +211,6 @@ def summarise(cases: Sequence[JudgedCase], threshold: float = DEFAULT_THRESHOLD)
     }
     for name in names:
         values = [c.scores[name] for c in judged if name in c.scores]
-        if not values:
-            continue
         summary[name] = {
             "mean": round(sum(values) / len(values), 3),
             "at_or_above_threshold": round(

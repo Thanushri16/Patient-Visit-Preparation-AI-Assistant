@@ -30,9 +30,8 @@ from evaluators.rag.dataset import load_cases  # noqa: E402
 from evaluators.rag.deterministic import Report, score_case  # noqa: E402
 from evaluators.rag.judged import (  # noqa: E402
     DEFAULT_JUDGE_MODEL,
-    JudgedCase,
-    build_metrics,
-    judge_case,
+    JudgeRequest,
+    judge_all,
     summarise,
 )
 from evaluators.rag.shadow import ShadowReport, classify  # noqa: E402
@@ -61,6 +60,12 @@ def main(argv: list[str] | None = None) -> int:
         help="also run the DeepEval metrics; costs several model calls per case",
     )
     parser.add_argument("--judge-model", default=DEFAULT_JUDGE_MODEL)
+    parser.add_argument(
+        "--judge-concurrency",
+        type=int,
+        default=3,
+        help="parallel judge calls; too high loses scores to rate limits",
+    )
     parser.add_argument("--mode", default="primary")
     parser.add_argument(
         "--split",
@@ -87,8 +92,8 @@ def main(argv: list[str] | None = None) -> int:
     report = Report()
     shadow = ShadowReport()
     generated = cited_ok = 0
-    judged: list[JudgedCase] = []
-    metrics_suite = build_metrics(args.judge_model) if args.judge else None
+    # Collected during the loop, judged in one concurrent batch afterwards.
+    judge_queue: list[JudgeRequest] = []
 
     for index, case in enumerate(cases, start=1):
         result = answer_knowledge_question(case.question, retriever, client, mode=args.mode)
@@ -118,7 +123,7 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
 
-        if metrics_suite is not None and scored.answered:
+        if args.judge and scored.answered:
             # Only answered cases are judged. Faithfulness of "I don't have
             # documentation on that" is not a meaningful question, and scoring
             # refusals would drag a generation metric toward whatever the judge
@@ -127,16 +132,16 @@ def main(argv: list[str] | None = None) -> int:
                 source.text
                 for source in (result.evidence.supporting if result.evidence else ())
             ]
-            judged.append(
-                judge_case(
-                    metrics_suite,
+            judge_queue.append(
+                JudgeRequest(
                     question_id=case.question_id,
                     group=case.group,
                     question=case.question,
                     answer=result.text,
-                    context=context,
-                    expected_facts=case.expected_facts or case.expected_covered_facts,
-                    expected_answer=case.expected_answer,
+                    context=tuple(context),
+                    expected=case.expected_answer.strip()
+                    or " ".join(case.expected_facts or case.expected_covered_facts)
+                    or None,
                 )
             )
 
@@ -154,7 +159,14 @@ def main(argv: list[str] | None = None) -> int:
         gap_disclosure=float(metrics["gap_disclosure"]),
         citation_validation=float(metrics["citation_validation"]),
     )
-    judged_summary = summarise(judged) if metrics_suite is not None else None
+    judged = (
+        judge_all(
+            judge_queue, model=args.judge_model, max_concurrent=args.judge_concurrency
+        )
+        if judge_queue
+        else []
+    )
+    judged_summary = summarise(judged) if args.judge else None
 
     print("\n" + json.dumps(metrics, indent=2))
     print("\ndivergence: " + json.dumps({k: v for k, v in divergence.items() if v}))
@@ -180,7 +192,7 @@ def main(argv: list[str] | None = None) -> int:
                 "settings": SETTINGS.model_dump(),
                 "metrics": metrics,
                 "judged": judged_summary,
-                "judge_model": args.judge_model if metrics_suite else None,
+                "judge_model": args.judge_model if args.judge else None,
                 "judged_cases": [vars(j) for j in judged],
                 "divergence": divergence,
                 "promotion": promotion,
