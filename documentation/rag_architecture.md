@@ -1236,32 +1236,131 @@ injected through `RunnableConfig`, never stored in state.
 
 ## B.5 Proving equivalence
 
-Both orchestrators are wired behind one flag:
+### The criterion had to change, and why
 
-```python
-ORCHESTRATOR = "chain" | "graph"     # env-configurable, default "chain" until B ships
-```
+The original criterion was byte-identical replies plus identical state on every
+turn. **It is unachievable, and not because a graph would break something.**
 
-`/chat` dispatches on it and returns an identical payload either way. Then:
+Before any graph node existed, the equivalence harness was run with the chain on
+both sides — identical code, identical inputs. Over three runs of eight
+conversations, one to two diverged every time: always the extractor, always on
+`visit_data.visit_reason`, cascading into the reply because the chain
+acknowledges what it captured. Roughly 15% of conversations.
+
+The chain contains four uncached model calls — intent classification,
+extraction, follow-up wording, confirmation — and any of them can flip. So a
+*perfect* reimplementation would fail a strict turn-by-turn criterion about 15%
+of the time, and a real migration bug would be indistinguishable from extractor
+jitter.
+
+This is the reason the harness was built before the graph rather than after, as
+the step order suggested. Built afterwards, the first equivalence run would have
+shown ~15% divergence against a correct graph, and the obvious response would
+have been to bisect a graph that was not broken.
+
+### The fix: record the model calls, for evaluation only
+
+Splitting the criterion was the first answer. The better one is to remove the
+non-determinism from the measurement without removing it from the application.
+
+Every model call in this codebase already goes through an **injected** client:
+`get_chatbot_response` takes one as a parameter and `app.py` constructs it at
+startup. So the evaluation harness constructs a `CachingChatClient` instead —
+it wraps a real client, hashes `(model, messages, temperature)`, and replays
+identical calls from disk.
+
+**Production is untouched.** The application cannot tell the difference, which
+is the whole point: caching *inside* the chain would be a behaviour change, and
+Part B forbids those.
+
+Two properties make it trustworthy rather than convenient:
+
+- **Offline mode raises on a miss.** A silent cache miss is a live call inside a
+  run that claims to be reproducible — worse than no cache at all. In offline
+  mode a miss is a loud failure.
+- **Hit and miss counts are reported per run**, so "100% cached" is an observed
+  number rather than an assumption.
+
+Both clients are swapped, the module-level one and the knowledge branch's own.
+The branch captures its client when built at startup, so replacing only
+`app.client` would leave grounded generation and the answerability guard talking
+to the network while everything else replayed — reproducible in part, which is
+the worst of both.
+
+**Result: all 12 conversations compare byte-identical, over three consecutive
+replays, 21 cache hits and 0 misses each time.** The five that were
+non-reproducible are reproducible now, so the strict criterion applies to the
+whole set rather than to the deterministic seven.
+
+This also makes evaluation cheaper. The recording pass cost 13 completions; every
+replay since has cost nothing.
+
+### The criterion, split by determinism (the fallback)
+
+The split below is what applies when running **without** the cache — against
+live models, or after a prompt change that invalidates recorded calls. It is
+kept because the mode declaration documents something true about the
+application: which paths reach a model at all.
+
+Each conversation is declared STRICT or STRUCTURAL in
+`src/evaluators/equivalence/conversations.py`, with the reason recorded per
+conversation.
+
+**STRICT** — no model call decides anything on the path. Every field is
+compared and any difference is a defect:
+
+| Conversation | Why it is deterministic |
+|---|---|
+| emergency escalation | moderation is regex, escalation text is a constant |
+| menu and global commands | menu options route without the intent classifier |
+| never-route: medication | the policy ladder refuses before retrieval |
+| never-route: diagnosis | same ladder, diagnosis branch |
+| anaphylaxis note | regex detector, constant safety note |
+| off-topic decline | pre-check declines before any model call |
+| state recall | answered from `VisitData`, never from a model |
+
+**STRUCTURAL** — a model decides something, so free text is not compared and
+the decisions it drives are: `phase`, `workflow`, `emergency_detected`,
+`confirmed`, `rag.status`, `rag.source`, the set of cited document ids, and
+whether a reply was produced at all.
+
+That list is deliberately short, and it is the honest statement of what the
+weaker mode verifies: **every field not on it is a field STRUCTURAL cannot
+catch.** A migration bug would move a phase, a workflow or a RAG status;
+extractor jitter would not.
+
+### Calibration — the declaration is checked, not trusted
+
+`calibrate()` replays every STRICT conversation against itself and reports any
+that move. A conversation that diverges there is misdeclared: its path reaches a
+model somewhere.
+
+Currently 7 STRICT and 5 STRUCTURAL, with **zero misdeclared** across two
+repeats each.
+
+Without this check, `conversations.py` would be a place to quietly downgrade
+anything inconvenient — declare a failing conversation STRUCTURAL and the
+problem disappears. The calibration makes that visible: a STRICT conversation
+must earn the label by being reproducible, and moving one to STRUCTURAL is a
+diff someone can question.
+
+### What is compared
 
 | Check | Method | Bar |
 |---|---|---|
-| Deterministic replies | Menu prompts, refusals, fallbacks, the safe-fallback string — all constants | **Byte-identical** across orchestrators |
-| Unit suite | The full offline suite, run against both | 100% pass on both, no test modified |
-| Scenario benchmark | 215 single-turn cases, both orchestrators, same seed data | Pass rate ≥ chain's, and **no category** regresses |
-| Conversation benchmark | 34 multi-turn sessions, both | Session pass rate ≥ chain's; state persistence, recovery, and tone/safety counts unchanged |
-| RAG baseline | The Part A dataset, both | All retrieval and generation metrics within run-to-run noise |
-| State shape | `state.model_dump(mode="json")` per turn, both | Identical, field for field |
-| Telemetry | Chain events emitted per turn | Same node names, same order |
+| All conversations, cached | reply byte-for-byte, every state field | zero divergence |
+| Cache integrity | offline replay, hit/miss counts reported | zero misses |
+| STRUCTURAL conversations, uncached | the six declared fields, cited documents, reply presence | zero divergence |
+| Unit suite | the full offline suite against both orchestrators | 100% on both, no test modified |
+| Scenario benchmark | 215 single-turn cases, both | pass rate no worse, no category regressing |
+| Conversation benchmark | 34 multi-turn sessions, both | session pass rate no worse |
+| RAG benchmark | corpus v2, both, deterministic metrics | within run-to-run noise |
+| Telemetry | chain events per turn | same node names, same order |
 
-Any diff is a defect in the migration, investigated as such — not accepted as an
-improvement. An actual improvement discovered during the migration is
-implemented in the shared module and re-baselined on the chain first, so both
-orchestrators show it.
-
-The comparison is automated in `src/evaluators/rag/equivalence.py`, which runs a
-case list through both orchestrators in the same process and diffs replies,
-state, and events.
+Volatile fields are excluded by name: `session_id` (each side is replayed under
+its own), `visit_id`, `persisted_at`, and the two RAG latency measurements. That
+list is kept short on purpose — every entry is something the harness can no
+longer catch.
 
 ## B.6 Checkpointing, and the FR-2 door
 
