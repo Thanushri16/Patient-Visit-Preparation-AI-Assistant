@@ -1,0 +1,67 @@
+{
+ "02ea030b433924e695861f2706cd0caef0eb4834cd44c5932c06b852f6737649": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 289
+ },
+ "0650d908fd13b07fcd2b02e862b9461654769f836c60f18f82920e311481b1de": {
+  "completion_tokens": 242,
+  "content": "To prepare for a colonoscopy, you will need to follow these bowel prep instructions:\n\n1. Talk with your doctor about any health problems you have and all of the medicines and supplements that you take. You may need to stop taking some of your medicines and/or supplements before the procedure [1].\n\n2. Follow the bowel prep instructions from your doctor, which may include:\n   - Following a clear liquid diet, usually for about one day before the procedure. Avoid red or purple drinks or gelatin, as the dye can look like blood in the colon [1][2].\n   - You probably need to stop eating and drinking the night before the exam [1].\n   - You will need to take some laxatives, which may be pills, a powder that you dissolve in liquid, an enema, or a combination of these. The laxative will cause diarrhea, so you need to stay close to the bathroom [1][2].\n\n3. For a virtual colonoscopy, you will also need to drink a contrast medium the night before, which is a dye or other substance that is visible on x-rays [1].\n\nMake sure to follow your provider's specific instructions regarding bowel prep, as they may vary.",
+  "prompt_tokens": 1905
+ },
+ "0d0a314172cde57b6b120369ecd9cb202709c4fddc8f386379d59cc8484e829e": {
+  "completion_tokens": 24,
+  "content": "There is no risk to having a hearing test, and it is not mentioned that a hearing test is painful [3].",
+  "prompt_tokens": 1609
+ },
+ "34da8de218e0ebf8fdfd4b4f630c492eab62badce6cb04134dbf3b47c6f7a8d3": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 537
+ },
+ "68177bcd7543b20526f54728ca6b510638087297ed36d5da9430c444960cc87e": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 583
+ },
+ "7485da09ffdb185cbacc8225b89e90f82f60200790147dc020dd345ebc49657f": {
+  "completion_tokens": 3,
+  "content": "report_allergy",
+  "prompt_tokens": 587
+ },
+ "7ac31736be32826385c94b6346e989623a8d829588ab5988542da1fd3f1691ce": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 607
+ },
+ "a6a9f83e21b936e36868ebd5a1a44894379faf431d8b0d052e8aa1776c7bcd0b": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 582
+ },
+ "b09ec1677c72f30719a6031db1655fe36534b6e6d2e3bda4fc8cfc749004b168": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 547
+ },
+ "bcc6320e4748e035b372224eb003dadbdfdd213e9c9e285ac521823ed36f046c": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 581
+ },
+ "be7a15c3b325c9c5d893cd90352a73abbe50c5a10706ba6d0c3d3a78d17e30ca": {
+  "completion_tokens": 4,
+  "content": "report_new_symptoms",
+  "prompt_tokens": 585
+ },
+ "d95cfef7ce29f8f9ab7d9a72d5e3c708e0585cb45210448b3f9f34d90d934725": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 584
+ },
+ "e9f499b4c117e3584174bd19d570d54ddc12d0930e054c7007c94c29e99edcb3": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 611
+ }
+}
