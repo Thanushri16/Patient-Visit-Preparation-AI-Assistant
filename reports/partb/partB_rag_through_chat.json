@@ -1,0 +1,16 @@
+{
+  "generated_at": "20260823T195419Z",
+  "summary": {
+    "questions": 68,
+    "split": "all",
+    "diverged": 0,
+    "divergent_fields": {},
+    "cache": {
+      "hits": 564,
+      "misses": 0
+    },
+    "cache_complete": true,
+    "equivalent": true
+  },
+  "diverged": []
+}

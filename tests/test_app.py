@@ -25,10 +25,20 @@ class ChatbotUiTests(unittest.TestCase):
         self.assertIn("What can I help you with today?", response.text)
 
     def test_chat_response_exposes_benchmark_contract(self):
+        """The endpoint returns the orchestrator's reply verbatim, whichever it is.
+
+        Patched at `answer_turn` rather than at `get_chatbot_response`. The
+        latter is the chain's entry point, so under ORCHESTRATOR=graph the patch
+        did not intercept anything and the test compared a real greeting against
+        the mock. That was a mock aimed at one implementation, not a behaviour
+        difference: chain and graph return byte-identical replies to this input
+        unmocked. `answer_turn` is the seam both share.
+        """
+
         client = TestClient(app)
         with (
             patch.object(app_module, "client", object()),
-            patch.object(app_module, "get_chatbot_response", return_value="How can I help?"),
+            patch.object(app_module, "answer_turn", return_value="How can I help?"),
         ):
             response = client.post(
                 "/chat",

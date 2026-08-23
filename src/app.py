@@ -75,6 +75,43 @@ except ImportError:  # pragma: no cover
     from src.rag.integration import build_knowledge_branch
 knowledge_branch = build_knowledge_branch(client) if client is not None else None
 
+# Which orchestrator answers a turn. Both stay wired so the equivalence harness
+# can keep comparing them, and so `ORCHESTRATOR=chain` remains a one-word
+# rollback rather than a revert.
+#
+# The default became the graph once it had earned it: 20/20 conversations
+# byte-identical over three cached replays, the full unit suite passing on both,
+# and both benchmarks matching within their own noise. See rag_architecture.md
+# section B.5 -- in particular the measured noise floor, which is the reason the
+# scenario benchmark's -3 is not read as a regression.
+ORCHESTRATOR = (os.getenv("ORCHESTRATOR") or "graph").strip().lower()
+
+try:
+    from graph.runner import run_turn as _run_turn_graph
+except ImportError:  # pragma: no cover
+    from src.graph.runner import run_turn as _run_turn_graph
+
+
+def answer_turn(messages, prompt, client, state, visit_repository, knowledge_branch,
+                orchestrator: str | None = None):
+    """Dispatch one turn to the configured orchestrator.
+
+    Both entry points take the same arguments and mutate the same state object,
+    so this is a choice of implementation rather than an adapter. An adapter
+    would be somewhere for a difference between them to hide.
+    """
+
+    chosen = (orchestrator or ORCHESTRATOR).strip().lower()
+    runner = _run_turn_graph if chosen == "graph" else get_chatbot_response
+    return runner(
+        messages,
+        prompt,
+        client,
+        state=state,
+        visit_repository=visit_repository,
+        knowledge_branch=knowledge_branch,
+    )
+
 HTML_TEMPLATE = """
 <!doctype html>
 <html lang="en">
@@ -269,13 +306,14 @@ async def chat(request: Request):
     session = get_or_create_chat_session(session_id, now)
     input_moderation = moderate_text(prompt, stage="input")
     session.state.rag = None
-    reply = get_chatbot_response(
+    reply = answer_turn(
         session.messages,
         prompt,
         client,
-        state=session.state,
-        visit_repository=visit_repository,
-        knowledge_branch=knowledge_branch,
+        session.state,
+        visit_repository,
+        knowledge_branch,
+        orchestrator=data.get("orchestrator"),
     )
     session.expires_at = now + SESSION_TTL_SECONDS
     return JSONResponse(

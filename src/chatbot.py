@@ -297,6 +297,172 @@ def _render_summary(state: ConversationState, prompt: str) -> str:
     return summary
 
 
+def handle_confirmation_turn(
+    state: ConversationState,
+    prompt: str,
+    client: OpenAI | None,
+    visit_repository: JsonVisitRepository | None = None,
+) -> str:
+    """Classify a reply to a shown summary, and act on it.
+
+    Extracted verbatim from `get_chatbot_response` so the graph in src/graph/
+    can call the same implementation rather than restate it. Behaviour is
+    unchanged: this is the block that used to sit inline under Flow 5.
+    """
+
+    # Asking to see the summary is not agreeing to it. Classifying "show me
+    # my summary" as a confirmation silently finalised records the patient
+    # had only asked to read.
+    if is_summary_request(normalize_route_text(prompt)):
+        # Returns the text rather than calling `_finalize`. Inline, this `return`
+        # exited `get_chatbot_response`, so it finalised on the way out; both
+        # call sites now finalise the value this returns, and finalising here
+        # too would moderate and record the turn twice.
+        return _render_summary(state, prompt)
+    # Confirmation input path: classify the user's reply against the displayed summary.
+    confirmation_phase_before = state.phase.value
+    confirmation = classify_confirmation(
+        client,
+        prompt,
+        state.summary_text or begin_summary_review(state),
+    )
+    # Flow 4: a correction goes back through extraction and validation.
+    if confirmation.action.value == "correct":
+        # Confirmation correction path: re-enter collection with the correction text.
+        state.phase = ConversationPhase.COLLECTING
+        state.confirmed = False
+        state.confirmation_attempt_count = 0
+        correction_result = process_collection_turn(
+            client,
+            state,
+            confirmation.correction_text or prompt,
+        )
+        if correction_result.merge_result.errors:
+            # Only an invalid correction sends the user back for detail. A
+            # correction that merely leaves other fields unanswered still
+            # gets the corrected summary shown, because reviewing it is what
+            # the user was in the middle of doing.
+            response_text = correction_result.response
+        else:
+            # Correction output path with a clean merge: show what changed,
+            # then re-offer the record for confirmation. Leading with the
+            # delta is what the patient asked about; the full summary
+            # follows so nothing is hidden.
+            merge = correction_result.merge_result
+            changed = merge.accepted_fields + merge.cleared_fields
+            delta = build_change_summary(state.visit_data, changed)
+            summary = begin_summary_review(state)
+            response_text = _compose(
+                f"Updated:\n{delta}" if delta else "",
+                ("Nothing else has changed. " if delta else ""),
+                summary,
+            )
+    else:
+        # Flow 5: confirm or unclear replies use the confirmation response path.
+        response_text = confirmation_response(state, confirmation)
+        emit_chain_event(
+            state,
+            "confirmation_classifier",
+            success=confirmation.action.value != "unclear",
+            prompt_version="confirmation_classifier_v1",
+            retry_count=state.confirmation_attempt_count,
+            error_category=(
+                "unclear_confirmation" if confirmation.action.value == "unclear" else None
+            ),
+            metadata={"action": confirmation.action.value},
+            phase_before=confirmation_phase_before,
+        )
+        if state.phase is ConversationPhase.COMPLETED and visit_repository is not None:
+            persistence_started = perf_counter()
+            try:
+                saved_path = visit_repository.save_confirmed(state)
+                response_text += f" It was saved locally with visit ID {state.visit_id}."
+                emit_chain_event(
+                    state,
+                    "confirmed_visit_persistence",
+                    success=True,
+                    latency_ms=(perf_counter() - persistence_started) * 1_000,
+                    metadata={"file_extension": saved_path.suffix},
+                )
+            except (OSError, TypeError, ValueError) as exc:
+                state.persistence_error = type(exc).__name__
+                response_text += " I couldn't save it locally; your session still has the summary."
+                emit_chain_event(
+                    state,
+                    "confirmed_visit_persistence",
+                    success=False,
+                    latency_ms=(perf_counter() - persistence_started) * 1_000,
+                    error_category=type(exc).__name__,
+                )
+    return response_text
+
+
+def handle_collection_turn(
+    state: ConversationState,
+    prompt: str,
+    client: OpenAI | None,
+    visit_repository: JsonVisitRepository | None = None,
+    knowledge_branch=None,
+    injection_notice: str = "",
+) -> str:
+    """Run one collection turn: knowledge, extraction, validation, next question.
+
+    Extracted verbatim from `get_chatbot_response`, as above.
+    """
+
+    # Everything in the message that is not a field — a greeting, an expressed
+    # worry, a general question about preparing — is answered alongside the
+    # structured intake rather than instead of it.
+    knowledge_text = _knowledge_answer(state, prompt, knowledge_branch)
+    supplementary = build_supplementary_response(
+        state, prompt, knowledge_text=knowledge_text
+    )
+    summary_requested = state.workflow in SUMMARY_WORKFLOWS
+
+    # Collection input path: extract structured fields from the user's latest message.
+    collection_result = process_collection_turn(client, state, prompt)
+    merge_result = collection_result.merge_result
+    if not merge_result.errors and not merge_result.missing_fields:
+        if summary_requested:
+            _hydrate_visit_from_repository(state, visit_repository)
+        # Collection success path: enough information was collected, so show the summary.
+        acknowledgement = build_acknowledgement(state, merge_result)
+        summary = (
+            _render_summary(state, prompt)
+            if summary_requested
+            else begin_summary_review(state)
+        )
+        farewell = (
+            "Take care, and good luck at your appointment."
+            if detect_farewell(prompt)
+            else ""
+        )
+        response_text = (
+            summary
+            if summary_requested
+            else _compose(
+                injection_notice, supplementary, acknowledgement, summary, farewell
+            )
+        )
+    else:
+        # Collection continuation path: return the next question or validation feedback.
+        # A message that both supplies information and asks to see the record
+        # gets both: the update is applied and the summary is shown, rather
+        # than silently dropping the half that did not drive the routing.
+        trailing_summary = (
+            begin_summary_review(state)
+            if is_summary_request(normalize_route_text(prompt))
+            else ""
+        )
+        response_text = _compose(
+            injection_notice,
+            supplementary,
+            collection_result.response,
+            trailing_summary,
+        )
+    return response_text
+
+
 def get_chatbot_response(
     messages: list[ChatMessage],
     prompt: str,
@@ -449,144 +615,17 @@ def get_chatbot_response(
 
     # Flow 5: if the chatbot is waiting on review, classify confirm vs correction.
     if state.phase is ConversationPhase.AWAITING_CONFIRMATION:
-        # Asking to see the summary is not agreeing to it. Classifying "show me
-        # my summary" as a confirmation silently finalised records the patient
-        # had only asked to read.
-        if is_summary_request(normalize_route_text(prompt)):
-            return _finalize(
-                state, messages, prompt, _render_summary(state, prompt)
-            )
-        # Confirmation input path: classify the user's reply against the displayed summary.
-        confirmation_phase_before = state.phase.value
-        confirmation = classify_confirmation(
-            client,
-            prompt,
-            state.summary_text or begin_summary_review(state),
+        response_text = handle_confirmation_turn(
+            state, prompt, client, visit_repository
         )
-        # Flow 4: a correction goes back through extraction and validation.
-        if confirmation.action.value == "correct":
-            # Confirmation correction path: re-enter collection with the correction text.
-            state.phase = ConversationPhase.COLLECTING
-            state.confirmed = False
-            state.confirmation_attempt_count = 0
-            correction_result = process_collection_turn(
-                client,
-                state,
-                confirmation.correction_text or prompt,
-            )
-            if correction_result.merge_result.errors:
-                # Only an invalid correction sends the user back for detail. A
-                # correction that merely leaves other fields unanswered still
-                # gets the corrected summary shown, because reviewing it is what
-                # the user was in the middle of doing.
-                response_text = correction_result.response
-            else:
-                # Correction output path with a clean merge: show what changed,
-                # then re-offer the record for confirmation. Leading with the
-                # delta is what the patient asked about; the full summary
-                # follows so nothing is hidden.
-                merge = correction_result.merge_result
-                changed = merge.accepted_fields + merge.cleared_fields
-                delta = build_change_summary(state.visit_data, changed)
-                summary = begin_summary_review(state)
-                response_text = _compose(
-                    f"Updated:\n{delta}" if delta else "",
-                    ("Nothing else has changed. " if delta else ""),
-                    summary,
-                )
-        else:
-            # Flow 5: confirm or unclear replies use the confirmation response path.
-            response_text = confirmation_response(state, confirmation)
-            emit_chain_event(
-                state,
-                "confirmation_classifier",
-                success=confirmation.action.value != "unclear",
-                prompt_version="confirmation_classifier_v1",
-                retry_count=state.confirmation_attempt_count,
-                error_category=(
-                    "unclear_confirmation" if confirmation.action.value == "unclear" else None
-                ),
-                metadata={"action": confirmation.action.value},
-                phase_before=confirmation_phase_before,
-            )
-            if state.phase is ConversationPhase.COMPLETED and visit_repository is not None:
-                persistence_started = perf_counter()
-                try:
-                    saved_path = visit_repository.save_confirmed(state)
-                    response_text += f" It was saved locally with visit ID {state.visit_id}."
-                    emit_chain_event(
-                        state,
-                        "confirmed_visit_persistence",
-                        success=True,
-                        latency_ms=(perf_counter() - persistence_started) * 1_000,
-                        metadata={"file_extension": saved_path.suffix},
-                    )
-                except (OSError, TypeError, ValueError) as exc:
-                    state.persistence_error = type(exc).__name__
-                    response_text += " I couldn't save it locally; your session still has the summary."
-                    emit_chain_event(
-                        state,
-                        "confirmed_visit_persistence",
-                        success=False,
-                        latency_ms=(perf_counter() - persistence_started) * 1_000,
-                        error_category=type(exc).__name__,
-                    )
-
         return _finalize(state, messages, prompt, response_text)
     # Confirmation else path: the chatbot is not awaiting review, so continue to active collection.
 
     # Flow 6: continue the active collection workflow with extraction and validation.
     if state.phase is ConversationPhase.COLLECTING:
-        # Everything in the message that is not a field — a greeting, an expressed
-        # worry, a general question about preparing — is answered alongside the
-        # structured intake rather than instead of it.
-        knowledge_text = _knowledge_answer(state, prompt, knowledge_branch)
-        supplementary = build_supplementary_response(
-            state, prompt, knowledge_text=knowledge_text
+        response_text = handle_collection_turn(
+            state, prompt, client, visit_repository, knowledge_branch, injection_notice
         )
-        summary_requested = state.workflow in SUMMARY_WORKFLOWS
-
-        # Collection input path: extract structured fields from the user's latest message.
-        collection_result = process_collection_turn(client, state, prompt)
-        merge_result = collection_result.merge_result
-        if not merge_result.errors and not merge_result.missing_fields:
-            if summary_requested:
-                _hydrate_visit_from_repository(state, visit_repository)
-            # Collection success path: enough information was collected, so show the summary.
-            acknowledgement = build_acknowledgement(state, merge_result)
-            summary = (
-                _render_summary(state, prompt)
-                if summary_requested
-                else begin_summary_review(state)
-            )
-            farewell = (
-                "Take care, and good luck at your appointment."
-                if detect_farewell(prompt)
-                else ""
-            )
-            response_text = (
-                summary
-                if summary_requested
-                else _compose(
-                    injection_notice, supplementary, acknowledgement, summary, farewell
-                )
-            )
-        else:
-            # Collection continuation path: return the next question or validation feedback.
-            # A message that both supplies information and asks to see the record
-            # gets both: the update is applied and the summary is shown, rather
-            # than silently dropping the half that did not drive the routing.
-            trailing_summary = (
-                begin_summary_review(state)
-                if is_summary_request(normalize_route_text(prompt))
-                else ""
-            )
-            response_text = _compose(
-                injection_notice,
-                supplementary,
-                collection_result.response,
-                trailing_summary,
-            )
         return _finalize(state, messages, prompt, response_text)
     # Collection else path: no collection workflow is active, so fall back to the menu response.
 

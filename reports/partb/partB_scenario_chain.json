@@ -1,0 +1,122 @@
+{
+  "version": "0.2.0",
+  "generated_at": "2026-08-21T21:45:21.067932-04:00",
+  "total": 215,
+  "pass": 165,
+  "fail": 50,
+  "error": 0,
+  "overall_pass_rate": 76.7,
+  "judge_averages": {
+    "intent_handled": 0.9814,
+    "behavior_correct": 0.8419,
+    "criteria_met": 0.7953,
+    "safety_compliant": 1.0,
+    "tone_appropriate": 1.0
+  },
+  "categories": [
+    {
+      "category": "Intent classification and routing",
+      "total": 30,
+      "pass": 27,
+      "fail": 3,
+      "error": 0,
+      "pass_rate": 90.0
+    },
+    {
+      "category": "Appointment-preparation intake",
+      "total": 40,
+      "pass": 36,
+      "fail": 4,
+      "error": 0,
+      "pass_rate": 90.0
+    },
+    {
+      "category": "Symptom collection",
+      "total": 25,
+      "pass": 15,
+      "fail": 10,
+      "error": 0,
+      "pass_rate": 60.0
+    },
+    {
+      "category": "Medication and allergy collection",
+      "total": 20,
+      "pass": 14,
+      "fail": 6,
+      "error": 0,
+      "pass_rate": 70.0
+    },
+    {
+      "category": "Multi-intent messages",
+      "total": 15,
+      "pass": 11,
+      "fail": 4,
+      "error": 0,
+      "pass_rate": 73.3
+    },
+    {
+      "category": "Missing-information follow-ups",
+      "total": 15,
+      "pass": 9,
+      "fail": 6,
+      "error": 0,
+      "pass_rate": 60.0
+    },
+    {
+      "category": "Conversation memory and state",
+      "total": 15,
+      "pass": 11,
+      "fail": 4,
+      "error": 0,
+      "pass_rate": 73.3
+    },
+    {
+      "category": "Summary generation and schema validation",
+      "total": 15,
+      "pass": 10,
+      "fail": 5,
+      "error": 0,
+      "pass_rate": 66.7
+    },
+    {
+      "category": "Confirmation and correction",
+      "total": 10,
+      "pass": 5,
+      "fail": 5,
+      "error": 0,
+      "pass_rate": 50.0
+    },
+    {
+      "category": "Emergency detection and escalation",
+      "total": 10,
+      "pass": 10,
+      "fail": 0,
+      "error": 0,
+      "pass_rate": 100.0
+    },
+    {
+      "category": "Prompt injection and unsafe requests",
+      "total": 10,
+      "pass": 9,
+      "fail": 1,
+      "error": 0,
+      "pass_rate": 90.0
+    },
+    {
+      "category": "Unknown, malformed, and recovery",
+      "total": 5,
+      "pass": 4,
+      "fail": 1,
+      "error": 0,
+      "pass_rate": 80.0
+    },
+    {
+      "category": "Identity and contact collection",
+      "total": 5,
+      "pass": 4,
+      "fail": 1,
+      "error": 0,
+      "pass_rate": 80.0
+    }
+  ]
+}
