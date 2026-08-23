@@ -1,0 +1,1692 @@
+{
+ "01a76d21c1bac9601df2ea9520a82823cddda8888c20ef15ebc75fd35c507cd1": {
+  "completion_tokens": 36,
+  "content": "There are no special preparations needed for a FIT (Fecal Immunochemical Test) or stool DNA test. You can collect the sample at home without any bowel prep [1].",
+  "prompt_tokens": 1971
+ },
+ "01c92d58ddfe976bfa5e9b8c3b5b9a0bc30d2afa084b8127036211722514f366": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 336
+ },
+ "026eac86831d55b836769f17ab23b152a5ddb21880ee96e176115cea37da3829": {
+  "completion_tokens": 32,
+  "content": "{\"field_path\":\"symptom_severity\",\"question\":\"On a scale from 0 to 10, how would you rate the severity of your headache?\"}",
+  "prompt_tokens": 717
+ },
+ "043df1f8c9e57ee37014b82996e07ea9470b754ce558a86df477121adc74e2a7": {
+  "completion_tokens": 236,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"headache\",\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4978
+ },
+ "045ca8e24d1d3f97c9d514697a12c4233e25eaaf98e091fbf81231dfe99df6f5": {
+  "completion_tokens": 33,
+  "content": "{\"field_path\":\"symptom_severity\",\"question\":\"On a scale from 0 to 10, how would you rate the severity of your sore throat?\"}",
+  "prompt_tokens": 718
+ },
+ "04f63cc6ed4cb89ffbd615fdec6f9169036092bdf47f8915380dc9c3457b4fae": {
+  "completion_tokens": 12,
+  "content": "MRI does not use x-rays or other radiation [3].",
+  "prompt_tokens": 850
+ },
+ "056bb237f27480419b74c9d96fffd0695d18f31fbe3b00c156c44dba6a0957c8": {
+  "completion_tokens": 18,
+  "content": "{\"field_path\":\"visit_reason\",\"question\":\"What is the reason for your visit?\"}",
+  "prompt_tokens": 704
+ },
+ "066b2b2204a96ff126b03c3fd741d490a438200a907fe35d1fb42949ff5a5b20": {
+  "completion_tokens": 33,
+  "content": "{\"field_path\":\"symptom_severity\",\"question\":\"On a scale from 0 to 10, how would you rate the severity of your sore throat?\"}",
+  "prompt_tokens": 719
+ },
+ "0896b32885c928634682bb29df94ca1ab29477506bf68a2b151197700cf3907a": {
+  "completion_tokens": 28,
+  "content": "The context does not specify how long an MRI usually takes. I suggest asking the clinic for more information on the duration of the MRI scan.",
+  "prompt_tokens": 852
+ },
+ "09ffb59a0324b00edbc3ea4ba2d1f082bcba56015fe43cd615b46dd59cd8c8f8": {
+  "completion_tokens": 265,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"throat swelling\",\"symptom_location\":\"throat\",\"symptom_onset\":\"last month\",\"symptom_duration\":null,\"symptom_severity\":10,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":[{\"allergen\":\"unknown allergen\",\"reaction\":\"throat swelled up\",\"severity\":\"severe (possible anaphylaxis)\"}],\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4948
+ },
+ "0a820727028a78b71a92a88db66fb04c35185838b84c1f17740410ab5f385710": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4943
+ },
+ "0cd05681e39a1fa542245837d04b97df14a80b004c590346e9dbfd803dbf7bd7": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 419
+ },
+ "0d2b04bcbd205b74ee8c282d191d0efb895dc43706e3b84a334df5f2971bec3c": {
+  "completion_tokens": 238,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"sigmoidoscopy\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4947
+ },
+ "0d4851fb4492cab0a0a5f93ca5150880a9b75672c173895f102fd4acefbe61c4": {
+  "completion_tokens": 248,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":[{\"allergen\":\"latex\",\"reaction\":null,\"severity\":null}],\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4951
+ },
+ "0dd5500644df55fae0c506697467573bcc6ccd2ee03a258f6a5569f1da07b8a9": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 397
+ },
+ "0e7b578c47a18d2136b2d0e56c38ba0119ba6a39b7acb4ac964da0014aa5b9e2": {
+  "completion_tokens": 3,
+  "content": "report_allergy",
+  "prompt_tokens": 590
+ },
+ "0f2d4d9cd345ea23d5673c4f01bfd21e1d04dec098f5a2c8e0f65352a324523c": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 582
+ },
+ "1064127c3cb2d5380dc50dfa17db505a4dcd266b1e1a4ec3147c569c9989438a": {
+  "completion_tokens": 13,
+  "content": "You don't need any special preparations for a hearing test [1].",
+  "prompt_tokens": 1524
+ },
+ "1069d028ca3a25a16124d8a1148c44e4662368f96e437024b77bd0828355f528": {
+  "completion_tokens": 26,
+  "content": "You should not wear makeup or nail polish. You will need to have your hair loose so your scalp can be checked [1].",
+  "prompt_tokens": 1668
+ },
+ "10fb1f4f075ae86c3471223c6f9e378c7e248421a08db75cbe501efaf5781b04": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 550
+ },
+ "11a0b040cf842ef1bff7bbef38bcee2505e0dc148a735083fc085f74d26b9f78": {
+  "completion_tokens": 18,
+  "content": "{\"field_path\":\"current_medications\",\"question\":\"What current medications are you taking?\"}",
+  "prompt_tokens": 696
+ },
+ "12845f95eb1df78a66023b6c984f7c618f9cc8a62386d4c127f67915f1a22a25": {
+  "completion_tokens": 4,
+  "content": "report_new_symptoms",
+  "prompt_tokens": 585
+ },
+ "13fc89834e94312f6eb15c979af91437f347c1823d6fbdb90c431fdf6ee50271": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 581
+ },
+ "14722f995e3a12ef3dfce4f7aff6a8bcad36e7f4d88fd8977c27a17132e0e7ba": {
+  "completion_tokens": 119,
+  "content": "The \"ABCDEs\" of melanoma stands for:\n\nA - Asymmetry: Does the mole or spot have an irregular shape with two parts that look very different?  \nB - Border: Is the border of the mole ragged or irregular?  \nC - Color: Is the color uneven?  \nD - Diameter: Is the mole or spot bigger than the size of a pea or a pencil eraser?  \nE - Evolving: Has the mole or spot changed during the past few weeks or months?  \n\nThis is how you can evaluate moles for signs of skin cancer [1].",
+  "prompt_tokens": 639
+ },
+ "179d87edea1e31fe6fb4ebe5589fd9683a6cd4d18767ef49341e9145eb46678f": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4963
+ },
+ "17b36a0a89cdbe5af293551d6bf289dfa2f62036390e64aeed04621890defc74": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 548
+ },
+ "17da24d9d288b009ed844f2bd95de9304d83f5b020eead47d8d4bcc6af959d5c": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 441
+ },
+ "180a90af01af730e9d3caf98d56d3cefa872277fa348318ec267fc3737bf9259": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 607
+ },
+ "1975920dcfd721fd3a3d321a167885122aa7d1ae18c5b601c2c0467351e5662a": {
+  "completion_tokens": 68,
+  "content": "If you aren't at higher risk for colorectal cancer, your provider will likely recommend you start screenings at age 45. If you are at higher risk, you may need to start getting screened for colorectal cancer earlier. Talk with your provider about when to start, how often to get screened, and which type of test you should have [1].",
+  "prompt_tokens": 1936
+ },
+ "1b7a2e1b802a6a256b6f28302f352bd8472f4fbe2b80d732747c7d56a796e42c": {
+  "completion_tokens": 24,
+  "content": "{\"field_path\":\"provider_name\",\"question\":\"Who is the healthcare provider you will be seeing for your PET scan?\"}",
+  "prompt_tokens": 709
+ },
+ "1deab42205f6d90aed2da8a7b35c1cd8dfa1a15061019d71c3cb2e3a90a217b9": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 394
+ },
+ "1ed56240d6f5d2c5cd8541b31ce5422fedd309a478effc262b702e020981cb6e": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 430
+ },
+ "1fab74a69461e99dac016346065400e01b349f41d8389d53c09f9440de54bfdb": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4966
+ },
+ "1fad852d0879e9e517ee3a2529b1cd3bccb3d673074490b0466af21a99e65c29": {
+  "completion_tokens": 2,
+  "content": "show_menu",
+  "prompt_tokens": 579
+ },
+ "1fe3ae14fdbed9983aeb172f530d7eb41a69ebf02f89553a1fd1a4e4e329bda9": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 584
+ },
+ "25dfdab1258a4a4f0cc16f12f912a93ef5ab15ca519000b53ed62319db74256f": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 580
+ },
+ "27ffb9d0480fb2a97a2119c4301d3c8e5f528fcfae96e9863493b741c0ca713e": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 481
+ },
+ "280d2682857c7f1e8c97934a295a2ba33a51fbbd54b18dc6ccb89f4075bb5851": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 583
+ },
+ "286b87cc6c3493ec981e1f7cd58dcf2525942f8fbd682c146cb91a016e4ba175": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4964
+ },
+ "28acf66a1e2e863ca0d5372ec87df8e09be02244a8c4d21417e5c5f2a7817847": {
+  "completion_tokens": 241,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"bowel prep for a colonoscopy\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4944
+ },
+ "28b32cc66a16a05c5ab3eabc733acc4027a3897b28eb731ad35358f01ec57f56": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 446
+ },
+ "29c434218928d9bb91f6165498ec8876b35e23c257dde572e6104cbc5648ed0c": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 562
+ },
+ "2afbb61fbc83922eb818dcced919d6ce389a9c25a9ec3a0194727a87bcf2df9a": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 590
+ },
+ "2b43622c6431e62c9f5966f0e3f9ea078f964e9059d3d31ed44b21ad6d64d47b": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 580
+ },
+ "2ccc3265b702b916a98d435bcf8478b2d51413739fcc66a476d9fefe40e89716": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 582
+ },
+ "2d1546dbc4c3d134ec95b9e8308ce97bb1a7cbc4bb712974173802d5d29542e0": {
+  "completion_tokens": 237,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"headache\",\"symptom_location\":null,\"symptom_onset\":\"since yesterday\",\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4970
+ },
+ "2e6435c70dd362e35c78696902f555c2b4f1d506f4883fb507ac576bf845e901": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 581
+ },
+ "2f100b53273f113aa58fef3bf76764ec2d68f643a12be26160f201e6433bdb20": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 584
+ },
+ "31914f985512a354fd9329095497d0cc43cf4cb1d40efc080c104052c194f38b": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 581
+ },
+ "3208992014c9ac5e3e6f28a6d9b7a429dcdfeda6b9bc5d8c8fc9b7f3e5406631": {
+  "completion_tokens": 237,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"MRI consultation\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"pacemaker\",\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4948
+ },
+ "32e938a87aedd89538f8f2a2f6699b045dde64b057ff07754ec4a5ed726f6f70": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4943
+ },
+ "34ee2b3bad0e9e4b27367315885e1a28680f0d58863cc586ceda778170a3861d": {
+  "completion_tokens": 253,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":[{\"name\":\"ibuprofen\",\"dosage\":null,\"frequency\":null,\"purpose\":null}],\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4945
+ },
+ "35932e098cabb1c596c6a3e65c6a1330b416ded81017b93736d9c44a9b5911f7": {
+  "completion_tokens": 237,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"headache\",\"symptom_location\":null,\"symptom_onset\":\"yesterday\",\"symptom_duration\":null,\"symptom_severity\":6,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4978
+ },
+ "35ab5ded329e859dcbbdba4c5e34961ed5f27c9215fc4ee3cf85904b2f57bdae": {
+  "completion_tokens": 18,
+  "content": "{\"field_path\":\"appointment_date\",\"question\":\"What is the date of your appointment?\"}",
+  "prompt_tokens": 706
+ },
+ "3649320254f0ec4c015ff64285d9a1ad4d1241e90bfd59429dda8751c70f6df2": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 353
+ },
+ "38c758ea5e18f5927a4cf9417ad23cec80e14d8580c29193b81277ac87319faf": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 583
+ },
+ "38dbea9c356f6f04b5e0f2778849389eb52bc62853b33e424cf79d2c6ed9e0c9": {
+  "completion_tokens": 24,
+  "content": "{\"field_path\":\"symptom_duration\",\"question\":\"How long has the mole with a ragged border been present?\"}",
+  "prompt_tokens": 715
+ },
+ "39a0481766866806d80052dc621f1bf147c54ad456faa1da886409d87af9c362": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 490
+ },
+ "3a15fe9c2305430f1f64cca0ea5ca3e34340ed24a1065840615ff583392012e3": {
+  "completion_tokens": 2,
+  "content": "show_menu",
+  "prompt_tokens": 580
+ },
+ "3a246e8713d5ababfbe18b6e8f5eba3bcb88232e34bf3cbaf09254fceb765eb9": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 617
+ },
+ "3a9c66fadb81066dca00979d1ad064ce28c2b8d1a453489dbe854d2dc14f7d03": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 614
+ },
+ "3b34c210fc04828346ffdbc1b404d9180cae46f69b429f310d841270c6bd3cd2": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4963
+ },
+ "3c3bf3c81e6b832c34a1a564b25d729ff9fb76e1eefc766dbe5ee29237088c9d": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4940
+ },
+ "3d870f339df9b971ef2d6440e85d4c36c358f977787bc930f3c21c90af27ad27": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 573
+ },
+ "3e4b14257e4502340af4e3283929b639aa249c20941c2a3b955d12053b8ea47d": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 567
+ },
+ "3eef48b494c3862268984db188e2fc07c9b3499aee47df686bf5fc752ddceb05": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 585
+ },
+ "4048ca88353898ee97fc96b0f2469edb7deb3718b1f29393816b452cc66a35bc": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 368
+ },
+ "404fefcb739d7d8551b3d1c9d2c4f5aedbcb2d35dddea7fced98ade706345b2e": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 344
+ },
+ "40873dccaa9729ad7b234a1f1c80be5d76e493f25b6957f4c4259cb3698f565d": {
+  "completion_tokens": 20,
+  "content": "{\"field_path\":\"symptom_location\",\"question\":\"Where exactly do you feel the sore throat?\"}",
+  "prompt_tokens": 717
+ },
+ "40911e0a736db0256eda01a3d4987d937a7395cb26bd00805351ea791b32ecb4": {
+  "completion_tokens": 21,
+  "content": "{\"field_path\":\"symptom_duration\",\"question\":\"How long have you been experiencing the sore throat?\"}",
+  "prompt_tokens": 711
+ },
+ "417a2f45e46c744452ad047bbd452d698b421e6c41e97b9b63b9a18f99628451": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 527
+ },
+ "41d02935b17a8a70a41b7cae34ef4fe1cc1cb745b6162e14ed8cd13baff54aa5": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4943
+ },
+ "42aaf81515b723f7eecff2589fc3cf033dd831de3ff94525a0cb3ec01508c1ab": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 303
+ },
+ "434df2fff98185a2cbe58ad1ce2f3850211705f5e8bc6766734e98a8515a5639": {
+  "completion_tokens": 243,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"headache\",\"symptom_location\":\"moderate\",\"symptom_onset\":\"since yesterday\",\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":\"constant\",\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[\"symptom_severity\"],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4974
+ },
+ "4353458ef9d76cacfff1b8745186c140c4f2171c5f39bf060165737040a14ea4": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4945
+ },
+ "442d7936df10252ad60af243c9438800f25fa39e6836014dcd43dbf9946856eb": {
+  "completion_tokens": 238,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"headache\",\"symptom_location\":\"moderate\",\"symptom_onset\":\"since yesterday\",\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4972
+ },
+ "4602d7cf8a5cf46a060ea0bf804151dfc0ebabb12a16c8c895128f90a7532742": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 431
+ },
+ "461e63767714376bac5726adedd26e3455fe973b7c3f9b1e8d014b3efe46425c": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 358
+ },
+ "46b16eb0c500cb7698b0659c8e1aae87d426279d65cfa47a0ff32a095a845659": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 419
+ },
+ "48426e3d244fefc86c9b6dd1ab99ef8393f64be98e540b40e77dd49b2b9fe2b8": {
+  "completion_tokens": 237,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"mammogram\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4962
+ },
+ "489a59715ebe15eade3ccd5e59befaf735f14c0eb75256a011f32327ebfcf23e": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 581
+ },
+ "49089674c30c7b7eac14fc465cd199b3aae57b2974c8999e67325339083cc032": {
+  "completion_tokens": 20,
+  "content": "{\"field_path\":\"symptom_duration\",\"question\":\"How long has the asymmetric mole been present?\"}",
+  "prompt_tokens": 711
+ },
+ "4a56b1967fb69a8bd40f3f825aced0ec8f4578820860a0c5bef68189f75dc653": {
+  "completion_tokens": 24,
+  "content": "There is no risk to having a hearing test, and it is not mentioned that a hearing test is painful [3].",
+  "prompt_tokens": 1609
+ },
+ "4ec724d2c7834576bc50efa4166dd1e3adeb779a8e45ce41c87e67c7ed2b970c": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 581
+ },
+ "4f5c549f4eb3268a032fcee38b49b539fa07f7bfb91aa19c6e285fff43b92a40": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 582
+ },
+ "50c0171c49f4a68c1d194c651526349ad635b64ba888027b447448ba4f5914d0": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 377
+ },
+ "50dbc4382e1efd4301bcbe67356429bd9b28c75adc4410140051ad90621b1178": {
+  "completion_tokens": 107,
+  "content": "Before a fecal occult blood test (FOBT), you may need to avoid the following foods and medicines for several days before your test:\n\n- Nonsteroidal anti-inflammatory drugs (NSAIDs), such as ibuprofen, naproxen, or aspirin\n- Vitamin C daily from supplements, fruit juices, or fruit\n- Certain vegetables, such as broccoli and turnips\n- Red meat, such as beef, lamb, or pork\n\nYour provider will give you full instructions on how to prepare for your screening test [1].",
+  "prompt_tokens": 1766
+ },
+ "50ddc6e5cb8674ffffc05ae1cab6fe2dfa9b9b2aeeb95f94151f7a312a1822f6": {
+  "completion_tokens": 28,
+  "content": "{\"field_path\":\"symptom_severity\",\"question\":\"On a scale from 0 to 10, how severe is your headache?\"}",
+  "prompt_tokens": 712
+ },
+ "52187fdf31109f337e7da8f197b79ec8fdaa1389ff5002299907befbe5680ac3": {
+  "completion_tokens": 242,
+  "content": "To prepare for a colonoscopy, you will need to follow these bowel prep instructions:\n\n1. Talk with your doctor about any health problems you have and all of the medicines and supplements that you take. You may need to stop taking some of your medicines and/or supplements before the procedure [1].\n\n2. Follow the bowel prep instructions from your doctor, which may include:\n   - Following a clear liquid diet, usually for about one day before the procedure. Avoid red or purple drinks or gelatin, as the dye can look like blood in the colon [1][2].\n   - You probably need to stop eating and drinking the night before the exam [1].\n   - You will need to take some laxatives, which may be pills, a powder that you dissolve in liquid, an enema, or a combination of these. The laxative will cause diarrhea, so you need to stay close to the bathroom [1][2].\n\n3. For a virtual colonoscopy, you will also need to drink a contrast medium the night before, which is a dye or other substance that is visible on x-rays [1].\n\nMake sure to follow your provider's specific instructions regarding bowel prep, as they may vary.",
+  "prompt_tokens": 1905
+ },
+ "54856e62031185f4155829e32d11a85f2713b719df0bbc733c8bc2826cc8bba9": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 422
+ },
+ "556ded6a9cdecd2d03192c01cfc3e11f7c1d712338bc9e25757f24583524e41f": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4963
+ },
+ "571d21c3225dd9b348d3096edff4a9bf9fb1997678d4f85240db177d61a4d668": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 581
+ },
+ "57e99eaea414b5fc51be0f4e6301d714f8d396aeb2287c3de27302b13177349f": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 526
+ },
+ "58bb4751d7643b9baaaa103f3b809b8b28ba335fb3ace1a50ec9e11b7961537d": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4942
+ },
+ "58cc38d7117fc2929da05fe6e2d92ce19518f5f7ed7903f15991a371583e8a8e": {
+  "completion_tokens": 25,
+  "content": "{\"field_path\":\"provider_name\",\"question\":\"Who is the healthcare provider you will be seeing for your FIT test preparation?\"}",
+  "prompt_tokens": 706
+ },
+ "597567212066a4d95db41ba75ed68088b1f07c2a6857a5f85acc13a0e3f7155f": {
+  "completion_tokens": 73,
+  "content": "Yes, you may need to follow a clear liquid diet one or more days before the procedure. You may also need to take a laxative the night before the test and empty your bowels with an enema about one hour before the procedure. A second enema is sometimes needed. Be sure to talk to your provider for specific instructions regarding your preparation [2].",
+  "prompt_tokens": 1843
+ },
+ "59c3e23b6c7357d1ecb3015a51d2069e64c8e6e548ff3b664b7b8dfb74275f3a": {
+  "completion_tokens": 263,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"throat swelling\",\"symptom_location\":\"throat\",\"symptom_onset\":\"last month\",\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":[{\"allergen\":\"unknown\",\"reaction\":\"needed an EpiPen\",\"severity\":\"severe (possible anaphylaxis)\"}],\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4978
+ },
+ "5d973c79493e3b8900532f2229535302d2df3b380f3ceabd9608507c9420924f": {
+  "completion_tokens": 62,
+  "content": "For some CT scans, contrast material might be given in one of the following ways: [1]\n- A liquid to swallow\n- A shot (injection)\n- An enema (placed into the rectum) \n\nAlways ask your provider if there are any special instructions to follow regarding the contrast material.",
+  "prompt_tokens": 1108
+ },
+ "5e3610b0e5da33a4d67953b326c1afad537438827432d42acf8c2caf6badb17c": {
+  "completion_tokens": 26,
+  "content": "If no polyps were found during your last colonoscopy, you will need to have the procedure every 10 years [4].",
+  "prompt_tokens": 1744
+ },
+ "5e3f7b22782986cdc5632e5e416fa7b2fa8c9611ff87095efb4da3137e2e5b3f": {
+  "completion_tokens": 236,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"biopsy\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4961
+ },
+ "5ee9e76038bcca5ce8c16b8c556d3e42c38ecf8f9eeeaa3e6f12e029a143a7dd": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 585
+ },
+ "5f985a05beb2e14796591445ad9a6b40d380b9b2394c81cff07e4da9b4449d5c": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 578
+ },
+ "60f1da4606cbf204e272d3fa16e5e0074fe12ddc59fe92dc0d136be4ec39fedd": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":\"Dana\",\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4957
+ },
+ "616b9ed36c0a6ff9ddf6be79c35fcfd8951f9b592e90d40c60b2c48804291004": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 495
+ },
+ "616c3e4cd49042fbbc494604f1eedafa5ddaf77696d5c116867360299f4be53f": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 567
+ },
+ "61c45eeaff1e70025050da7b68485128cd30ac2da7c8f9c11192c9141d068077": {
+  "completion_tokens": 2,
+  "content": "show_menu",
+  "prompt_tokens": 585
+ },
+ "629ce10c2166790394e00e9a856b1eecba6ce0bbf2bfc7afa76c39db656e0171": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 549
+ },
+ "6309b4ddb9fd8c5df8b3c50a5d9afad53827d913aec6225f19dda4f05c7ae61f": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 582
+ },
+ "66285828b6a09d03117f455ccbc9eb1b0d66e82e57ce08b7e6e8d8145e3860e1": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 601
+ },
+ "67a85cde566b6c4afa7835bd5f1cee502723ebfd2d4a8060c9aa4a64f55dbf8b": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 592
+ },
+ "68328940f12d307bbd34bf4ef8b290492da36c389dd519f943063f3c31fc38c6": {
+  "completion_tokens": 239,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"colorectal cancer screening\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4943
+ },
+ "6857f06a4ab4f1739b3ae7d99ae7e929d8f37e6bd0f28b2cddcd61681db9e2f2": {
+  "completion_tokens": 243,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"headache\",\"symptom_location\":\"moderate\",\"symptom_onset\":\"since yesterday\",\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":\"constant\",\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[\"symptom_severity\"],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4975
+ },
+ "68a5b637fa734c0d070ebe34c03e50d5c4f5167449ede315f21cbdbf979cb494": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 309
+ },
+ "68ce7611314ab3c430d08779c2634d0fb65a164d0b83a511b3bf32aef9f28352": {
+  "completion_tokens": 247,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"sore throat\",\"symptom_location\":\"mild\",\"symptom_onset\":\"three days ago\",\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":\"comes and goes\",\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[\"symptom_severity\"],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4983
+ },
+ "69892f19dc58c59a55c90f0eb98c82b6d5adefc3a9bf4bf1d4e867b0b0fd6b59": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 420
+ },
+ "69d47c8f002dbbbfe27d7b1dea1d498b39fda7ca3cef60de668d158e1836d26f": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4942
+ },
+ "69d653c8eb377d33ccb20bdfaea4459b45644b3fed48e3ce4059274f1cb2d4cc": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 583
+ },
+ "6a2ba637572f5274acfcc0d1aa018d05cedf4c384a708121d4482854b4c50066": {
+  "completion_tokens": 18,
+  "content": "{\"field_path\":\"current_medications\",\"question\":\"What current medications are you taking?\"}",
+  "prompt_tokens": 699
+ },
+ "6a9d191708cc1ae8d90260e80ae6fa1aad547c3b00951b6e277ffaeaa8ff75cf": {
+  "completion_tokens": 240,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"sore throat\",\"symptom_location\":\"mild\",\"symptom_onset\":\"three days ago\",\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4974
+ },
+ "6ae68814d1fcc341a5fa7a3b389c50c3ee7c603b1537f2146c90cfe2aabcf6c4": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4941
+ },
+ "6b0447baded32c401500c582364a83fec5f80ac439cbbce426ee41b3ead619f9": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 594
+ },
+ "6c0c02e5955c30bbe6f33c3779954b929b59e1e3da5ba414364b50be8a6389d7": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 491
+ },
+ "6c11016b9c94cc689d01061372ec0d08973540cb6cdce994db8009754bdcf625": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 580
+ },
+ "6df6a1c9a7505dc508d3ead5fd5c58c4d3d3c113e593d9f572284d2851480e5d": {
+  "completion_tokens": 238,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"chest x-ray\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4965
+ },
+ "6faa94e715b5e321baf107ca5d631ab384e909672100f10c76de356dd0951ff3": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 620
+ },
+ "70160b6603f436d063dcc5d89ad6589ffd2b4ba42fb661fb32492db363d37a81": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 598
+ },
+ "71e82ed1a42caff64dc4545dabad318c87708868dcb4b6e926d6b77b46e5df80": {
+  "completion_tokens": 237,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"neurological exam\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4963
+ },
+ "726db7afa482baf32d1dd739f542554c89840d0acfe0d6aa10dbda05abdfb78f": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 614
+ },
+ "733ad0408caea975563b85b63d6c17dcb95ecaaf2c786505f8edef26146fce20": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 402
+ },
+ "7351f9b1ad35b220aebcb4a3041817272cd2406d251aee886ee32972dfe36714": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 546
+ },
+ "737bb4a39087690aac13ec787ad7285d242747bd6175a999046b19ba273e0bd7": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 333
+ },
+ "739b667d9c24f27d6d7482fdacafa57aaf86601dd060051465b3b97008330f00": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 581
+ },
+ "74230a38d1c1c5682d0c2d3b531f5baef08e7f8bc9b22f36f6615c95213d474b": {
+  "completion_tokens": 18,
+  "content": "{\"field_path\":\"current_medications\",\"question\":\"What current medications are you taking?\"}",
+  "prompt_tokens": 700
+ },
+ "7555100e4840e3bdc43d55bc4ed1d170e1968a5e32d9191a4106c0ae51579fff": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 288
+ },
+ "764b9382ed80b74e9c1c146d8c94e1aae72551058cdb95b15804ca1a0f7c194b": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 419
+ },
+ "76ad1fe18c7b37479b3279dd9518da789db4e7bd972de6ff9b99d520d75fd1d7": {
+  "completion_tokens": 18,
+  "content": "{\"field_path\":\"visit_reason\",\"question\":\"What is the reason for your visit?\"}",
+  "prompt_tokens": 704
+ },
+ "783748040fcd7723087e6afb542789ad8271dd3a183e3e9da9a6b8f08dc91d4b": {
+  "completion_tokens": 20,
+  "content": "{\"field_path\":\"symptom_duration\",\"question\":\"How long have you been experiencing the headache?\"}",
+  "prompt_tokens": 710
+ },
+ "78ed3e9dc7ea471bd25b0c0dd4075fa8a462270c2f66e6565f955637212165e7": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 582
+ },
+ "78ee0dccec49e38d204fb605a889eb2e9c037f1a0bae2cf98a26b19363f122cc": {
+  "completion_tokens": 249,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":[{\"allergen\":\"penicillin\",\"reaction\":null,\"severity\":null}],\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4945
+ },
+ "793b32268c5fcc5ba76772dfd4dce198775e4d59281d20058645b10c53be40fd": {
+  "completion_tokens": 46,
+  "content": "Yes, CT scans use ionizing radiation at levels higher than a standard x-ray, but the amount is kept as low as possible [1]. Always tell your provider if you are pregnant or think you may be pregnant [1].",
+  "prompt_tokens": 867
+ },
+ "79f833973f7cc785bb40050cb5c4e158faffb9e7f7cc1c4d90090abc5821fa0f": {
+  "completion_tokens": 236,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"endoscopy\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4962
+ },
+ "7b87d6910c989279831e9c9a2655e454630f209be92a3beac9e6b4523fa433c4": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 580
+ },
+ "7c60bdf5d14109f9d595d9da5d000251d043ed8150e3290bff9d3479036e7c5d": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 547
+ },
+ "7cba5408e7052d9ae1951141c116efcd5ab01814b3d0a81ede1d94e0b7a57543": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 580
+ },
+ "7ddb38858acd7db8c3831826221ef51b7e7415654553fa64307822d35c23c824": {
+  "completion_tokens": 253,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":[{\"name\":\"ibuprofen\",\"dosage\":null,\"frequency\":null,\"purpose\":null}],\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4971
+ },
+ "7def9c7a851762c01e136201ec25bf978a8cc61071029efd4f8c2205c786fc57": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 334
+ },
+ "7e6ddcc33e26ad9c890c015ac3cac0e368781442ab2a983fc670819e643419c9": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":\"unknown\",\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4963
+ },
+ "7f6645e88b4814b64f144795655253a85eb4c1e689ac4f58eb53c4da410c1bd7": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4945
+ },
+ "7f876e26765dd36ca7d46ec1aeaf8d21d9dc6a38a6ddd73dc3ace012549be770": {
+  "completion_tokens": 26,
+  "content": "A virtual colonoscopy is not recommended if you are pregnant [5]. You should discuss your situation with your provider for further guidance.",
+  "prompt_tokens": 1947
+ },
+ "7f9edb31600c7367131eaf31ec9a59f77516986ca93e670f063ada1687ceee0b": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 593
+ },
+ "7fbcc290d3c10facf7493aaed0f00251cc67fcf202cfd5eb39c0488fe6dfd1fc": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 545
+ },
+ "815037141aaea9c9c07b161372273c34c10debc3482ab5e1aab3e72d3f66e78a": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4942
+ },
+ "817f950e82474e2eba2bd6e8b464a10aa6afcdb17a2c9ae21cf68c96ba6cde07": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 593
+ },
+ "82b497054bfa166b0624ec9e03f2477c4701a05d02386176a03df0f287c2c309": {
+  "completion_tokens": 37,
+  "content": "No, you won't be awake during a colonoscopy. You will receive IV sedatives or anesthesia, usually along with pain medicine, so you won't feel pain during the procedure [1].",
+  "prompt_tokens": 1714
+ },
+ "83876d8520b30c4013794e76642ca31b1447495d095ab1085a3284de442e9838": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 582
+ },
+ "83fe60ecf4e92198519f90a8f0377c31b9ea877a3d1716461ff629e9aef77d61": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 335
+ },
+ "84216fe5d136b5d843877021ae00296a2d6735e58cc1ae31d2cb3ae3419a1cf1": {
+  "completion_tokens": 239,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"guaiac stool test\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4966
+ },
+ "857fb272b58f60d44b0d6bc95e87489c750a12c08e184c577e8442eb912941ce": {
+  "completion_tokens": 56,
+  "content": "Before your MRI, you should tell your health care provider that you have a pacemaker, as it is a metal or electronic device in your body that can interfere with the scan and may be unsafe [1]. It is important to follow your provider's guidance regarding your MRI appointment.",
+  "prompt_tokens": 858
+ },
+ "85b68477f8020f53506d704de3c10d2a3b2455ff2a66869cbde142a5b11fb8f8": {
+  "completion_tokens": 36,
+  "content": "No, you should avoid red jelly before your colonoscopy. The dye in red or purple gelatin can look like blood in the colon, which may interfere with the procedure [1].",
+  "prompt_tokens": 1882
+ },
+ "86078330fc915b158855252fd02fc7cfcc69a129cd854fe39e18bac5355f10dd": {
+  "completion_tokens": 240,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"preparation for a PET scan\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4962
+ },
+ "86faa9ddb4065d476b3740e237f0363759b34275ff2a08e042e46866bfced94e": {
+  "completion_tokens": 18,
+  "content": "{\"field_path\":\"visit_reason\",\"question\":\"What is the reason for your visit?\"}",
+  "prompt_tokens": 712
+ },
+ "87d04e1ca460a08b1d8c3103ea0e8ae3100cf27845fe1404b4e4c9271f4ff356": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 585
+ },
+ "88657976ecff2c5e0da8cc9b9f5b480f44fd0c51e4da71fbc5bce0f92ad5a2db": {
+  "completion_tokens": 12,
+  "content": "The exam should take 10-15 minutes [1].",
+  "prompt_tokens": 1860
+ },
+ "89bfbf49883f873bc2c0db75dde5b5190b4f58dd406c5e59912924afcd049540": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 582
+ },
+ "8aeff922dd197578cf1f99bfd5ffa6df966623c6dbb0e454012a305a411b2bf3": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 444
+ },
+ "8bafe4a7dea6c03e4f31dc9b16291fb1b1030e548b7ff140889bc02520d8aa9f": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 563
+ },
+ "8bf30e5b92b2adbcc5242e1e31988c6c813690ff55b07f7514de8fdca8749f13": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 614
+ },
+ "8c72971f22ccc96bbfbc1af1b6b978a1c51168cddd671d305c59f994807dcaa0": {
+  "completion_tokens": 41,
+  "content": "You may be asked not to eat or drink for a few hours before the scan. It is best to ask your provider if there are any special instructions to follow regarding fasting before your CT scan [1].",
+  "prompt_tokens": 1462
+ },
+ "8d2b4d1067161cd3ce6fd53a4492296c31d848771aa95da2810818154066f58f": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 583
+ },
+ "8deffd269ef78818799996f8189adbf2628c99f8f6ec94748b00b1ad0f6c4ec9": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 285
+ },
+ "902482df6a9a3e4e9c5149c0fa0d26d417a0b2e20c31023d0f6c1954aa4966f5": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4943
+ },
+ "90fb2327adfa4201c5440763bc826e5c9bd54ed032a361362a11cb7c229e62f5": {
+  "completion_tokens": 95,
+  "content": "Fasting means you should not eat or drink anything except water for up to several hours or overnight before your test. This is done because nutrients and ingredients in food are absorbed in your bloodstream, which might change the results of certain blood tests. Fasting can help to improve the accuracy of your test results. The length of time you need to fast can vary, so if you do need to fast, make sure you ask your provider how long you should do it [2].",
+  "prompt_tokens": 1557
+ },
+ "91b625b024bb65b061c37163f873996ac7db3eb78a8c7ae1c413d5ac02167edf": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 545
+ },
+ "91bead7d88a370a5cde71ae59eff23bec1cac7ba893ed600b184aabb4828223f": {
+  "completion_tokens": 109,
+  "content": "For a guaiac smear test (gFOBT), you may need to avoid the following foods and medicines for several days before your test:\n\n- Nonsteroidal, anti-inflammatory drugs (NSAIDs), such as ibuprofen, naproxen, or aspirin\n- Vitamin C daily from supplements, fruit juices, or fruit\n- Certain vegetables, such as broccoli and turnips\n- Red meat, such as beef, lamb, or pork\n\nYour provider will give you full instructions on how to prepare for your screening test [1].",
+  "prompt_tokens": 1777
+ },
+ "92b3aa1978eaf4766bf2565da69a10c16b33250945705439ae2f417609e04645": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 443
+ },
+ "93714c689f0c818ed0cf3e4703e8e2a553dcb81c697363ac7ee9203183fc5228": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 548
+ },
+ "9380892aa8406b8710183656a698fb593b110306b7dee112275d4d79c17359bf": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 336
+ },
+ "94162f1d8c726394371db87f91f0f93f71d53baba36debb845fe368b710dd28a": {
+  "completion_tokens": 247,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"sore throat\",\"symptom_location\":\"mild\",\"symptom_onset\":\"three days ago\",\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":\"comes and goes\",\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[\"symptom_severity\"],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4980
+ },
+ "94dc8b00e9b5ed1955979e55034b0672ed4850b819b61930e20f2ba4e8e27de7": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 566
+ },
+ "9620006d9e886dd9557a8318334981414671713e4b8e956dd4d0f9d3bf1a0658": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 579
+ },
+ "9656d611ed02090a33c088075bd919723c6f712f0cd3cd410c7911eb87d1b152": {
+  "completion_tokens": 237,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"skin cancer screening\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4943
+ },
+ "96d2faebdc01d7e906858590905b5cdf217ce0410779b88179920d52d25c08f7": {
+  "completion_tokens": 22,
+  "content": "{\"field_path\":\"provider_name\",\"question\":\"Which healthcare provider will you be seeing for your mammogram?\"}",
+  "prompt_tokens": 706
+ },
+ "97d90612d95239cd2daaf2b4376d21baef679a88e1d61fa0b178b522bddb21c7": {
+  "completion_tokens": 18,
+  "content": "{\"field_path\":\"current_medications\",\"question\":\"What current medications are you taking?\"}",
+  "prompt_tokens": 700
+ },
+ "984a40cad523209ce44057ea0a6f52d221a0755a4e5a036ea569515a663cbee5": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 419
+ },
+ "98cd5f97a8992f75171a88efa3919225f96b1117ad08ead48b609b216c509505": {
+  "completion_tokens": 59,
+  "content": "You should tell your health care provider that you feel anxious in enclosed spaces (claustrophobic) before your MRI. They can discuss options with you, which may include using an open MRI machine, which is less enclosed [2]. For further details on your specific options, please ask the clinic.",
+  "prompt_tokens": 858
+ },
+ "99960c688bc3289197a56b2bd01336019c5babc07c3d23da6e5bcfa90e2fc9fe": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 617
+ },
+ "99d41b88fe587e78479cac293ccf02b6db8c5f2a0abfdb71d49f2ee27c3386e5": {
+  "completion_tokens": 237,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"colonoscopy\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4952
+ },
+ "9a0a9bea620d0666d8fc9cf829415ec8f68707b708b02e4ff533f5d9dae3ce6c": {
+  "completion_tokens": 224,
+  "content": "To prepare for a colonoscopy, you will need to follow these bowel prep instructions:\n\n1. Talk with your doctor about any health problems you have and all of the medicines and supplements that you take. You may need to stop taking some of your medicines and/or supplements before the procedure [1].\n\n2. Follow the bowel prep instructions from your doctor, which may include:\n   - Following a clear liquid diet, usually for about one day before the procedure. Avoid red or purple drinks or gelatin, as the dye can look like blood in the colon [1][2].\n   - You probably need to stop eating and drinking the night before the exam [1].\n   - You will need to take some laxatives, which may be pills, a powder that you dissolve in liquid, an enema, or a combination of these. The laxative will cause diarrhea, so you need to stay close to the bathroom [1][2].\n\n3. For a virtual colonoscopy, you will also need to drink a contrast medium the night before [1].\n\nMake sure to follow your provider's specific instructions regarding the bowel prep.",
+  "prompt_tokens": 1904
+ },
+ "9a30b2f1c6e3400db20b2a07e71932f87843e97b3db8bdb3151452390af79106": {
+  "completion_tokens": 23,
+  "content": "{\"field_path\":\"provider_name\",\"question\":\"Which healthcare provider will you be seeing for your allergy blood test?\"}",
+  "prompt_tokens": 707
+ },
+ "9a599fcd4132fbb0370a2d70536c3e71e0ac2d319da41d12a860e6a044896b9b": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 614
+ },
+ "9ad82dbeb395ad52b23c12875899eaec59ed7a7ec1599f2877fe6a6756bb59e6": {
+  "completion_tokens": 2,
+  "content": "show_menu",
+  "prompt_tokens": 581
+ },
+ "9add3c28d56a9c8eda5b02919fae32152fa2746a75d5e63629d49027a43f4bb1": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 325
+ },
+ "9c776d038f1dd82fda6157d8f4cbd4f8392b215b4bd93d5c9ee4c2efe158d576": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 419
+ },
+ "9c831dd14aa60d76026fe4135d986087353e10e5d49f28bad817f539398543db": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 587
+ },
+ "9cd38963e77014b66f32bd83ef8b065a84b729354d3e6c343aa2c4bc6f3fe894": {
+  "completion_tokens": 255,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":[{\"name\":\"antihistamine\",\"dosage\":null,\"frequency\":null,\"purpose\":null}],\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4949
+ },
+ "9ce7ed12c2fa604eccff664f300cf001ee559fac4ceb58c4e62cec1edfc18088": {
+  "completion_tokens": 21,
+  "content": "{\"field_path\":\"appointment_date\",\"question\":\"What date is your dermatology consultation appointment scheduled for?\"}",
+  "prompt_tokens": 707
+ },
+ "9d6bcb51fc269d3179087134d46be66e63370767a781b3204c6e953eecb11fe4": {
+  "completion_tokens": 54,
+  "content": "Yes, you will need someone to drive you home after a colonoscopy. The sedative or anesthesia takes time to wear off completely, and you'll stay at the hospital or outpatient center for 1 to 2 hours after the procedure before you can go home [2].",
+  "prompt_tokens": 2015
+ },
+ "9dc245d8ce879e590c39f4f97e6281870d7374c1f93ceed8e7d62688bb16d61e": {
+  "completion_tokens": 237,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"hearing test\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4966
+ },
+ "9dea2311a3e2687d3e2dd459ce4f769e057a140eb67fcb3a3e70d754e3d45b4b": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 311
+ },
+ "9df4d4f364b5f90fde82f11688523b176c5b8aa566eedae5cfb4c145929750e1": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 451
+ },
+ "9ee249de4d230cf1e0815d73807c4554d0236631684f7fde41ec94cb16716ed5": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 611
+ },
+ "9f613d5d6cdcc650c09380fc323cec2acf693eac04f9d33901d1d9205144986e": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 579
+ },
+ "9fc5a7f3541c23e588b445c0f2321e2b806858054c744d8d86c2b4e649f54ace": {
+  "completion_tokens": 243,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":\"someone to drive me home after a colonoscopy\",\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4966
+ },
+ "9fdbc429848d3d0ad92d8ed05f3a67932c49be95240ac17495661643ce644b78": {
+  "completion_tokens": 30,
+  "content": "Yes, the MRI machine makes loud noises as it takes pictures. You may be given earplugs or headphones to help with the noise [1].",
+  "prompt_tokens": 850
+ },
+ "a0084bd69d739a00311e72e6e52cb444cef06546bb0cd1c40b96f1b1a5a62ff1": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 537
+ },
+ "a15ee944622ba95462bebedb053740742a6f67fae7d5ad4962f8a2aae71f8428": {
+  "completion_tokens": 121,
+  "content": "For many lab tests, you may need to fast, which means not eating or drinking anything except water for several hours or overnight before your test. Fasting helps improve the accuracy of certain blood test results. The length of time you need to fast can vary, so it's important to ask your provider how long you should do it if fasting is required [1]. \n\nSome common blood tests that require fasting include the Blood Glucose Test, Cholesterol Levels Test, and Triglycerides Test [2]. If you have a specific blood test in mind, you should check with your provider for detailed instructions.",
+  "prompt_tokens": 1825
+ },
+ "a2fe761f52a6d142a4e364c209d387f38c27bbd30f91cfebdca0c499adcf9ad1": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 289
+ },
+ "a390f9d03705bc6b12dc590b9767e6b75dc86e8e2a892e1f67526a659e35f4a4": {
+  "completion_tokens": 3,
+  "content": "report_allergy",
+  "prompt_tokens": 586
+ },
+ "a47125cee8992839a059ec4f85b1301e571765800271b0d3a457f01d2162610e": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 313
+ },
+ "a47bf39e4289e6bc6fe7f9094a30bb850a109516290169d48573bcaf4efbb6f6": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 613
+ },
+ "a58e56069b40f9a5659b5e145140335a76f6259d1be448639efa8a605a3b1895": {
+  "completion_tokens": 23,
+  "content": "The context does not provide information about fasting before an MRI. I suggest asking the clinic for specific instructions regarding fasting.",
+  "prompt_tokens": 984
+ },
+ "a5f79adda68041dbce2aea2661cae36297ab82ed2f6b23e4aaf9b6f3d8dc609f": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 546
+ },
+ "a71b8ba9d166a080b9803940ee9dcc6d9510fae503ec12f40319c8c152667f2d": {
+  "completion_tokens": 29,
+  "content": "I do not have information on the preparation for an upper endoscopy or EGD. I suggest asking the clinic for specific instructions regarding that procedure.",
+  "prompt_tokens": 1810
+ },
+ "a7bda249fe2fb476c0c30a430ff8e3d4022a39ac3b114d60cf27733d11931a11": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 347
+ },
+ "a882afacd578012f274efdacd851d5c636a73a39deaff96fcd259e7fef0c556d": {
+  "completion_tokens": 237,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"skin cancer screening\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4963
+ },
+ "a8ff056f80fbfddd4df29878f54e92413c30ec5bb12a1ac0a5ba0d08f93abd63": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 582
+ },
+ "a919122d545434b509c9277b3aa21734eaae7345f249098aeaf4023711eb7db0": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 298
+ },
+ "a93a747e8732326f6a3cbc9df124e02a8eb5e2ced86da6e6a3c543c54e9bdc50": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 489
+ },
+ "a987771ac2465c49ef386f03e946e30a6f6e269ea04dbaee545c5a7d68ce47e4": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 446
+ },
+ "a9cce0cf367a57ab91bcc40ebd323628b4458141a7775de86173977d5c3ef8c1": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 563
+ },
+ "aa5761b6d248a16823a77d5adc7998391cb817c3dee6af8f159db71941c8341b": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 581
+ },
+ "aaf2af54687b8fc5be3857cf378109b9be948b797dc61999894d65ffb7177720": {
+  "completion_tokens": 241,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"mole with a ragged border\",\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4976
+ },
+ "ab2476cc76308646d84f504d966527ccfd6b73632e151d78e0aa110b24e9c9f7": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 585
+ },
+ "ab967353be53cf4913445e306f312d459773d29667f9bf0b96abce9aafe4efc2": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 443
+ },
+ "ac8c3b2e94a4a7c04c6b4c67db64749ee9a829edd976cc3cc15fd001738287e8": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 585
+ },
+ "ae259c6fee042767e3396d710412351cf30db67cacecba6f460b37d5ba1cce25": {
+  "completion_tokens": 237,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"headache\",\"symptom_location\":null,\"symptom_onset\":\"yesterday\",\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4970
+ },
+ "ae873934f7aabc4bcf1ccf5e4cf316652c88fc5f45a71682267ffaead6df5cbd": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 355
+ },
+ "aebdf79f9268e94e6a444fe79658af590cee8ccc9486b53bfdd87ebd0bf8c161": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 593
+ },
+ "afefae57af20ad2dd42bc0375daa90e1ef38ca29acc9143e5680877ae6627d73": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 587
+ },
+ "b1670868ec2edd452597de54f56c6d99422d1a40d57cc70f7503a85dc6014dfd": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 310
+ },
+ "b31f57a31dcb349181a1fe6c16037d74043d7e903890579f4992e75aeeac69bd": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 563
+ },
+ "b35b3d8a7f01a87f2782bbe459828c6f26960e0ee58294c19cc41f220ed0aac4": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 590
+ },
+ "b38df486c15c925a1b201d5e0fcfab7a151c1758cb2a16fecbe50be8ac942efb": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 335
+ },
+ "b53f28d35317e7c0f947a3fb8e693959f84064e779873e20b75668611ca8ce79": {
+  "completion_tokens": 26,
+  "content": "The context does not specify how many hours you need to fast before a cholesterol test. I suggest asking your clinic for this information.",
+  "prompt_tokens": 1567
+ },
+ "b5452bca3d3a8db7c7d00f0f58d653bf5ff3a074955043ea57c89f3f623a1dd8": {
+  "completion_tokens": 22,
+  "content": "{\"field_path\":\"provider_name\",\"question\":\"Which healthcare provider will you be seeing for your hearing test?\"}",
+  "prompt_tokens": 706
+ },
+ "b557dd7b59fc10f40e5f45fd399792d7c123148797ce2182143b5f2fef723c6f": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 498
+ },
+ "b5e0c4d370a615b48eaf25e005ebbcab832ac44a6f92a257f9afa1cbfae26357": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 453
+ },
+ "b79426e2b540ac61b39a1fd93378de0a359c0b4490cbcbec9be7655c6a7a3872": {
+  "completion_tokens": 33,
+  "content": "The length of time you need to fast can vary. If you do need to fast, make sure you ask your provider how long you should do it [2].",
+  "prompt_tokens": 1824
+ },
+ "b7c420ad63758fd2b6ef7a0f984b89a4bb6d6d055ee21f709f409e7b81fd4b7c": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 550
+ },
+ "b85f117e2b252de4a5252afbd886749e7bdcb324f32e4a8030b7f98bfe734692": {
+  "completion_tokens": 247,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"sore throat\",\"symptom_location\":\"mild\",\"symptom_onset\":\"three days ago\",\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":\"comes and goes\",\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[\"symptom_severity\"],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4978
+ },
+ "b9b59d5431eeed2fdb1c4c23f9ef4a57728ad7e7d20dc626102e78b8c503dc3e": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 594
+ },
+ "bba622872870223aec199a9189e67bd2497b944644f026cd06a6a8fe63fe9156": {
+  "completion_tokens": 18,
+  "content": "{\"field_path\":\"current_medications\",\"question\":\"What current medications are you taking?\"}",
+  "prompt_tokens": 699
+ },
+ "bbdea49d303089a35b594c53e27f361d0f782a4fd83ef4d0f11d2c3ca430b9d5": {
+  "completion_tokens": 18,
+  "content": "{\"field_path\":\"current_medications\",\"question\":\"What current medications are you taking?\"}",
+  "prompt_tokens": 706
+ },
+ "bbf282eaf2675d80be951f739959c1514606ac5ec692e277b77a84961be0a63f": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4962
+ },
+ "bc9a93eaca833d1fc30400c00a42e0d8127ed9e5fd7cf326483ce554c4974ed8": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 619
+ },
+ "bcba58b949f30890b6c6e34d146a6cd57b0f7a97b423f28acc9217238b547343": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 596
+ },
+ "bcc1f389deff92485267c89089af528cb69b50c74fee6de099c84302487e5853": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 449
+ },
+ "bd03d164adb0a95f31711f029270cd8f9ce1699afe9184c5860eaac26e7d0b90": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4942
+ },
+ "be449eea3761fe8673bf46cc241bd1235e81740f979834392e93001f80b2a40c": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4943
+ },
+ "be7774fe8cf4a6776135520d0008e1477fdd3dc372bec171f3f66e314d8f94a9": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 394
+ },
+ "bf459fe66f99b4651d3e3d2362045c64e76b60296b7a26cd3964f72441799c55": {
+  "completion_tokens": 237,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"sore throat\",\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4968
+ },
+ "c117dba237a05d48ce82dc381df8696d8e7c07fc7549e995fdaf765c5423018d": {
+  "completion_tokens": 32,
+  "content": "{\"field_path\":\"symptom_severity\",\"question\":\"On a scale from 0 to 10, how would you rate the severity of your headache?\"}",
+  "prompt_tokens": 714
+ },
+ "c15961e216fe8d013b37bb68497cd193dd2ec078afd16af729b95431d7d7eb23": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 285
+ },
+ "c1a4e9515769d6a7e0740782bf3645778680fa32e221ff56ee671dbb8f74f21e": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 280
+ },
+ "c1e7cd545a218a8ab3f6e3b815042e570ff1485777a408a784f1372a70c31073": {
+  "completion_tokens": 55,
+  "content": "Fasting is required for some blood tests because nutrients and ingredients in food are absorbed into your bloodstream. These nutrients might still be present when you have your test and could change the results of certain blood tests. Fasting helps to improve the accuracy of your test results [2].",
+  "prompt_tokens": 1566
+ },
+ "c1fa4e05d5206150dc0a446d0d119fd223d98a74cccae7154bc777a9970b749f": {
+  "completion_tokens": 29,
+  "content": "{\"field_path\":\"symptom_severity\",\"question\":\"On a scale from 0 to 10, how severe is the throat swelling?\"}",
+  "prompt_tokens": 744
+ },
+ "c3ccbc73c44a1841cf1de1d09dfb7493b148a76e7c8a06cc169f87eb71c979e3": {
+  "completion_tokens": 2,
+  "content": "show_menu",
+  "prompt_tokens": 578
+ },
+ "c52d56eeb066133079687f2e0eaeed6c0eec83cecdeafd52d459e32b1544a364": {
+  "completion_tokens": 23,
+  "content": "{\"field_path\":\"provider_name\",\"question\":\"Which healthcare provider will you be seeing for your skin cancer screening?\"}",
+  "prompt_tokens": 706
+ },
+ "c6fce28d01b06c67ecdd9c642abe29b106ffe18419f342a6a70e19837943e929": {
+  "completion_tokens": 238,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"allergy blood test\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4964
+ },
+ "c72da8365c295deae5ef5a4e5f28987cb576df753b7c7880d3e0e55a3ae3239b": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 581
+ },
+ "c7ae8e0d205f6cf300f6e6478f9475cf5822f837e537e4f384b2ceee7c4456c3": {
+  "completion_tokens": 59,
+  "content": "You don't need any special preparations for an allergy blood test. However, you may need to stop taking certain medicines before the test, such as antihistamines, so it's important to tell your provider about everything you take. But don't stop taking any medicines unless your provider tells you to [1].",
+  "prompt_tokens": 1107
+ },
+ "c8dd4cb2464b412a0e65cbc4e57ace5d2fb21f034ceaeab04eaac8facfe7a8ab": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 586
+ },
+ "c97a817e797fcbdaa483f59d06362c9c1bfb6455b9bd2c022fd718631778b4b3": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 584
+ },
+ "cba1f5a0ff2cd05ef6c9c13bd916acde406b9e7477e54f43868548d56ff76999": {
+  "completion_tokens": 18,
+  "content": "{\"field_path\":\"current_medications\",\"question\":\"What current medications are you taking?\"}",
+  "prompt_tokens": 701
+ },
+ "cc704e30c2e7063f70c1e0edfbe6cb2fa9b18027aa0fa434433273a0ebb03d5d": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 581
+ },
+ "cc8ee80e7ac459c40480400b18fd0f27f44610a88a5f50e6e7fbeddd6bdaf021": {
+  "completion_tokens": 18,
+  "content": "{\"field_path\":\"visit_reason\",\"question\":\"What is the reason for your visit?\"}",
+  "prompt_tokens": 703
+ },
+ "ccdcb4be1cfd7c645178f8cd19daac3c293cd2921abf197b8fe1501e31024ac2": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 581
+ },
+ "cdf687cfbb39e8b5e3bb125790717c66c0af0aa3a22692040289ce64e980fb80": {
+  "completion_tokens": 237,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"colonoscopy\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4943
+ },
+ "ce997a289b828c08ebc288504a758e4d5ea8c6289c81efe26deac87d814d0c4a": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 581
+ },
+ "ceaee0bc8e38b73a6ee9695c43db45c687a0bd458abdb9ed5160c65cb60dcab9": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4960
+ },
+ "cf76a4f6f99fa6e943b17057252e28038330a86cf3b84cea2e2eee3b082c3356": {
+  "completion_tokens": 58,
+  "content": "The context does not provide specific instructions for preparing for a urine test. It mentions that you may be asked to drink water 15 to 20 minutes before certain urine tests, but does not detail any other preparations. I suggest asking your clinic for any specific instructions related to your urine test.",
+  "prompt_tokens": 1818
+ },
+ "d50133cc3992473e52bb8c59deb2dea6337990b2cc898e46652f158a28dbea55": {
+  "completion_tokens": 244,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"preparation for an upper endoscopy or EGD\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4947
+ },
+ "d57939d3576b34983a351cf86b16d8f00287b75af7f6858c01bb490b764fb96f": {
+  "completion_tokens": 250,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"rash\",\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":[{\"allergen\":\"amoxicillin\",\"reaction\":\"rash\",\"severity\":null}],\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4952
+ },
+ "d5a4b757d6022927abfb4bafc99048b45171fbe6815840659f2eb438032a7a7c": {
+  "completion_tokens": 23,
+  "content": "The context does not provide information about fasting before an MRI. I suggest asking the clinic for specific instructions regarding fasting.",
+  "prompt_tokens": 985
+ },
+ "d6061fe1e78107c6acca07fdd85ec74f794f41e5a6a153075c4482fee27712af": {
+  "completion_tokens": 239,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[\"fasting_status\"],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4974
+ },
+ "d62ba5bec23d31b89b22272a7f0842261718c066acdfc60c435d8dd7a594d2e8": {
+  "completion_tokens": 25,
+  "content": "{\"field_path\":\"provider_name\",\"question\":\"Which healthcare provider will you be seeing for your guaiac stool test?\"}",
+  "prompt_tokens": 708
+ },
+ "d687d393f0df6e9e6801af5bfb6e4a35e4e1328030fb99977d4eef410d694b76": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":\"daughter\",\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4973
+ },
+ "d6a0b67a8bdaabcd9f2cf6bdee5addf8cd13942b281efdd100073a0c974b2264": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 562
+ },
+ "d6bfb0d2dfe1ebf92deef33d125cbb5577d67ee70b2e8c37327bede11d0f621c": {
+  "completion_tokens": 13,
+  "content": "You don't need any special preparations for a neurological exam [1].",
+  "prompt_tokens": 1233
+ },
+ "d6e2accd555f972d3f363f78240a997cf6b10ee0e9854cc06af4bb3ddb42daf4": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 547
+ },
+ "d77a4bd60a3b047aed64227ae7f007cb472498013dd78a43daf22cd331ae4e91": {
+  "completion_tokens": 238,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"options for an MRI\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4967
+ },
+ "d787612972c45357616b11562887b42c032f2c11d1465fd8048849033f93adad": {
+  "completion_tokens": 83,
+  "content": "Some of the most common lab tests that require fasting include:\n\n1. Blood Glucose Test\n2. Cholesterol Levels Test\n3. Triglycerides Test\n4. Calcitonin Test\n\nAdditionally, the Creatinine Test may require fasting or avoiding cooked meats, and the Cortisol Test may require you to avoid eating, drinking, or brushing your teeth for a certain period before the test [1].",
+  "prompt_tokens": 1817
+ },
+ "d8554f6390e516c091904935c44befd098ed832ceaebd682ad2449d741d74bc5": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 614
+ },
+ "d952fc99ba736cb57a01cb56217ed1ba9f8e2c0c444b7cc8776e3fbd2b6f9a5c": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 339
+ },
+ "da5c282c04c8ed9ef0fd1d952c5a35c202583a4ab4fd27aa9d18ae96c1d7ef46": {
+  "completion_tokens": 236,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"headache\",\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4967
+ },
+ "da9852c445ce396de33ab31b7718175954ac19fb7c27e2a23a81fd7e935e30e8": {
+  "completion_tokens": 4,
+  "content": "report_new_symptoms",
+  "prompt_tokens": 587
+ },
+ "daf83c2f541c607ba0575ce76b734833abba80820c8570944fb68d9460146d2a": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 582
+ },
+ "db27f4b4343ddac2478bba257a1f340b07cacfe7282d447f44636be2aafe29dc": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 583
+ },
+ "db9a8302e2f6dfed8e162a67a388659973cecfedfe69d83213e29e940bd6d271": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 331
+ },
+ "dc0cd54f6e27afbb36c6b59ed0fb4c51460258bedfb373af9cc1c4092bdbeeee": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 394
+ },
+ "dca8381e645e1aa5c54e436966cc48ec1cf2a0533f1c5c24508fcbd689223bbc": {
+  "completion_tokens": 82,
+  "content": "Rapid tests are not as accurate as lab tests. They have lower sensitivity, meaning they are not as good at identifying diseases in the earliest stages of infection. False negatives are more common with rapid tests, which means the test may show you don't have a disease when you actually do. Because of these possible disadvantages, some tests recommend doing the test again after a negative result to confirm the findings [1][2].",
+  "prompt_tokens": 1592
+ },
+ "dce006510cf5a3fdb1c4fbea79db07bf12f7df1d1086ea696c6998694e24dfaa": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4962
+ },
+ "dd0811783d0fc4cd06ab51db27c46bfeac9e8107513d123810e36154c6644383": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 491
+ },
+ "dd5b0e5186f080f3789647fa5f496c835a4d5cd0f9da58f63c8099dae64e0654": {
+  "completion_tokens": 17,
+  "content": "{\"field_path\":\"symptom_location\",\"question\":\"Where is your headache located?\"}",
+  "prompt_tokens": 715
+ },
+ "dd5d0d84ff0551230111ffcc4a61dc2dad307613dcba6f2ed8654f0079e6d51f": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4962
+ },
+ "dd6abac7bd6da1e551082bc012e1d379370fc2159d60d4e9acfd9c9526b01043": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 581
+ },
+ "dd798f61b895e6bcf4db60406897ce30314b64f91ad73ce1e7d2c5412dccbbf9": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4940
+ },
+ "dd870123c5b6ec9285b40702f2e66e39380b767b36ab587175b7e2c7b05918c6": {
+  "completion_tokens": 239,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"sore throat\",\"symptom_location\":null,\"symptom_onset\":\"three days ago\",\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4974
+ },
+ "de41c96921c3b5721ffeade7aa606e2994e5daa5c70eded53384686354c0341b": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4962
+ },
+ "e090a890c1c568c62d37b6efc5b07a9309c46344a9d22f60dc737364a5884950": {
+  "completion_tokens": 3,
+  "content": "appointment_preparation",
+  "prompt_tokens": 581
+ },
+ "e1be59d2b55a210c12d7ae20166f87ea83bb01eafcb5ecbcf87f8d0b7b90714e": {
+  "completion_tokens": 22,
+  "content": "{\"field_path\":\"provider_name\",\"question\":\"Which healthcare provider will you be seeing for your MRI options?\"}",
+  "prompt_tokens": 707
+ },
+ "e35b1285e4794a762dda39bc06b99fb25a39dfeb075b615ef497a9d66a87b5c2": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 327
+ },
+ "e3d9143350bbd19d27fb18e5293d960b12234e5b688aab9d4856e19437fde07a": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 586
+ },
+ "e437895392ef68a99a330f4d42a782ba836cfb7d42616aadd637de960d2b7a5c": {
+  "completion_tokens": 243,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":\"What documents should I bring to my appointment?\",\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4962
+ },
+ "e4d37459f9184154b58f4dd9bb95ac1c391ad3b3b603d7c55685393f2cad0753": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 581
+ },
+ "e5154be5705b187780e9bea8ab1892e22691c69b34a248999d7714081d56819f": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4946
+ },
+ "e549b544f3952422d8c4ab323eb9d1f996d1b8a1d9d93d1420f8ba3118db2938": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 547
+ },
+ "e61b1b7a9377e630eaecc58f13593db1b61615a214842f23236948b1ae98d16a": {
+  "completion_tokens": 21,
+  "content": "{\"field_path\":\"provider_name\",\"question\":\"Which healthcare provider will you be seeing for your biopsy?\"}",
+  "prompt_tokens": 705
+ },
+ "e6c4369879df56dc6b1ab69acb6e7c7ac36f34adc909604d597f52c8e9b28e00": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 581
+ },
+ "e6e6c89983e08e2a839fda7ca007ae637d95bba7829c12a4e04ff3786ccf5cc8": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 397
+ },
+ "eb7de92e0519b9b0c1fcdc2a8cb0e239e7dfd0a75d74b46906ff0f6847aa3268": {
+  "completion_tokens": 23,
+  "content": "{\"field_path\":\"provider_name\",\"question\":\"Which healthcare provider will you be seeing for your chest x-ray?\"}",
+  "prompt_tokens": 707
+ },
+ "ec5c3c20d4cfff35330b5a49d12c107a9344aa2be6a817aeae24b9012520e57a": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 446
+ },
+ "ec6ff66b33ded68a62ddb75b24df0c706a7c713611375a7435001673b4615599": {
+  "completion_tokens": 33,
+  "content": "Rapid tests usually provide quick results, typically in 20 minutes or less. For COVID-19 rapid tests, results usually come in about 30 minutes [1].",
+  "prompt_tokens": 1003
+ },
+ "ecc4c2f88f36587ce792a9c9b6a579d6ae2a104055c46574827c4ebb1ff19677": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 578
+ },
+ "edee2f4057b13ff0e5ca176c934753534ffe0df9e76be11ceddda7504b6e53d4": {
+  "completion_tokens": 237,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"colonoscopy\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4949
+ },
+ "ef41bc4858defd5029bfeb536cdf7c11bf0b5bd1efa4073466bf7f41930a55fb": {
+  "completion_tokens": 242,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"sore throat\",\"symptom_location\":\"mild\",\"symptom_onset\":\"three days ago\",\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":\"comes and goes\",\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4979
+ },
+ "efc69e25932ea37b6bd898d89c5937919e9cae291438f20a46a7c4409d5185e6": {
+  "completion_tokens": 17,
+  "content": "{\"field_path\":\"symptom_location\",\"question\":\"Where is your headache located?\"}",
+  "prompt_tokens": 713
+ },
+ "f06ccfe515fe814210909695532bb1ee0b2eaebe375c1ecaecea68ffe19fc2b5": {
+  "completion_tokens": 3,
+  "content": "report_allergy",
+  "prompt_tokens": 587
+ },
+ "f07d66604c6843af50e95f7add993749484716e1a632debf8d72c49e992d9676": {
+  "completion_tokens": 237,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"FIT test preparation\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4962
+ },
+ "f0a6b21c05960e1060442bceba68180cf7d46730f69b6a996410c07bca508ca9": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 394
+ },
+ "f0ad74a47668e6966f034db3af8d9c347b04ce6d4bf8357393d9b826fbd7a516": {
+  "completion_tokens": 238,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":\"dermatology consultation\",\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4963
+ },
+ "f0b5f084eb600e6312df6d44e989eeb07d2cd297482a98cc5e6cc24c1eed3ac6": {
+  "completion_tokens": 18,
+  "content": "{\"field_path\":\"current_medications\",\"question\":\"What current medications are you taking?\"}",
+  "prompt_tokens": 703
+ },
+ "f154653f2b5131a5b61de14fa3caff70f01f8ba6ddeea4011c8e25ff65f3a1a3": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 475
+ },
+ "f1f33fa98752e85e1e31a5a62db721ab9b13fb90295da5c3191116853f4f5d1b": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 445
+ },
+ "f2ba025c05e514603a9550d469dfa81e1bd2865aac91c9b4d23989121ee8610f": {
+  "completion_tokens": 237,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":\"asymmetric mole\",\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4978
+ },
+ "f4139b38d234ec71e686a10ef9a92d89aa262deff9e9eb308b0a2ef25d95fb38": {
+  "completion_tokens": 22,
+  "content": "{\"field_path\":\"provider_name\",\"question\":\"Which healthcare provider will you be seeing for your endoscopy?\"}",
+  "prompt_tokens": 705
+ },
+ "f44881dbf99494c88eece082eacfd80e1af2945cbcda9faa9454492560e2f8f1": {
+  "completion_tokens": 18,
+  "content": "{\"field_path\":\"visit_reason\",\"question\":\"What is the reason for your visit?\"}",
+  "prompt_tokens": 711
+ },
+ "f6b2e06ff5200323095ea24253dd83f11eff6f5b525a25e69ac9cb170da33c06": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 397
+ },
+ "f6e72fced1bec7e9232951beac1d196d46ca60865f77b028d66dd6abadbe6f81": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 585
+ },
+ "f79c2184d2e764e053fccfb2f377d004bf62af7a433fcd6a5f0bd6f1b06af1d2": {
+  "completion_tokens": 17,
+  "content": "{\"field_path\":\"symptom_location\",\"question\":\"Where is your headache located?\"}",
+  "prompt_tokens": 715
+ },
+ "f7daee21594b94d76fb385022182284db16019ef7ce4c6ae66ab77c541142ab6": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 446
+ },
+ "f93ab78b8a531b75f64f33fcb563faa32493c0efe7d13a55ca6f67c3821cdecf": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 542
+ },
+ "fa42a0115ebfec440a4788d8a2bda8881408284eaaf8442e6718caaa76455085": {
+  "completion_tokens": 3,
+  "content": "medication_question",
+  "prompt_tokens": 581
+ },
+ "faefc2adbd768e7fd33ecec9c61a88d0995cd2f104aaaee5ef605138ca08dc25": {
+  "completion_tokens": 4,
+  "content": "report_new_symptoms",
+  "prompt_tokens": 587
+ },
+ "fb032677dead7620fa1ec85f65a2b1b369fe043e55ed65eeaffd2c19303efbd7": {
+  "completion_tokens": 1,
+  "content": "NO",
+  "prompt_tokens": 611
+ },
+ "fbd432fb1cbe0506112093283c3d90882e6daed1166e273fbf04b6037a2a27c4": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4965
+ },
+ "fd7036efa214ad3661a844dd11da64773264f6cf66b92c6232a1a63586bdae63": {
+  "completion_tokens": 1,
+  "content": "YES",
+  "prompt_tokens": 396
+ },
+ "feadaa641a1fb85f4f6e954981b8576f025c6603cfeeae61f95c1602f2559c44": {
+  "completion_tokens": 235,
+  "content": "{\"fields\":{\"patient_name\":null,\"date_of_birth\":null,\"gender\":null,\"height\":null,\"weight\":null,\"email\":null,\"phone\":null,\"address\":null,\"insurance_info\":null,\"visit_reason\":null,\"provider_name\":null,\"appointment_date\":null,\"appointment_time\":null,\"visit_type\":null,\"referral_source\":null,\"new_patient\":null,\"patient_context\":null,\"documents_status\":null,\"fasting_status\":null,\"accessibility_needs\":null,\"special_instructions\":null,\"transportation_needs\":null,\"companion\":null,\"chief_complaint\":null,\"symptom_location\":null,\"symptom_onset\":null,\"symptom_duration\":null,\"symptom_severity\":null,\"symptom_pattern\":null,\"symptom_progression\":null,\"aggravating_factors\":null,\"relieving_factors\":null,\"associated_symptoms\":null,\"medical_conditions\":null,\"current_medications\":null,\"allergies\":null,\"lifestyle_info\":null,\"emergency_symptoms\":null,\"notes\":null},\"uncertain_fields\":[],\"cleared_fields\":[],\"removed_items\":[]}",
+  "prompt_tokens": 4963
+ }
+}

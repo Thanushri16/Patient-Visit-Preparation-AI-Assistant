@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from chatbot import get_chatbot_response  # noqa: E402
+from chatbot import get_chatbot_response, handle_confirmation_turn  # noqa: E402
 from models import (  # noqa: E402
     ConfirmationAction,
     ConfirmationResult,
@@ -206,6 +206,39 @@ class SummaryWorkflowTests(unittest.TestCase):
         self.assertEqual(document["visit_summary"]["chief_complaint"], "headache")
         self.assertIsNone(document["visit_summary"]["provider_name"])
         self.assertIn("provider_name", document["missing_fields"])
+
+    def test_asking_to_see_the_summary_while_awaiting_confirmation_works(self):
+        """Reading the summary is not agreeing to it, and must not raise.
+
+        Regression test. Lifting this block out of `get_chatbot_response` left
+        it calling `_finalize(state, messages, ...)` where `messages` was a
+        parameter of the enclosing function and not of the extracted one, so
+        this path raised NameError on both orchestrators. Nothing caught it, so
+        it would have surfaced as a 500.
+
+        The whole suite passed over it, and so did the equivalence harness --
+        the chain and the graph call the same extracted function, so both failed
+        identically and compared equal. This test exercises the path directly
+        rather than through a mock, which is what it would have taken to catch.
+        """
+
+        state = ConversationState(
+            session_id="summary-request-while-confirming",
+            workflow=WorkflowType.APPOINTMENT_PREPARATION,
+            phase=ConversationPhase.AWAITING_CONFIRMATION,
+            visit_data=VisitData(chief_complaint="sore throat"),
+            summary_text="Chief complaint: sore throat",
+        )
+
+        response = handle_confirmation_turn(
+            state, "Can I see my visit summary?", None
+        )
+
+        self.assertTrue(response)
+        self.assertIn("sore throat", response)
+        # Still awaiting confirmation: showing the record is not confirming it.
+        self.assertEqual(state.phase, ConversationPhase.AWAITING_CONFIRMATION)
+        self.assertFalse(state.confirmed)
 
 
 if __name__ == "__main__":

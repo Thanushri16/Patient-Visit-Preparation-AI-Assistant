@@ -1,0 +1,162 @@
+{
+  "generated_at": "20260823T195327Z",
+  "summary": {
+    "conversations": 20,
+    "strict": 20,
+    "structural": 0,
+    "turns": 54,
+    "equivalent": true,
+    "diverged_conversations": [],
+    "divergences_by_field": {},
+    "examples": [],
+    "cache": {
+      "hits": 164,
+      "misses": 0,
+      "hit_rate": 100.0
+    },
+    "misdeclared_strict": [],
+    "cache_complete": true
+  },
+  "conversations": [
+    {
+      "id": "emergency",
+      "mode": "strict",
+      "turns": 1,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "menu",
+      "mode": "strict",
+      "turns": 2,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "never_route_medication",
+      "mode": "strict",
+      "turns": 1,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "never_route_diagnosis",
+      "mode": "strict",
+      "turns": 1,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "anaphylaxis",
+      "mode": "strict",
+      "turns": 1,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "off_topic",
+      "mode": "strict",
+      "turns": 1,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "state_recall",
+      "mode": "strict",
+      "turns": 2,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "intake",
+      "mode": "strict",
+      "turns": 3,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "knowledge",
+      "mode": "strict",
+      "turns": 1,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "knowledge_fallback",
+      "mode": "strict",
+      "turns": 1,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "compound",
+      "mode": "strict",
+      "turns": 1,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "summary",
+      "mode": "strict",
+      "turns": 3,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "confirm_yes",
+      "mode": "strict",
+      "turns": 7,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "correction",
+      "mode": "strict",
+      "turns": 7,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "summary_during_confirm",
+      "mode": "strict",
+      "turns": 7,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "workflow_switch",
+      "mode": "strict",
+      "turns": 5,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "injection",
+      "mode": "strict",
+      "turns": 1,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "knowledge_midintake",
+      "mode": "strict",
+      "turns": 3,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "restart",
+      "mode": "strict",
+      "turns": 4,
+      "equivalent": true,
+      "divergences": []
+    },
+    {
+      "id": "empty_then_menu",
+      "mode": "strict",
+      "turns": 2,
+      "equivalent": true,
+      "divergences": []
+    }
+  ]
+}
