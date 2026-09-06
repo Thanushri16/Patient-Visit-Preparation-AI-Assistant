@@ -519,6 +519,10 @@ PostgreSQL + pgvector. It creates the extension, the `data_knowledge_chunk`
 table, an HNSW index on cosine distance, and a JSONB metadata column on first
 use. There is no hand-written schema and no migration step.
 
+Part C adds a second table, `data_knowledge_sentence`, built by the same class
+with a different `table_name`. Both are created the same way; see C.2 for why
+sentences do not share the chunk table.
+
 Node metadata carries everything a citation needs, and is split by what the
 embedder should see:
 
@@ -683,9 +687,10 @@ cannot be expressed as node-parser configuration:
 | Index and store | LlamaIndex `PGVectorStore` |
 | Retrieval | LlamaIndex `VectorStoreQuery`, behind the `Retriever` protocol |
 
-`PGVectorStore` creates the `vector` extension, the `data_knowledge_chunk` table
-and its HNSW index on first use, sized to the configured embedding model. There
-is no migration step and no hand-written DDL.
+`PGVectorStore` creates the `vector` extension, the table and its HNSW index on
+first use, sized to the configured embedding model — `data_knowledge_chunk` for
+Part A, `data_knowledge_sentence` for Part C. There is no migration step and no
+hand-written DDL.
 
 ### 6.1 The retriever interface
 
@@ -1487,15 +1492,67 @@ Part C runs on the Part B graph. Only the object behind `rag_retrieve` changes.
 ## C.2 Ingestion
 
 ```text
-knowledge/*.md
-   -> sentence parser (section-aware; a heading does not merge into the sentence after it)
-   -> for each sentence: store the sentence text, plus the ±5 neighbourhood as window_text
+clinical_docs/*.pdf
+   -> documents.py: load, clean, section        (shared with Part A, unchanged)
+   -> one Document per section                  (shared)
+   -> sentence parser
+   -> for each sentence: store the ±5 neighbourhood and where the sentence sits in it
    -> embed the sentence only
    -> upsert into knowledge_sentence
 ```
 
-One ingestion run serves every window size. Narrower windows are sliced from
-`sentence_index` at query time.
+There is no chunking step. The 400-token splitter is bypassed: the retrieval
+unit is one sentence. On corpus v2 that is **654 sentences against 81 chunks**.
+
+Section-awareness is not enforced by the parser. `documents.py` already emits one
+`Document` per section and a node parser never splits across documents, so a
+window cannot span two sections and a heading cannot merge into the sentence
+after it. The property is structural rather than a rule that could be forgotten.
+
+**Sentences are found by `split_sentences` in `sentence_window.py`, not by
+NLTK.** LlamaIndex's default splitter downloads a punkt model on first use,
+which puts a network fetch inside ingestion and makes sentence boundaries depend
+on a downloaded artefact rather than on this repository — two machines splitting
+differently would silently change what every stored window and citation covers.
+The replacement vetoes a split when the preceding token is a known abbreviation
+(`Dr.`, `e.g.`, `mg`) or a single character (list markers, initials). It
+under-splits by design: a window carrying one sentence too many costs a few
+tokens, while a fragment embedded as though it were a sentence is a retrieval
+miss.
+
+**One ingestion run serves every window size**, via four metadata keys:
+
+| Key | Holds |
+|---|---|
+| `window_sentences` | The ±5 neighbourhood, JSON-encoded |
+| `window_center` | Where this sentence sits inside that array — below 5 at a section edge |
+| `sentence_index` | Position of the sentence within its section |
+| `window_text` | The joined neighbourhood, for inspection |
+
+Storing the *sentences* rather than only the joined `window_text` is what makes a
+narrower window an exact array slice. Slicing the stored text instead would mean
+re-splitting it at query time and trusting the splitter to behave exactly as it
+did during ingestion; a drift there would move citation boundaries invisibly.
+
+The node's text stays the single sentence, because that is what gets embedded.
+All four keys above are excluded from the embedding, and so is
+`original_sentence` — the parser sets it to a copy of the sentence, and leaving
+it in embeds the sentence twice, diluting it with its own duplicate and
+defeating the precision the strategy exists for. What is embedded is
+`title + section + sentence`, the same heading-travels-with-the-node rule Part A
+uses.
+
+**A separate table, not a strategy column on `knowledge_chunk`.** The retrieval
+units differ by an order of magnitude, so a shared table would mix two
+populations in one HNSW index and make every similarity threshold mean two
+things at once. `KnowledgeStore` was already parameterised by table name, so
+this needed no change to the store. Idempotency is shared: both tables key on
+the same content hash plus `PIPELINE_VERSION`, so a change to cleaning or
+sectioning re-ingests both rather than leaving one built from older text than
+the other.
+
+    uv run python -m src.rag.ingest ingest --strategy sentence_window
+    uv run python -m src.rag.ingest ingest --strategy both     # keeps them in step
 
 ## C.3 Runtime
 
@@ -1510,10 +1567,45 @@ question
    -> grounded generation + citations     (shared, identical prompt)
 ```
 
+The window size is an argument to `retrieve`, not a property of the index, so
+every arm of the matrix reads the same rows. No arm can be contaminated by
+having been ingested from a different corpus revision than another.
+
 Deduplication matters more than it looks: two adjacent retrieved sentences at
 window 5 overlap heavily, and paying for the same text twice would make wider
 windows look worse on cost and better on recall for the wrong reason. Windows
-are merged into a single span before the token count is taken.
+are merged into a single span before the token count is taken. Three rules
+govern the merge, and each exists for a failure it prevents:
+
+- **Merging is per `(document, section)`.** Sentence indices are positions
+  within a section, so merging across sections would splice unrelated prose.
+- **Touching counts as overlapping.** Windows ending at sentence 4 and starting
+  at 5 are continuous text; emitting them separately shows the model a seam that
+  is not in the document. Clustering tracks the running extent as it grows, not
+  the first member — three windows can chain A-B-C where A and C do not touch
+  directly, and comparing only against A would split one passage in two.
+- **A merged span keeps its strongest member's similarity.** The evidence check
+  reads `sources[0]` as the top match, so a merge must never demote it.
+
+Everything downstream of the retriever is untouched, because it is written
+against the `Retriever` protocol rather than against a strategy. The one change
+outside `retrievers.py` was a defaulted `metadata` field on `RetrievedChunk`, so
+the window survives `store.search`; a node with no stored window passes through
+unchanged rather than being dropped.
+
+First measured query, "Do I need to fast before a blood test?", top_k 6 — a
+single question, so an illustration of the mechanism rather than evidence, which
+is what C.4 is for:
+
+| Strategy | Sources | Context tokens | Top similarity |
+|---|---|---|---|
+| basic | 6 | 1422 | 0.639 |
+| window 1 | 2 | 227 | 0.656 |
+| window 3 | 2 | 312 | 0.656 |
+| window 5 | 2 | 355 | 0.656 |
+
+Six hits merged into two sources, which is the deduplication above doing its
+work.
 
 ## C.4 Experiment matrix
 
@@ -1960,14 +2052,14 @@ and hold in all three parts, regardless of what is retrieved.
 
 ### Part C — Advanced RAG
 
-| Step | Work | Depends on | Done when |
-|---|---|---|---|
-| C1 | Sentence parser, window builder, sentence ingestion | A11, B5 | `knowledge_sentence` populated in one run |
-| C2 | `SentenceWindowRetriever` with expansion and dedup | C1 | Window sizes 1/2/3/5 selectable at query time |
-| C3 | DeepEval integration on the existing runner | A9 | Judged metrics reported alongside deterministic ones |
-| C4 | Experiment matrix, both conditions | C2, C3 | Ten runs complete and checkpointed |
-| C5 | **Part C comparison report and recommendation** | C4 | Default strategy set in `config.py`, with evidence |
-| C6 | Promote RAG to primary; update the SRS | C5 | FR-8/FR-9 status updated; this document's tracker updated |
+| Step | Work | Depends on | Done when | Status |
+|---|---|---|---|---|
+| C1 | Sentence parser, window builder, sentence ingestion | A11, B5 | `knowledge_sentence` populated in one run | **Done** — 654 sentences from 11 documents; `--strategy sentence_window\|both` |
+| C2 | `SentenceWindowRetriever` with expansion and dedup | C1 | Window sizes 1/2/3/5 selectable at query time | **Done** — window is a query-time argument; overlapping windows merged per section |
+| C3 | DeepEval integration on the existing runner | A9 | Judged metrics reported alongside deterministic ones | **Done in Part A** — `evaluators/rag/judged.py`; baseline in `reports/rag/` |
+| C4 | Experiment matrix, both conditions | C2, C3 | Ten runs complete and checkpointed | Next |
+| C5 | **Part C comparison report and recommendation** | C4 | Default strategy set in `config.py`, with evidence | — |
+| C6 | Promote RAG to primary; update the SRS | C5 | FR-8/FR-9 status updated; this document's tracker updated | — |
 
 Part C's ingestion (C1) depends on Part A rather than Part B and can start in
 parallel with the migration; the *evaluation* waits for B5 so every arm is
