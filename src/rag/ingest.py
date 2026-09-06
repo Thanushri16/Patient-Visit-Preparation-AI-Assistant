@@ -23,15 +23,29 @@ from dataclasses import dataclass
 
 try:
     from .chunking import nodes_from_loaded_document
-    from .config import EMBEDDING, PIPELINE_VERSION, SETTINGS
+    from .config import (
+        EMBEDDING,
+        PIPELINE_VERSION,
+        SENTENCE_TABLE_NAME,
+        SETTINGS,
+        VECTOR_TABLE_NAME,
+    )
     from .documents import ManifestDocument, load_document, load_manifest
     from .embeddings import build_embed_model, embed_nodes
+    from .sentence_window import MAX_WINDOW, sentence_nodes_from_loaded_document
     from .store import KnowledgeStore
 except ImportError:  # pragma: no cover - allows running as a script
     from chunking import nodes_from_loaded_document
-    from config import EMBEDDING, PIPELINE_VERSION, SETTINGS
+    from config import (
+        EMBEDDING,
+        PIPELINE_VERSION,
+        SENTENCE_TABLE_NAME,
+        SETTINGS,
+        VECTOR_TABLE_NAME,
+    )
     from documents import ManifestDocument, load_document, load_manifest
     from embeddings import build_embed_model, embed_nodes
+    from sentence_window import MAX_WINDOW, sentence_nodes_from_loaded_document
     from store import KnowledgeStore
 
 
@@ -46,15 +60,26 @@ class DocumentPlan:
     warnings: list[str]
 
 
-def build_plan(store: KnowledgeStore | None, force: bool = False) -> list[DocumentPlan]:
-    """Decide what to do with each indexed document, without embedding anything."""
+def build_plan(
+    store: KnowledgeStore | None,
+    force: bool = False,
+    build_nodes=nodes_from_loaded_document,
+) -> list[DocumentPlan]:
+    """Decide what to do with each indexed document, without embedding anything.
+
+    `build_nodes` selects the retrieval unit: 400-token chunks by default,
+    sentences for Part C. The fingerprint logic is deliberately shared -- both
+    tables key idempotency on the same content hash plus PIPELINE_VERSION, so a
+    change to cleaning or sectioning re-ingests both rather than leaving one
+    silently built from older text than the other.
+    """
 
     documents, _ = load_manifest()
     plans: list[DocumentPlan] = []
 
     for manifest in documents:
         loaded = load_document(manifest)
-        nodes = nodes_from_loaded_document(loaded)
+        nodes = build_nodes(loaded)
 
         action, reason = "ingest", "not stored yet"
         if store is not None:
@@ -104,17 +129,18 @@ def ingest(
     store: KnowledgeStore,
     embed_model,
     force: bool = False,
+    build_nodes=nodes_from_loaded_document,
 ) -> list[DocumentPlan]:
     """Embed and store every document whose content or pipeline has changed."""
 
     prune(store)
-    plans = build_plan(store, force=force)
+    plans = build_plan(store, force=force, build_nodes=build_nodes)
     for plan in plans:
         if plan.action == "skip":
             continue
 
         loaded = load_document(plan.manifest)
-        nodes = nodes_from_loaded_document(loaded)
+        nodes = build_nodes(loaded)
         if not nodes:
             plan.action, plan.reason = "skip", "no nodes produced"
             continue
@@ -152,53 +178,87 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--force", action="store_true", help="re-ingest even when unchanged"
     )
+    parser.add_argument(
+        "--strategy",
+        choices=("basic", "sentence_window", "both"),
+        default="basic",
+        help="which retrieval unit to build: 400-token chunks, sentences, or both",
+    )
     args = parser.parse_args(argv)
+
+    # (table, node builder) per strategy. Part C compares the two, so `both`
+    # exists to keep the tables built from the same corpus revision -- ingesting
+    # them separately invites comparing a strategy against a stale opponent.
+    targets = {
+        "basic": ((None, nodes_from_loaded_document),),
+        "sentence_window": ((SENTENCE_TABLE_NAME, sentence_nodes_from_loaded_document),),
+        "both": (
+            (None, nodes_from_loaded_document),
+            (SENTENCE_TABLE_NAME, sentence_nodes_from_loaded_document),
+        ),
+    }[args.strategy]
 
     if args.command == "plan":
         # Works without a database: reports what would be built from the corpus.
-        store = _open_store(optional=True)
-        _print_plan(build_plan(store))
+        for table, build_nodes in targets:
+            store = _open_store(optional=True, table_name=table)
+            print(f"--- {table or VECTOR_TABLE_NAME} ---")
+            _print_plan(build_plan(store, build_nodes=build_nodes))
+            if store is None:
+                print("\nNo DATABASE_URL, so nothing was compared against the store.")
+        return 0
+
+    embed_model = None
+    for table, build_nodes in targets:
+        label = table or VECTOR_TABLE_NAME
+        store = _open_store(optional=False, table_name=table)
         if store is None:
-            print("\nNo DATABASE_URL, so nothing was compared against the store.")
-        return 0
+            return 1
 
-    store = _open_store(optional=False)
-    if store is None:
-        return 1
+        if args.command == "status":
+            rows = store.corpus_status()
+            print(f"--- {label} ---")
+            if not rows:
+                print("Empty. Run `ingest` first.")
+                continue
+            for row in rows:
+                print(
+                    f"{row['document_id']:32s} {row['category']:12s} "
+                    f"nodes={row['nodes']:3d}"
+                )
+            print(f"{len(rows)} documents, {sum(r['nodes'] for r in rows)} nodes.\n")
+            continue
 
-    if args.command == "status":
-        rows = store.corpus_status()
-        if not rows:
-            print("The knowledge store is empty. Run `ingest` first.")
-            return 0
-        for row in rows:
-            print(
-                f"{row['document_id']:32s} {row['category']:12s} nodes={row['nodes']:3d}"
-            )
-        print(f"\n{len(rows)} documents, {sum(r['nodes'] for r in rows)} nodes.")
-        return 0
+        mismatch = store.dimension_mismatch()
+        if mismatch:
+            print(mismatch, file=sys.stderr)
+            return 1
 
-    mismatch = store.dimension_mismatch()
-    if mismatch:
-        print(mismatch, file=sys.stderr)
-        return 1
+        dropped = prune(store)
+        if dropped:
+            print(f"Removed from {label}, no longer indexed: {', '.join(dropped)}\n")
 
-    dropped = prune(store)
-    if dropped:
-        print(f"Removed from the store, no longer indexed: {', '.join(dropped)}\n")
-
-    print(
-        f"Embedding with {EMBEDDING.model} ({EMBEDDING.dimensions}d), "
-        f"chunk_size={SETTINGS.chunk_size_tokens}, "
-        f"overlap={SETTINGS.chunk_overlap_tokens}, pipeline v{PIPELINE_VERSION}\n"
-    )
-    _print_plan(ingest(store, build_embed_model(), force=args.force))
+        unit = (
+            f"chunk_size={SETTINGS.chunk_size_tokens}, "
+            f"overlap={SETTINGS.chunk_overlap_tokens}"
+            if build_nodes is nodes_from_loaded_document
+            else f"sentences, window +/-{MAX_WINDOW} stored"
+        )
+        print(
+            f"--- {label} ---\n"
+            f"Embedding with {EMBEDDING.model} ({EMBEDDING.dimensions}d), "
+            f"{unit}, pipeline v{PIPELINE_VERSION}\n"
+        )
+        # Built once and shared: the two tables must be embedded by the same
+        # model instance, or a profile change between them would go unnoticed.
+        embed_model = embed_model or build_embed_model()
+        _print_plan(ingest(store, embed_model, force=args.force, build_nodes=build_nodes))
     return 0
 
 
-def _open_store(optional: bool) -> KnowledgeStore | None:
+def _open_store(optional: bool, table_name: str | None = None) -> KnowledgeStore | None:
     try:
-        store = KnowledgeStore()
+        store = KnowledgeStore(**({"table_name": table_name} if table_name else {}))
         store.healthcheck()
         return store
     except Exception as error:  # noqa: BLE001 - the CLI reports, it does not crash

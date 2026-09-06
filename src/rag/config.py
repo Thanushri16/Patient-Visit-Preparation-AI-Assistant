@@ -112,9 +112,16 @@ MAX_MODEL_INPUT_TOKENS = EMBEDDING.max_input_tokens
 # file alone would miss the former entirely.
 PIPELINE_VERSION = 2
 
-# The LlamaIndex table name. PGVectorStore prefixes it, so the physical table is
-# data_knowledge_chunk.
+# The LlamaIndex table names. PGVectorStore prefixes what it is given, so the
+# physical tables are data_knowledge_chunk and data_knowledge_sentence.
+#
+# Two tables rather than one with a strategy column: the retrieval unit differs
+# (a 400-token chunk against a single sentence), so a shared table would mix two
+# populations in one HNSW index and make every similarity threshold mean two
+# things at once. Part C compares the strategies; it must be able to query
+# either without the other in the way.
 VECTOR_TABLE_NAME = "knowledge_chunk"
+SENTENCE_TABLE_NAME = "knowledge_sentence"
 
 
 class RagSettings(BaseModel):

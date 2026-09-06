@@ -14,7 +14,7 @@ portal that manages documents, not here.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Sequence
 
 try:
@@ -47,6 +47,11 @@ class RetrievedChunk:
     last_updated: str | None
     text: str
     similarity: float
+    # The node's raw metadata, for strategies that store more than a citation
+    # needs. Sentence-window retrieval keeps its neighbourhood here and swaps it
+    # in at query time; basic retrieval leaves it empty. Defaulted so the
+    # existing constructors and every test fixture are unaffected.
+    metadata: dict = field(default_factory=dict)
 
 
 class KnowledgeStore:
@@ -269,6 +274,7 @@ class KnowledgeStore:
                     last_updated=metadata.get("last_updated") or None,
                     text=node.get_content(),
                     similarity=float(similarity),
+                    metadata=dict(metadata),
                 )
             )
         return chunks
