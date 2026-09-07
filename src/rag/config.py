@@ -141,6 +141,15 @@ class RagSettings(BaseModel):
     embed_batch_size: int = Field(default=64, gt=0)
 
     # Retrieval
+    #
+    # The strategy is not a setting. Part C measured sentence windows against
+    # these fixed-size chunks and chunks won on the metric that decides it
+    # (faithfulness 0.959 vs 0.899); `integration.py` therefore builds
+    # `BasicChunkRetriever` directly. `SentenceWindowRetriever` remains in
+    # retrievers.py as the measured alternative, reachable from the benchmark
+    # runner's --strategy flag, but nothing in the request path selects it. A
+    # settings field here would have implied a switch that does not exist.
+    #
     # Raised from the plan's 4 after measuring where the answering chunk
     # actually ranks: for "is a virtual colonoscopy safe if I might be pregnant"
     # it sits 5th, so top_k=4 could not see it however good the guards were. The

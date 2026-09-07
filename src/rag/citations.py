@@ -1,5 +1,10 @@
 """Citation binding and validation.
 
+Not LlamaIndex's `CitationQueryEngine`, deliberately: that has the model emit
+citation markers as part of generation, which makes the model both the author
+and the auditor. This validates after the fact instead. See "What LlamaIndex is
+deliberately not used for" in documentation/rag_architecture.md section 6.0.
+
 The generation prompt asks the model to mark each claim with the number of the
 context block it came from. Asking is not the guarantee — this module is. An
 answer whose markers do not resolve, or which makes claims with no marker at

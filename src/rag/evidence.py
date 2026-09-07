@@ -26,6 +26,12 @@ run past the threshold, in increasing order of cost:
 
 This module does not split compound questions (A.4.1) and does not know about
 never-route topics (A6). Both sit above it.
+
+LlamaIndex's `SimilarityPostprocessor` covers the score floor below and nothing
+else. The floor is the weakest of these checks -- the Part A sweep held
+near-miss resistance at 10/10 across floors from 0.30 to 0.55, so what separates
+a right answer from a wrong one is guard 3, which has no framework equivalent.
+See section 6.0 of documentation/rag_architecture.md.
 """
 
 from __future__ import annotations
