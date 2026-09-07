@@ -8,6 +8,8 @@ buried in a call site. Nothing here reads the network or the database.
 import os
 from pathlib import Path
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -131,9 +133,28 @@ class RagSettings(BaseModel):
 
     # Rollout stage. See rag_architecture.md section 3.7.
     #   shadow    - run RAG, log it, return the curated answer
-    #   preferred - RAG when evidence is sufficient, else the curated answer
-    #   primary   - RAG, with the explicit fallback when evidence is missing
-    mode: str = "shadow"
+    #   preferred - RAG when the answer is grounded, else the curated answer
+    #
+    # "preferred" since C6. All six promotion gates pass on the basic arm
+    # (near-miss resistance 100, gap disclosure 100, citation validation 100,
+    # never-route 100, wrong-document grounding 0, outcome accuracy 93.8), which
+    # is what the ladder asked for before grounded answers reach a patient.
+    #
+    # The plan named a third stage, "primary", meaning RAG with the explicit
+    # "I don't have documentation on that" fallback instead of the curated
+    # answer. It is not implemented, and the type below now rejects it rather
+    # than accepting a stage that silently behaves as `preferred`: pipeline.py
+    # branches on `shadow` alone, and `_fill_from_fallback` prefers the curated
+    # answer whenever one exists. That is deliberate rather than an omission --
+    # every question the assistant answers today has a curated answer behind the
+    # retriever, so preferring it on a retrieval failure means a failure returns
+    # today's behaviour rather than an apology. Removing that floor would be a
+    # regression with no upside, so the ladder stops here.
+    #
+    # Typed, not a bare str. A misspelling used to be accepted and then read as
+    # "not shadow" by pipeline.py -- the failure would have been serving
+    # grounded answers to a deployment that asked for shadow.
+    mode: Literal["shadow", "preferred"] = "preferred"
 
     # Ingestion
     chunk_size_tokens: int = Field(default=400, gt=0)

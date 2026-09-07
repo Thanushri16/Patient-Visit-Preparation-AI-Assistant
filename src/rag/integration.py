@@ -121,8 +121,6 @@ def build_knowledge_branch(chat_client) -> KnowledgeBranch | None:
 
 
 def is_enabled() -> bool:
-    return database_url() is not None and SETTINGS.mode in {
-        "shadow",
-        "preferred",
-        "primary",
-    }
+    # The mode is validated by its type in config.py, so this only has to ask
+    # whether a store is configured at all.
+    return database_url() is not None

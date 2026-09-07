@@ -2229,7 +2229,7 @@ and hold in all three parts, regardless of what is retrieved.
 | C3 | DeepEval integration on the existing runner | A9 | Judged metrics reported alongside deterministic ones | **Done in Part A** — `evaluators/rag/judged.py`; baseline in `reports/rag/` |
 | C4 | Experiment matrix, both conditions | C2, C3 | Ten runs complete and checkpointed | **Done** — 9 distinct arms (basic is shared by both conditions) |
 | C5 | **Part C comparison report and recommendation** | C4 | Default strategy set in `config.py`, with evidence | **Done** — `retrieval_strategy = "basic"`; sentence windows not promoted |
-| C6 | Promote RAG to primary; update the SRS | C5 | FR-8/FR-9 status updated; this document's tracker updated | Next |
+| C6 | Promote RAG off shadow; update the SRS | C5 | FR-8/FR-9 status updated; this document's tracker updated | **Done** — `mode=preferred`; FR-8 and FR-9 marked complete. `primary` is not implemented and was removed from the ladder: see the note in `config.py` |
 
 Part C's ingestion (C1) depends on Part A rather than Part B and can start in
 parallel with the migration; the *evaluation* waits for B5 so every arm is
