@@ -107,8 +107,8 @@ This project will be delivered in four development iterations:
    | FR-5 Conversation Context | Partially complete | Workflow state and message memory are preserved in memory, but not across durable resumed sessions. |
    | FR-6 Emergency Detection | Complete | Emergency symptoms are detected and routed away from normal intake, with escalation guidance specific to the emergency and past, already-treated events not escalated. |
    | FR-7 Safety | Complete | The chatbot already avoids diagnosis and prescription behavior. |
-   | FR-8 Educational Assistance | Partially complete | The chatbot answers common preparation questions — documents to bring, fasting, pre-visit forms, telehealth, transportation, accessibility — from curated non-prescriptive content, and declines out-of-scope requests. These answers are not yet citation-backed clinic-document answers. |
-   | FR-9 RAG | Not complete | Retrieval, vector search, citations, and grounded response generation are not implemented yet. |
+   | FR-8 Educational Assistance | Complete | The chatbot answers common preparation questions — documents to bring, fasting, pre-visit forms, telehealth, transportation, accessibility — and declines out-of-scope requests. Since Iteration 3 these are answered from an 11-document clinical corpus with resolvable citations; the curated content remains behind the retriever as the fallback whenever evidence is insufficient, so a retrieval failure returns prior behaviour rather than an apology. |
+   | FR-9 RAG | Complete | PostgreSQL + pgvector via LlamaIndex `PGVectorStore`, retrieval behind a `Retriever` protocol, a deterministic evidence check with three near-miss guards, grounded generation, and citation validation that rejects invented or unresolvable markers. Running in `preferred` mode: grounded answers reach the patient, curated content is the floor. Measured on a 68-question benchmark — holdout outcome accuracy 94.3%, near-miss resistance, gap disclosure, citation validation and never-route compliance all 100%, wrong-document grounding 0. Judged separately with DeepEval (faithfulness 0.948, answer relevancy 0.915). See documentation/rag_architecture.md. |
    | FR-10 Knowledge Management | Not complete | There is no knowledge upload, versioning, or admin document portal yet. |
    | FR-11 Visit Summary | Partially complete | Structured summaries already exist, but editable summary workflows are not implemented. |
    | FR-12 Export | Not complete | PDF, JSON, and text export are not implemented yet. |
@@ -199,7 +199,7 @@ This project will be delivered in four development iterations:
 |---|---|---|
 | Iteration 1 | Complete | Conversation workflow, typed visit summary, in-memory session handling, and basic safety messaging are already implemented. |
 | Iteration 2 | Complete | Intent routing, moderation, prompt chaining, structured extraction, summary review, confirmation, persistence, and evaluation are implemented. Behaviour is measured against a 215-scenario benchmark whose findings have been fed back into the conversation design. |
-| Iteration 3 | Not complete | The codebase has foundations, but RAG ingestion, citations, persistent auth, exports, and admin knowledge management are still planned. |
+| Iteration 3 | Partially complete | The RAG core is delivered: corpus ingestion, pgvector storage, retrieval, evidence checks, grounded answers with validated citations, and a LangGraph orchestrator proven equivalent to the prior chain. Retrieval strategy was chosen by experiment — sentence-window and auto-merging retrieval were both measured and rejected on faithfulness and gap disclosure. Still planned: persistent auth, exports, admin knowledge management, Redis, background indexing workers, and hybrid retrieval. |
 | Iteration 4 | Not complete | Production deployment, security hardening, observability, autoscaling, and real-world validation are still planned. |
 
 ## Iteration 1

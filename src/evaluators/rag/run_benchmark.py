@@ -66,7 +66,11 @@ def main(argv: list[str] | None = None) -> int:
         default=3,
         help="parallel judge calls; too high loses scores to rate limits",
     )
-    parser.add_argument("--mode", default="primary")
+    # Defaults to the configured stage rather than a literal. The old default
+    # was "primary", a stage config.py does not implement -- harmless, because
+    # pipeline.py branches on "shadow" alone, but it meant every report claimed
+    # a mode the application cannot be run in.
+    parser.add_argument("--mode", default=SETTINGS.mode)
     parser.add_argument(
         "--strategy",
         choices=("basic", "sentence_window"),

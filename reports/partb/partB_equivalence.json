@@ -1,16 +1,16 @@
 {
-  "generated_at": "20260823T195327Z",
+  "generated_at": "20260907T234029Z",
   "summary": {
     "conversations": 20,
-    "strict": 20,
-    "structural": 0,
+    "strict": 9,
+    "structural": 11,
     "turns": 54,
     "equivalent": true,
     "diverged_conversations": [],
     "divergences_by_field": {},
     "examples": [],
     "cache": {
-      "hits": 164,
+      "hits": 158,
       "misses": 0,
       "hit_rate": 100.0
     },
@@ -69,77 +69,77 @@
     },
     {
       "id": "intake",
-      "mode": "strict",
+      "mode": "structural",
       "turns": 3,
       "equivalent": true,
       "divergences": []
     },
     {
       "id": "knowledge",
-      "mode": "strict",
+      "mode": "structural",
       "turns": 1,
       "equivalent": true,
       "divergences": []
     },
     {
       "id": "knowledge_fallback",
-      "mode": "strict",
+      "mode": "structural",
       "turns": 1,
       "equivalent": true,
       "divergences": []
     },
     {
       "id": "compound",
-      "mode": "strict",
+      "mode": "structural",
       "turns": 1,
       "equivalent": true,
       "divergences": []
     },
     {
       "id": "summary",
-      "mode": "strict",
+      "mode": "structural",
       "turns": 3,
       "equivalent": true,
       "divergences": []
     },
     {
       "id": "confirm_yes",
-      "mode": "strict",
+      "mode": "structural",
       "turns": 7,
       "equivalent": true,
       "divergences": []
     },
     {
       "id": "correction",
-      "mode": "strict",
+      "mode": "structural",
       "turns": 7,
       "equivalent": true,
       "divergences": []
     },
     {
       "id": "summary_during_confirm",
-      "mode": "strict",
+      "mode": "structural",
       "turns": 7,
       "equivalent": true,
       "divergences": []
     },
     {
       "id": "workflow_switch",
-      "mode": "strict",
+      "mode": "structural",
       "turns": 5,
       "equivalent": true,
       "divergences": []
     },
     {
       "id": "injection",
-      "mode": "strict",
+      "mode": "structural",
       "turns": 1,
       "equivalent": true,
       "divergences": []
     },
     {
       "id": "knowledge_midintake",
-      "mode": "strict",
+      "mode": "structural",
       "turns": 3,
       "equivalent": true,
       "divergences": []
