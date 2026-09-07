@@ -20,10 +20,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from openai import OpenAI  # noqa: E402
 
-from rag.config import SETTINGS, env_value  # noqa: E402
+from rag.config import SENTENCE_TABLE_NAME, SETTINGS, env_value  # noqa: E402
 from rag.embeddings import build_embed_model  # noqa: E402
 from rag.pipeline import answer_knowledge_question  # noqa: E402
-from rag.retrievers import BasicChunkRetriever  # noqa: E402
+from rag.retrievers import BasicChunkRetriever, SentenceWindowRetriever  # noqa: E402
 from rag.store import KnowledgeStore  # noqa: E402
 
 from evaluators.rag.dataset import load_cases  # noqa: E402
@@ -68,6 +68,34 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--mode", default="primary")
     parser.add_argument(
+        "--strategy",
+        choices=("basic", "sentence_window"),
+        default="basic",
+        help="which retriever to measure; sentence_window reads the sentence table",
+    )
+    parser.add_argument(
+        "--window",
+        type=int,
+        default=3,
+        help="sentences either side of the match; ignored unless --strategy "
+             "sentence_window",
+    )
+    parser.add_argument(
+        "--top-k",
+        type=int,
+        help="retrieval depth; defaults to SETTINGS.top_k",
+    )
+    parser.add_argument(
+        "--max-context-tokens",
+        type=int,
+        help="context budget; defaults to SETTINGS.max_context_tokens. The "
+             "matrix's equal-budget condition sets this explicitly",
+    )
+    parser.add_argument(
+        "--label",
+        help="name for this arm in the report filename; defaults to the strategy",
+    )
+    parser.add_argument(
         "--split",
         choices=("all", "tune", "holdout"),
         default="all",
@@ -86,8 +114,37 @@ def main(argv: list[str] | None = None) -> int:
     if args.limit:
         cases = cases[: args.limit]
 
-    retriever = BasicChunkRetriever(KnowledgeStore(), build_embed_model())
+    # Retrieval depth and context budget are read from SETTINGS by the pipeline,
+    # so an arm that varies them has to say so here rather than pass an argument
+    # down: the equal-budget condition changes what every downstream consumer
+    # sees, not just the retriever.
+    if args.top_k is not None:
+        SETTINGS.top_k = args.top_k
+    if args.max_context_tokens is not None:
+        SETTINGS.max_context_tokens = args.max_context_tokens
+
+    embed_model = build_embed_model()
+    if args.strategy == "sentence_window":
+        retriever = SentenceWindowRetriever(
+            KnowledgeStore(table_name=SENTENCE_TABLE_NAME),
+            embed_model,
+            window_size=args.window,
+        )
+    else:
+        retriever = BasicChunkRetriever(KnowledgeStore(), embed_model)
     client = OpenAI(api_key=env_value("OPENAI_API_KEY"))
+
+    arm = args.label or (
+        args.strategy
+        if args.strategy == "basic"
+        else f"{args.strategy}_w{args.window}"
+    )
+    print(
+        f"arm={arm} strategy={retriever.strategy} window={retriever.window_size} "
+        f"top_k={SETTINGS.top_k} budget={SETTINGS.max_context_tokens} "
+        f"min_similarity={SETTINGS.min_similarity} split={args.split} "
+        f"cases={len(cases)}\n"
+    )
 
     report = Report()
     shadow = ShadowReport()
@@ -182,13 +239,16 @@ def main(argv: list[str] | None = None) -> int:
 
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    path = REPORT_DIR / f"rag_benchmark_{stamp}.json"
+    path = REPORT_DIR / f"rag_partC_{arm}_{args.split}.json"
     path.write_text(
         json.dumps(
             {
                 "generated_at": stamp,
                 "mode": args.mode,
                 "split": args.split,
+                "arm": arm,
+                "strategy": retriever.strategy,
+                "window_size": retriever.window_size,
                 "settings": SETTINGS.model_dump(),
                 "metrics": metrics,
                 "judged": judged_summary,

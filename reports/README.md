@@ -48,11 +48,29 @@ The two scenario files are summaries only. The per-case transcript dumps were
 dropped: every figure cited in §B.5 is in the summaries, and the dumps ran to
 roughly 900 KB of duplicated conversation text.
 
+## Part C — `rag/rag_partC_*`
+
+| File | What it evidences |
+|---|---|
+| `rag_partC_comparison_all.json` | The nine-arm matrix: safety gates, outcome accuracy, fact coverage, promotion verdict per arm. **The only surviving source for those numbers** — the per-arm dumps were deleted as redundant, so re-running `compare_arms` needs the matrix re-run first |
+| `rag_partC_comparison_holdout.json` | The same, sliced to the holdout split |
+| `rag_partC_similarity_profile_all.json` | Top-similarity distributions per strategy. The evidence that `min_similarity=0.35` rejects zero answerable questions under either strategy, and so is not a confound in the comparison |
+| `rag_partC_J_*_holdout.json` | Judged (DeepEval) runs, per case, for basic / window 2 / window 3. The paired tables in C.6 are computed from these, not from each file's own summary |
+
+Arm labels: `A_*` is the equal-depth condition (top_k 6), `B_*` equal-budget
+(top_k raised so context matches basic's ~1161 tokens), `J_*` the judged subset.
+
 ## Regenerating
 
 ```bash
 # Part A
 uv run python -m src.evaluators.rag.run_benchmark --split holdout [--judge]
+
+# Part C arms: --strategy basic | sentence_window
+uv run python -m src.evaluators.rag.run_benchmark --split all \
+    --strategy sentence_window --window 2 --top-k 6 --label A_sw_w2
+uv run python -m src.evaluators.rag.compare_arms --split holdout
+uv run python -m src.evaluators.rag.similarity_profile --split all
 
 # Part B equivalence (needs --record once after any prompt change)
 uv run python -m src.evaluators.equivalence.run_equivalence --record

@@ -633,10 +633,11 @@ src/rag/
 ├── config.py          # Embedding profile, chunking, retrieval, rag.mode settings
 ├── documents.py       # Loading, cleaning, sectioning -> LlamaIndex Documents
 ├── chunking.py        # LlamaIndex TokenTextSplitter, 400/50 (Part A)
-├── sentence_window.py # SentenceWindowNodeParser (Part C)
+├── sentence_window.py # LlamaIndex SentenceWindowNodeParser, own splitter (Part C)
 ├── embeddings.py      # LlamaIndex OpenAIEmbedding
 ├── store.py           # LlamaIndex PGVectorStore wrapper
 ├── retrievers.py      # Retriever protocol + BasicChunkRetriever, SentenceWindowRetriever
+│                      # ---- LlamaIndex stops here; everything below is ours ----
 ├── evidence.py        # Deterministic sufficiency check
 ├── generation.py      # Grounded answer prompt and call
 ├── citations.py       # Citation binding and validation
@@ -691,6 +692,43 @@ cannot be expressed as node-parser configuration:
 first use, sized to the configured embedding model — `data_knowledge_chunk` for
 Part A, `data_knowledge_sentence` for Part C. There is no migration step and no
 hand-written DDL.
+
+#### What LlamaIndex is deliberately not used for
+
+The framework stops at retrieval. There is no `VectorStoreIndex`, no
+`QueryEngine`, no response synthesizer, no chat engine and no agent anywhere in
+this repository. Everything above retrieval — evidence sufficiency, the A.4.2
+guards, the never-route policy, prompt construction, generation and citation
+validation — is this project's code.
+
+That is a choice, not an oversight, and each of the components below is
+installed and available. Recorded here because "why didn't you just use the
+query engine" is the obvious question, and the answer is the same in every case:
+**these are the decisions that must stay deterministic and testable offline.**
+
+| Component | Would replace | Why not | Impact if adopted |
+|---|---|---|---|
+| `RetrieverQueryEngine` + synthesizer | `assemble_context`, `generation.py` | It owns the whole retrieve-then-answer path, including *whether to answer at all* | Would move the refusal decision inside a framework callback; A.5 and the guards would have to be reimplemented as postprocessors to keep the same behaviour |
+| `CitationQueryEngine` | `citations.py` | It has the model emit citation markers during generation | **A downgrade.** `validate_citations` checks the model's output *after* the fact — it resolves every marker against the supplied sources and rejects invented ones, retrying once then falling back. Model-generated citations remove the check and trust the thing being checked. Citation validation is 100% because of that check |
+| `SimilarityPostprocessor` | The `min_similarity` floor in `evidence.py` | It covers the floor and nothing else | Would cover roughly a quarter of A.5. The Part A sweep showed the floor is *not* what separates a right answer from a wrong one — guard 3 is, and it has no framework equivalent |
+| `MetadataReplacementPostProcessor` | Most of `SentenceWindowRetriever` | It substitutes the one window that was stored, at a fixed size | Would have made the Part C matrix impossible: window size is chosen per query from a single ingestion (C.2), and the postprocessor cannot slice a stored window or merge overlapping ones within a section |
+| `FaithfulnessEvaluator`, `RelevancyEvaluator` | Part of `evaluators/rag/judged.py` | DeepEval was already chosen for judged metrics (A.12.1) | Duplicate judging stacks, with no gain |
+| `AutoMergingRetriever` + `HierarchicalNodeParser` | `BasicChunkRetriever` | **Tried and rejected** — see C.6 | Measured, not assumed: gap disclosure 100 -> 0 and fact coverage 93.9 -> 57.1, because unmerged 128-token leaves cannot carry an answer |
+
+**`AutoMergingRetriever` was the one component this section previously named as
+worth revisiting. It was then tried, and it lost — see C.6.** Nothing on the
+list above is now outstanding.
+
+Two consequences of this boundary are worth stating plainly, because both cost
+something:
+
+- **More code to maintain.** `evidence.py`, `generation.py` and `citations.py`
+  are roughly 500 lines that a query engine would have supplied. They are also
+  the 500 lines with the most tests, which is the trade.
+- **The embedding client is outside our seams.** `OpenAIEmbedding` is
+  constructed by LlamaIndex, so the Part B recording harness — which wraps the
+  *chat* client — never sees embedding calls. That is the documented reason
+  `cache_complete` occasionally goes red for a non-defect (B.5).
 
 ### 6.1 The retriever interface
 
@@ -1651,23 +1689,155 @@ moves with the judge; Recall@K does not.
 
 ## C.6 Final comparison
 
-| Strategy | Recall@K | Retrieval precision | Context recall | Context relevancy | Faithfulness | Answer relevancy | Context tokens | Cost/query | p95 latency |
-|---|---|---|---|---|---|---|---|---|---|
-| Basic RAG | | | | | | | | | |
-| Window 1 | | | | | | | | | |
-| Window 2 | | | | | | | | | |
-| Window 3 | | | | | | | | | |
-| Window 5 | | | | | | | | | |
+**Status: complete (C4, C5). The recommendation is to keep basic retrieval, and
+the hypothesis Part C was built on is not supported end to end.**
 
-A second table reports the safety-shaped metrics per arm — near-miss resistance,
-wrong-document grounding, fallback correctness, gap-disclosure rate — separately
-from the quality table above, so an arm cannot win on average while regressing
-on the failures that do not show up as low scores.
+Nine arms, 65 questions each, `min_similarity` held at 0.35 throughout. The
+equal-budget arms use the top-k that brings mean context closest to basic's 1161
+tokens, measured rather than guessed.
 
-The recommendation is not simply the top row on quality. The deliverable is the
-window size with the best quality **per token of context**, stated with the
-trade-off it makes — the arm that wins on faithfulness while tripling cost per
-query is a finding, not a default.
+**Safety gates first**, because an arm that answers more while refusing less
+safely is not an improvement:
+
+| Arm | top-k | Near-miss | Wrong-doc grounding | Gap disclosure | Citations | Gates |
+|---|---|---|---|---|---|---|
+| basic | 6 | 100.0 | 0 | 100.0 | 100.0 | **pass** |
+| window 1 | 6 | 92.9 | 1 | 100.0 | 100.0 | fail |
+| window 2 | 6 | 100.0 | 0 | 100.0 | 100.0 | **pass** |
+| window 3 | 6 | 100.0 | 0 | 75.0 | 100.0 | fail |
+| window 5 | 6 | 92.9 | 1 | 75.0 | 100.0 | fail |
+| window 1 | 36 | 85.7 | 2 | 100.0 | 100.0 | fail |
+| window 2 | 30 | 92.9 | 1 | 100.0 | 100.0 | fail |
+| window 3 | 30 | 92.9 | 1 | 100.0 | 100.0 | fail |
+| window 5 | 24 | 92.9 | 1 | 100.0 | 100.0 | fail |
+
+Only one sentence arm clears the gates. Wrong-document grounding is the
+predicted failure and it appears exactly where C.5 said to watch for it: wider
+windows and deeper retrieval pull in adjacent text that reads like an answer.
+
+**Judged quality**, holdout split, paired per case so the arms are compared on
+the same questions rather than on whatever each happened to answer:
+
+| Metric | basic | window 2 | window 3 | n |
+|---|---|---|---|---|
+| Contextual relevancy | 0.275 | **0.461** | 0.449 | 17 |
+| Contextual precision | 0.936 | 0.971 | **1.000** | 17 |
+| Contextual recall | 0.976 | 1.000 | 1.000 | 17 |
+| Answer relevancy | 0.935 | 0.970 | **0.985** | 17 |
+| Faithfulness | **0.959** | 0.899 | 0.918 | 15 |
+| Mean context tokens | 1161 | **378** | 447 | — |
+
+Pairing is not a detail. The unpaired means are computed over 18, 15 and 18
+cases, because a judge does not always return every score — comparing those
+directly would attribute to the strategy a difference that is partly in the
+denominator.
+
+### The finding
+
+**Sentence windows did what they were built to do, and it was not enough.**
+Contextual relevancy — the metric that motivated Part C, at 0.264 in Part A —
+rises to 0.461, at a third of the context cost. Precision, recall and answer
+relevancy all improve.
+
+The gain does not survive the answer layer. Faithfulness falls 0.959 → 0.899,
+and the fall is concentrated rather than spread: **4 of 15 paired cases drop
+from 1.00 to between 0.50 and 0.88.** Fact coverage falls 81.2 → 72.9 and
+outcome accuracy 93.8 → 90.8.
+
+The plausible reading is that contextual relevancy rewards exactly what sentence
+windows do — remove padding — while faithfulness and fact coverage punish the
+same act when the padding was load-bearing. A 400-token chunk carries the
+qualifying clause that sits two sentences away from the match; a window of two
+sometimes does not.
+
+So the recommendation is not the top row on quality, as C.6 anticipated:
+**`retrieval_strategy = "basic"`**, recorded in `config.py` with this evidence.
+Trading groundedness for tidier retrieval context is the wrong trade for a
+healthcare assistant, where a fluent answer that outruns its evidence is the
+failure that matters most.
+
+The sentence path is kept and configurable rather than deleted. The
+retrieval-side gain is real, reproducible and cheap, so this is a decision the
+evidence can reopen — a wider window, or a hybrid that expands only when the
+match is isolated, would attack the faithfulness loss directly.
+
+### Auto-merging retrieval, tried and rejected
+
+`AutoMergingRetriever` over a `HierarchicalNodeParser` is the framework-native
+form of the same idea: index small leaves, and when enough leaves of one parent
+are retrieved, serve the parent instead. Three levels were built — 1600 / 400 /
+128 tokens, the middle level being Part A's own chunker — giving 1448 nodes and
+1301 leaves, behind the same `Retriever` protocol so the same runner, evidence
+check and prompt measured it.
+
+Holdout, paired per case against the arms above (n=13, 12 for faithfulness):
+
+| Metric | basic | window 2 | auto-merging |
+|---|---|---|---|
+| Contextual relevancy | 0.264 | 0.466 | **0.497** |
+| Contextual precision | **0.942** | 0.962 | 0.906 |
+| Answer relevancy | 0.915 | **0.960** | 0.919 |
+| Faithfulness | **0.948** | 0.894 | 0.878 |
+| Gap disclosure | **100** | 100 | **0** |
+| Fact coverage | **93.9** | 72.9 | **57.1** |
+| Outcome accuracy | **94.3** | 90.8 | 80.0 |
+
+It won contextual relevancy and lost everything else, two of them badly enough
+to disqualify it on their own: **gap disclosure fell to 0 and fact coverage to
+57.1.** The cause is structural. Merging only fires when enough leaves of one
+parent are retrieved, so on this corpus most results stay 128-token fragments —
+too small to carry the facts an answer needs, and far too small for a compound
+question to notice it has only covered half of what was asked.
+
+That last point is the one worth carrying forward: a retrieval strategy can look
+*better* on retrieval metrics while being unable to support the safety
+behaviours built on top of it. Contextual relevancy rose to its highest value of
+any arm in the same run where gap disclosure collapsed to zero.
+
+**Its code, its table and its report were deleted**, on the same rule applied to
+the parent-fallback prototype: it changed no decision. The figures above are
+recorded here and nowhere else.
+
+### Why the loss happened, and what it rules out
+
+The four faithfulness regressions share one shape: a qualifying clause sitting
+just outside the window. The pacemaker warning for an MRI, the sedation note
+that makes "awake and aware" wrong, the "may" that makes a clear-liquid diet a
+suggestion rather than a rule, a duration given as 30 minutes where the source
+says 20 or less.
+
+Faithfulness also tracked served-context size almost monotonically across the
+arms — 378 tokens gave 0.899, 447 gave 0.918, 1161 gave 0.959 — which points at
+how much context reached the model rather than at how the match was found.
+
+A prototype tested that directly: rank on sentences, serve the enclosing chunk
+rather than the window. It recovered roughly half the loss — faithfulness 0.919,
+fact coverage 85.7 (the best of any arm), all promotion gates passing — but
+still did not beat basic on faithfulness (0.978) or outcome accuracy (88.6 vs
+93.8) on the same paired holdout cases.
+
+**Its code and its report were deleted.** It changed no decision, and a
+retriever nothing selects is dead code that rots; the run it produced was
+evidence for a path not taken. The figures above are therefore recorded here and
+nowhere else — this paragraph is the artefact, and re-deriving them means
+rebuilding the prototype.
+
+The conclusion is narrow but reusable: **sentence windows lose faithfulness
+because of how little context they serve, not because sentence-level matching is
+worse.** Any future attempt should widen what is served while keeping the
+sentence match, and must clear faithfulness rather than retrieval metrics.
+
+### What this comparison cannot settle
+
+65 questions, 35 on holdout. A 3-point difference in outcome accuracy is two
+cases, which is inside the range Part B showed this scale of benchmark cannot
+resolve. The faithfulness result is the one worth acting on, because it is
+paired, concentrated in specific cases, and large where it appears — not a
+fraction of a point smeared across the set.
+
+Latency and cost per query were not measured per arm. Context tokens stand in
+for cost, and the retrieval-side latency difference between one vector query and
+another is not what decides this.
 
 ## C.7 Deliverables and acceptance
 
@@ -2057,9 +2227,9 @@ and hold in all three parts, regardless of what is retrieved.
 | C1 | Sentence parser, window builder, sentence ingestion | A11, B5 | `knowledge_sentence` populated in one run | **Done** — 654 sentences from 11 documents; `--strategy sentence_window\|both` |
 | C2 | `SentenceWindowRetriever` with expansion and dedup | C1 | Window sizes 1/2/3/5 selectable at query time | **Done** — window is a query-time argument; overlapping windows merged per section |
 | C3 | DeepEval integration on the existing runner | A9 | Judged metrics reported alongside deterministic ones | **Done in Part A** — `evaluators/rag/judged.py`; baseline in `reports/rag/` |
-| C4 | Experiment matrix, both conditions | C2, C3 | Ten runs complete and checkpointed | Next |
-| C5 | **Part C comparison report and recommendation** | C4 | Default strategy set in `config.py`, with evidence | — |
-| C6 | Promote RAG to primary; update the SRS | C5 | FR-8/FR-9 status updated; this document's tracker updated | — |
+| C4 | Experiment matrix, both conditions | C2, C3 | Ten runs complete and checkpointed | **Done** — 9 distinct arms (basic is shared by both conditions) |
+| C5 | **Part C comparison report and recommendation** | C4 | Default strategy set in `config.py`, with evidence | **Done** — `retrieval_strategy = "basic"`; sentence windows not promoted |
+| C6 | Promote RAG to primary; update the SRS | C5 | FR-8/FR-9 status updated; this document's tracker updated | Next |
 
 Part C's ingestion (C1) depends on Part A rather than Part B and can start in
 parallel with the migration; the *evaluation* waits for B5 so every arm is
