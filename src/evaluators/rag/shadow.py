@@ -155,6 +155,12 @@ GATES = {
     "near_miss_resistance_min": 90.0,
     "gap_disclosure_min": 100.0,
     "citation_validation_min": 98.0,
+    # Every answer to an answerable question must cite only documents the
+    # question was meant to be answered from. Set at 100 rather than 98: unlike
+    # citation validation, which tolerates a marker the model failed to place,
+    # a citation to the wrong document means the answer drew on the wrong
+    # source, and one of those is a wrong answer about a medical procedure.
+    "source_fidelity_min": 100.0,
 }
 
 
@@ -169,7 +175,8 @@ class ShadowReport:
         return tally
 
     def promotion(self, near_miss_resistance: float, gap_disclosure: float,
-                  citation_validation: float) -> dict[str, object]:
+                  citation_validation: float,
+                  source_fidelity: float = 100.0) -> dict[str, object]:
         """Judge shadow -> preferred against the plan's gates."""
 
         tally = self.counts()
@@ -183,6 +190,10 @@ class ShadowReport:
             "near-miss resistance >= 90%": near_miss_resistance >= GATES["near_miss_resistance_min"],
             "gap disclosure = 100%": gap_disclosure >= GATES["gap_disclosure_min"],
             "citation validation >= 98%": citation_validation >= GATES["citation_validation_min"],
+            # Closes the gap the other gates leave: near-miss resistance scores
+            # questions with no answer in the corpus, so answering a real
+            # question from the wrong page passed every check before this.
+            "source fidelity = 100%": source_fidelity >= GATES["source_fidelity_min"],
         }
         return {
             "false_fallback_rate": false_fallback,

@@ -30,6 +30,9 @@ The implemented prompt chain supports:
   is, how to prepare, how it will feel, what the risks are — retrieved from a
   corpus of clinical documents, with an explicit "I don't have documentation on
   that" when the evidence is missing
+- A LangGraph orchestrator serving every turn, proven to reproduce the previous
+  hand-rolled chain exactly before it became the default; `ORCHESTRATOR=chain`
+  switches back in one word
 - Refusal to answer from documents where the answer is a clinical judgement:
   whether to stop a medication, what a symptom means, whether a reaction was an
   allergy. These never reach the retriever.
@@ -70,9 +73,10 @@ Iteration 4 remains the enterprise production platform.
 │   │   ├── config.py                          # Embedding profile, chunking, retrieval, guard settings
 │   │   ├── documents.py                       # PDF extraction, cleaning, manifest-matched sectioning
 │   │   ├── chunking.py                        # LlamaIndex TokenTextSplitter, 400/50
+│   │   ├── sentence_window.py                 # Sentence parser and window builder (Part C)
 │   │   ├── embeddings.py                      # OpenAI embeddings, with a query cache
 │   │   ├── store.py                           # LlamaIndex PGVectorStore wrapper
-│   │   ├── retrievers.py                      # Retriever protocol and BasicChunkRetriever
+│   │   ├── retrievers.py                      # Retriever protocol, BasicChunkRetriever, SentenceWindowRetriever
 │   │   ├── query.py                           # Category inference, compound-question splitting
 │   │   ├── policy.py                          # What may never be answered from documents
 │   │   ├── evidence.py                        # Deterministic sufficiency check and near-miss guards
@@ -81,6 +85,11 @@ Iteration 4 remains the enterprise production platform.
 │   │   ├── pipeline.py                        # The branch, end to end
 │   │   ├── integration.py                     # Seam into the chat flow; degrades to curated content
 │   │   └── ingest.py                          # Corpus ingestion CLI
+│   ├── graph/                                 # LangGraph orchestrator (Iteration 3, Part B)
+│   │   ├── state.py                           # AssistantState
+│   │   ├── nodes.py                           # Thin adapters over the existing modules
+│   │   ├── build.py                           # Graph construction, conditional edges, checkpointer
+│   │   └── runner.py                          # run_turn() — the /chat entry point
 │   └── evaluators/
 │       ├── regression_suite.py             # Prompt-chain, injection, and intent evaluations
 │       ├── healthcare_assistant_benchmark.xlsx
@@ -89,7 +98,16 @@ Iteration 4 remains the enterprise production platform.
 │       │   ├── dataset.py                   # Benchmark loader and the tune/holdout split
 │       │   ├── deterministic.py             # Fact, citation and near-miss metrics
 │       │   ├── shadow.py                    # Curated-vs-retrieved divergence classes
+│       │   ├── judged.py                    # DeepEval metrics, batched
+│       │   ├── similarity_profile.py        # Per-strategy similarity distributions
+│       │   ├── compare_arms.py              # Part C arm comparison
 │       │   └── run_benchmark.py             # RAG benchmark CLI
+│       ├── equivalence/                     # Chain-vs-graph proof (Part B)
+│       │   ├── harness.py                   # Turn-by-turn comparison, STRICT and STRUCTURAL
+│       │   ├── caching_client.py            # Records model calls so replays are deterministic
+│       │   ├── conversations.py             # The 20 compared conversations
+│       │   ├── run_equivalence.py           # Equivalence CLI
+│       │   └── rag_through_chat.py          # The 68 RAG questions through /chat, both orchestrators
 │       └── benchmarks/
 │           ├── test_loader.py              # Excel scenario loader
 │           ├── preconditions.py            # Resolves a scenario's stated setup into turns
@@ -192,6 +210,28 @@ uv run uvicorn src.app:app --reload
 Open <http://127.0.0.1:8000> in a browser. Stop the server with `Ctrl+C`.
 
 Confirmed summaries are stored locally in `db/visits/`. They are not submitted to a provider or external healthcare system.
+
+### Choosing the orchestrator
+
+Two implementations serve a turn, and they are interchangeable. A LangGraph
+`StateGraph` is the default; the original hand-rolled chain is one word away.
+
+```bash
+ORCHESTRATOR=chain uv run uvicorn src.app:app --reload   # roll back
+```
+
+It can also be chosen per request, which is how the equivalence harness runs
+both against the same input:
+
+```bash
+curl -s localhost:8000/chat -H 'content-type: application/json' \
+  -d '{"message": "Do I need to fast before a blood test?",
+       "session_id": "demo", "orchestrator": "chain"}'
+```
+
+The graph's nodes call the same functions the chain calls, so this is a choice
+of control flow rather than of behaviour. That claim is checked rather than
+asserted — see the equivalence harness below.
 
 ## Run tests
 
@@ -357,6 +397,41 @@ long run can be inspected or resumed while it is still going.
 Both benchmarks share the same rate-limit handling, checkpointing and resume
 behaviour described above.
 
+### Equivalence harness — chain against graph
+
+The check that let the LangGraph orchestrator become the default. It runs both
+implementations over the same 20 conversations and compares every reply and
+every state field.
+
+```bash
+# Record the model calls once, then compare
+uv run python -m src.evaluators.equivalence.run_equivalence --record
+
+# Replay offline and free; fails if any call is not cached
+uv run python -m src.evaluators.equivalence.run_equivalence
+
+# The 68 RAG questions through /chat, both orchestrators
+uv run python -m src.evaluators.equivalence.rag_through_chat
+```
+
+Model calls are recorded to `reports/partb/model_cache.json` and replayed, for
+a reason worth knowing before reading the output: measured chain-against-chain,
+**20% of conversations diverge from themselves**, because four model calls in
+the turn can each flip. Without recording, a correct reimplementation would fail
+a byte-identical criterion a fifth of the time and a real bug would be
+indistinguishable from that jitter.
+
+A run that reports "equivalent" while recording cache misses is treated as a
+failure, not a pass. Several call sites catch their own model failures and
+return a fallback, so a miss produces the *same* fallback on both sides — the
+comparison would otherwise pass by agreeing about nothing.
+
+Re-record after any prompt change; the cache is stale by design when prompts
+move. Note that only chat calls are recorded, not embeddings, so retrieval can
+occasionally reorder and cause a stray miss.
+
+Reports are written to `reports/partb/`.
+
 ### RAG benchmark — 68 questions
 
 Needs the knowledge store running and an API key.
@@ -378,12 +453,31 @@ that does, and `never_route` questions must be refused before retrieval runs at
 all. A wrong answer to either is invisible to a faithfulness metric, because an
 answer grounded in the wrong passage is still faithful to that passage.
 
-The recorded held-out results belong to corpus version 1 and are superseded:
-two licensed Medical Encyclopedia sources have since been excluded and replaced
-with thinner NLM-authored Health Topic pages. Re-ingest corpus version 2 and run
-a fresh baseline before quoting current metrics. The historical numbers and the
-licence-remediation impact are documented in
+Current results are measured on corpus version 2, the 11 documents that remain
+after two licensed Medical Encyclopedia sources were excluded and replaced with
+thinner NLM-authored Health Topic pages. On the held-out split: outcome accuracy
+94.3%, and near-miss resistance, gap disclosure, citation validation and
+never-route compliance all at 100% with zero wrong-document grounding. The
+version 1 files are kept alongside for the comparison, and the licence
+remediation is documented in
 [the RAG architecture](documentation/rag_architecture.md#a13-licence-remediation-and-benchmark-impact).
+
+The retrieval strategy is selectable, which is how Part C compared them:
+
+```bash
+# Sentence-window retrieval, window size 2, against the sentence table
+uv run python -m src.evaluators.rag.run_benchmark --strategy sentence_window \
+    --window 2 --top-k 6 --label sw_w2
+
+# Lay the arm reports side by side
+uv run python -m src.evaluators.rag.compare_arms --split holdout
+```
+
+Sentence windows are **not** the default. They win every retrieval metric and
+lose faithfulness and fact coverage, which is the wrong trade here; the
+reasoning and the numbers are in
+[Part C of the RAG architecture](documentation/rag_architecture.md). The
+sentence table is populated by `ingest --strategy sentence_window`.
 
 Reports are written to `reports/rag/`.
 

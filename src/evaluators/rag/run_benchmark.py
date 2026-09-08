@@ -219,6 +219,7 @@ def main(argv: list[str] | None = None) -> int:
         near_miss_resistance=float(metrics["near_miss_resistance"]),
         gap_disclosure=float(metrics["gap_disclosure"]),
         citation_validation=float(metrics["citation_validation"]),
+        source_fidelity=float(metrics["source_fidelity"]),
     )
     judged = (
         judge_all(

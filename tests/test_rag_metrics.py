@@ -114,6 +114,121 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(report.metrics()["near_miss_resistance"], 100.0)
 
 
+class SourceFidelityTests(unittest.TestCase):
+    """Answering a real question out of the wrong document.
+
+    The gap this metric exists to close. `wrong_document_grounding` scores the
+    near_miss group, whose questions have no answer in the corpus at all, so a
+    strategy that answers an *answerable* question from the wrong page scored
+    100 on every safety gate. A hybrid retrieval arm did exactly that and was
+    only caught by a judged faithfulness score.
+    """
+
+    def cases(self):
+        return {c.question_id: c for c in load_cases()}
+
+    def test_citing_only_the_expected_document_is_clean(self):
+        report = Report()
+        report.results.append(
+            score_case(
+                self.cases()["RAG-004"], "MRI uses no radiation [1].", "answered",
+                ("mri",), source="rag",
+            )
+        )
+
+        self.assertEqual(report.metrics()["source_fidelity"], 100.0)
+        self.assertEqual(report.metrics()["off_source_cases"], [])
+
+    def test_citing_a_document_the_question_does_not_belong_to_is_caught(self):
+        report = Report()
+        report.results.append(
+            score_case(
+                self.cases()["RAG-017"],
+                "Avoid red meat before the test [1].", "answered",
+                ("colonoscopy",), source="rag",
+            )
+        )
+
+        metrics = report.metrics()
+
+        self.assertEqual(metrics["source_fidelity"], 0.0)
+        self.assertEqual(
+            metrics["off_source_cases"],
+            [{"question_id": "RAG-017", "cited": ["colonoscopy"]}],
+        )
+
+    def test_a_partly_off_source_answer_still_fails(self):
+        """One wrong source is enough: the answer drew on a page it should not have."""
+
+        report = Report()
+        report.results.append(
+            score_case(
+                self.cases()["RAG-013"], "You may not remember it [1][2].",
+                "answered", ("colonoscopy", "endoscopy"), source="rag",
+            )
+        )
+
+        self.assertEqual(report.metrics()["source_fidelity"], 0.0)
+
+    def test_the_old_gates_do_not_see_this_failure(self):
+        """The regression test for the blind spot itself.
+
+        If this ever starts failing because near_miss_resistance moved, the two
+        metrics have been conflated and this one has stopped being independent.
+        """
+
+        report = Report()
+        report.results.append(
+            score_case(
+                self.cases()["RAG-017"],
+                "Avoid red meat before the test [1].", "answered",
+                ("colonoscopy",), source="rag",
+            )
+        )
+
+        metrics = report.metrics()
+
+        self.assertEqual(metrics["near_miss_resistance"], 0.0)  # no near_miss cases
+        self.assertEqual(metrics["wrong_document_grounding"], 0)
+        self.assertEqual(metrics["source_fidelity"], 0.0)
+
+    def test_a_case_without_the_annotation_is_excluded_not_passed(self):
+        """Silence in the dataset must not read as a clean result."""
+
+        report = Report()
+        report.results.append(
+            score_case(
+                self.cases()["RAG-042"], "Some answer [1].", "answered",
+                ("mri",), source="rag",
+            )
+        )
+
+        # RAG-042 is a near_miss case with no expected documents, so it is not
+        # scored here at all -- it is caught by near-miss resistance instead.
+        # The rate reads 100 because nothing failed, and the count says why.
+        metrics = report.metrics()
+        self.assertEqual(metrics["source_fidelity"], 100.0)
+        self.assertEqual(metrics["source_fidelity_cases"], 0)
+        self.assertEqual(metrics["off_source_cases"], [])
+
+    def test_an_empty_run_does_not_block_promotion(self):
+        """A vacuous 100 must not become a spurious gate failure."""
+
+        self.assertEqual(Report().metrics()["source_fidelity"], 100.0)
+        self.assertEqual(Report().metrics()["source_fidelity_cases"], 0)
+
+    def test_a_refusal_is_not_scored(self):
+        report = Report()
+        report.results.append(
+            score_case(
+                self.cases()["RAG-004"], "I don't have documentation.", "fallback",
+                (), source="fallback",
+            )
+        )
+
+        self.assertEqual(report.metrics()["off_source_cases"], [])
+
+
 if __name__ == "__main__":
     unittest.main()
 
