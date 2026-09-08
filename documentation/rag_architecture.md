@@ -714,6 +714,7 @@ query engine" is the obvious question, and the answer is the same in every case:
 | `MetadataReplacementPostProcessor` | Most of `SentenceWindowRetriever` | It substitutes the one window that was stored, at a fixed size | Would have made the Part C matrix impossible: window size is chosen per query from a single ingestion (C.2), and the postprocessor cannot slice a stored window or merge overlapping ones within a section |
 | `FaithfulnessEvaluator`, `RelevancyEvaluator` | Part of `evaluators/rag/judged.py` | DeepEval was already chosen for judged metrics (A.12.1) | Duplicate judging stacks, with no gain |
 | `AutoMergingRetriever` + `HierarchicalNodeParser` | `BasicChunkRetriever` | **Tried and rejected** — see C.6 | Measured, not assumed: gap disclosure 100 -> 0 and fact coverage 93.9 -> 57.1, because unmerged 128-token leaves cannot carry an answer |
+| `QueryFusionRetriever` / BM25 hybrid | `BasicChunkRetriever` | **Tried and rejected** — see C.6 | Won four of five judged metrics, lost faithfulness 0.964 -> 0.884 on passages about adjacent but distinct tests |
 
 **`AutoMergingRetriever` was the one component this section previously named as
 worth revisiting. It was then tried, and it lost — see C.6.** Nothing on the
@@ -1134,7 +1135,8 @@ guard exists for, and no faithfulness metric can see it.
 | **Partial-answer correctness** | On compound questions: the covered facts are present *and* the uncovered part is named. Scored as two separate checks — a partial answer that omits the gap sentence fails |
 | **Gap-disclosure rate** | Share of `partially_answered` turns that explicitly named what was not covered. Target 100%; anything less means silent partial answers are shipping |
 | **Near-miss resistance** | Share of near-miss questions that produced the fallback rather than a confident wrong answer. The one metric faithfulness cannot substitute for |
-| **Wrong-document grounding** | Answers cited only documents outside the question's expected set. Distinguishes "retrieved nothing" from "retrieved the wrong thing", which need different fixes |
+| **Wrong-document grounding** | Count of *near-miss* questions that were answered with citations at all. Narrower than this row once claimed: it scores only the near-miss group, so it cannot see a real question answered from the wrong page. Source fidelity below covers that |
+| **Source fidelity** | Share of answered questions that cited **only** documents the question was meant to be answered from, over the cases annotated with `expected_document_ids`. Distinguishes "retrieved nothing" from "retrieved the wrong thing", which need different fixes. Reported with the number of cases scored, so a vacuous 100 is visible |
 
 **System**
 
@@ -1797,6 +1799,67 @@ any arm in the same run where gap disclosure collapsed to zero.
 **Its code, its table and its report were deleted**, on the same rule applied to
 the parent-fallback prototype: it changed no decision. The figures above are
 recorded here and nowhere else.
+
+### Hybrid retrieval, tried and rejected
+
+Dense retrieval fused with lexical retrieval by reciprocal rank fusion, the
+lexical arm being Postgres full-text search (`ts_rank_cd` over `to_tsvector`,
+OR-ed terms) rather than a BM25 dependency -- the corpus already lives in
+Postgres, and both are term-frequency scores fused by rank rather than by value.
+
+The motivation was real: embeddings are weakest exactly where lexical matching
+is strongest. "What does the ABCDE rule mean" tops out at 0.346 against prose
+that answers it completely, and `expand_query` exists as a hand-maintained
+workaround for that class.
+
+Holdout, paired per case (n=18, 17 for faithfulness):
+
+| Metric | basic | hybrid |
+|---|---|---|
+| Contextual relevancy | 0.263 | **0.269** |
+| Contextual precision | 0.940 | **0.958** |
+| Contextual recall | 0.978 | **0.991** |
+| Answer relevancy | 0.938 | **0.968** |
+| Faithfulness | **0.964** | 0.884 |
+| Fact coverage | **93.9** | 85.7 |
+
+All deterministic gates held, and hybrid won four of five judged metrics. It
+lost the deciding one. The regression is not a single outlier: excluding the
+worst case (RAG-017, 1.00 -> 0.17) faithfulness is still 0.929 against 0.961,
+and hybrid has five cases below 0.9 where basic has three.
+
+The failures share a shape, and it is the one lexical matching invites: passages
+about *adjacent but distinct* entities that share vocabulary. RAG-017 extended
+the dietary restrictions of one stool test to a different stool test; RAG-014
+merged two colonoscopy recovery times. Near-miss resistance stayed at 100
+because that metric scores questions with no answer in the corpus, whereas this
+is an answerable question answered from contaminated context.
+
+**That gap has since been closed.** `source_fidelity` scores answered questions
+against the `expected_document_ids` the benchmark already carried, and is a
+promotion gate at 100%. It is independent of near-miss resistance by
+construction, and there is a regression test asserting the old gates stay blind
+to the failure it catches -- if that test ever fails, the two metrics have been
+conflated. The deployed configuration passes it: 100% over 19 scored cases.
+
+The wider lesson is that the hybrid arm was caught only by a *judged*
+faithfulness score. A deterministic gate now catches the same class, which
+matters because the judged metrics are the expensive, slow, non-deterministic
+half of the harness.
+
+**A structural limit is worth recording separately.** The fused score cannot be
+returned as `similarity`: A.5 compares that value against `min_similarity`,
+guard 2 measures dispersion across it, and RRF scores sit near 0.016, so the
+0.35 floor would reject every answer. A lexically-found node therefore has its
+true cosine similarity looked up before it is returned. The consequence is that
+**lexical retrieval can rank a perfect chunk first and still have it discarded
+by the cosine gate** -- the ABCDE query scores 0.346 under both strategies and
+is refused by both. Hybrid's upside here is capped unless the evidence floor
+becomes strategy-aware, which would make the comparison measure the threshold
+rather than the strategy.
+
+Code and report deleted, as with the other two rejected experiments. The
+figures above are recorded here and nowhere else.
 
 ### Why the loss happened, and what it rules out
 

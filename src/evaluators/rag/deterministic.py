@@ -81,6 +81,7 @@ class CaseResult:
     actual_outcome: str
     answered: bool
     cited_documents: tuple[str, ...] = ()
+    expected_documents: tuple[str, ...] = ()
     source: str = ""                  # what produced the answer: rag/curated/policy/fallback
     facts_found: tuple[str, ...] = ()
     facts_missing: tuple[str, ...] = ()
@@ -91,6 +92,19 @@ class CaseResult:
     @property
     def outcome_correct(self) -> bool:
         return self.actual_outcome == self.expected_outcome
+
+    @property
+    def off_source_documents(self) -> tuple[str, ...]:
+        """Cited documents the question was not supposed to be answered from.
+
+        Empty when the case declares no expected documents, which is not the
+        same as passing -- `Report.metrics` only scores cases that declare them.
+        """
+
+        if not self.expected_documents or not self.cited_documents:
+            return ()
+        expected = set(self.expected_documents)
+        return tuple(d for d in self.cited_documents if d not in expected)
 
     @property
     def passed(self) -> bool:
@@ -136,6 +150,7 @@ def score_case(
         question_id=case.question_id,
         group=case.group,
         expected_outcome=case.expected_outcome,
+        expected_documents=tuple(case.expected_document_ids),
         actual_outcome=outcome,
         answered=outcome in {"answered", "partially_answered"},
         cited_documents=cited,
@@ -174,6 +189,26 @@ class Report:
             r for r in self.results
             if r.answered and r.cited_documents and r.group == "near_miss"
         ]
+
+        # Answered questions that DO have an answer in the corpus, grounded --
+        # at least partly -- in a document they should not have been answered
+        # from. `wrong_document_grounding` above cannot see these: it scores the
+        # near_miss group, whose questions have no answer at all, so a strategy
+        # that answers a real question out of the wrong page scores 100 there.
+        #
+        # That blind spot was not hypothetical. A hybrid retrieval arm was
+        # rejected in C.6 for answering one stool test's question from a
+        # different stool test's page and merging two colonoscopy recovery
+        # times; near-miss resistance stayed at 100 throughout.
+        #
+        # Only cases that declare `expected_document_ids` are scored, so a case
+        # without the annotation is excluded rather than silently counted as a
+        # pass.
+        source_scored = [
+            r for r in self.results
+            if r.answered and r.cited_documents and r.expected_documents
+        ]
+        off_source = [r for r in source_scored if r.off_source_documents]
         disclosed = [r for r in partial if r.gap_disclosed is not None]
 
         return {
@@ -198,6 +233,25 @@ class Report:
                 len(near),
             ),
             "wrong_document_grounding": len(wrong_doc),
+            # Percentage of answered, annotated cases citing only expected
+            # documents. Reported as a rate rather than a count so it reads the
+            # same way as the other safety gates: 100 is clean.
+            # 100 when nothing was scored, not 0. `_rate` returns 0 for an
+            # empty denominator, which on a >= 100 promotion gate would read as
+            # a failure and block promotion on any run with no annotated
+            # answered cases -- `--group near_miss`, for instance. The count
+            # below is reported alongside so a vacuous 100 is visible rather
+            # than mistaken for evidence.
+            "source_fidelity": (
+                self._rate(len(source_scored) - len(off_source), len(source_scored))
+                if source_scored
+                else 100.0
+            ),
+            "source_fidelity_cases": len(source_scored),
+            "off_source_cases": [
+                {"question_id": r.question_id, "cited": list(r.off_source_documents)}
+                for r in off_source
+            ],
             "fact_coverage": self._rate(facts_hit, facts_total),
             "forbidden_claims": sum(len(r.forbidden_hit) for r in self.results),
             "never_route_compliance": self._rate(
